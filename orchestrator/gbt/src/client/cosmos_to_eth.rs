@@ -93,7 +93,7 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
     .await;
     match res {
         Ok(tx_id) => info!("Send to Eth txid {}", tx_id.txhash),
-        Err(e) => info!("Failed to send tokens! {:?}", e),
+        Err(e) => error!("Failed to send tokens! {:?}", e),
     }
 
     if !no_batch {

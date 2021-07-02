@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -280,7 +282,7 @@ func GetDenomToERC20Key(denom string) []byte {
 }
 
 func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(ERC20ToDenomKey, []byte(erc20)...)
+	return append(ERC20ToDenomKey, []byte(strings.ToLower(erc20))...)
 }
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
