@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
@@ -27,7 +26,6 @@ func GetTxCmd(storeKey string) *cobra.Command {
 	}
 
 	gravityTxCmd.AddCommand([]*cobra.Command{
-		CmdSendToEth(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
@@ -90,49 +88,6 @@ func CmdUnsafeETHAddr() *cobra.Command {
 			return nil
 		},
 	}
-}
-
-func CmdSendToEth() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
-		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
-		Args:  cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-			cosmosAddr := cliCtx.GetFromAddress()
-
-			amount, err := sdk.ParseCoinsNormalized(args[1])
-			if err != nil {
-				return sdkerrors.Wrap(err, "amount")
-			}
-			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
-			if err != nil {
-				return sdkerrors.Wrap(err, "bridge fee")
-			}
-
-			if len(amount) > 1 || len(bridgeFee) > 1 {
-				return fmt.Errorf("coin amounts too long, expecting just 1 coin amount for both amount and bridgeFee")
-			}
-
-			// Make the message
-			msg := types.MsgSendToEth{
-				Sender:    cosmosAddr.String(),
-				EthDest:   args[0],
-				Amount:    amount[0],
-				BridgeFee: bridgeFee[0],
-			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			// Send it
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
-		},
-	}
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
 }
 
 func CmdRequestBatch() *cobra.Command {
