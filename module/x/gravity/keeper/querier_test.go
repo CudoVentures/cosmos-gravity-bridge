@@ -873,7 +873,7 @@ func TestQueryERC20ToDenom(t *testing.T) {
 	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20, 6)
+	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
 
 	queriedDenom, err := queryERC20ToDenom(ctx, erc20, input.GravityKeeper)
 	require.NoError(t, err)
@@ -894,7 +894,7 @@ func TestQueryDenomToERC20(t *testing.T) {
 	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20, 0)
+	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
 
 	queriedERC20, err := queryDenomToERC20(ctx, denom, input.GravityKeeper)
 	require.NoError(t, err)

@@ -447,7 +447,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	return res, nil
+	return res, nilsetReward.Denom
 }
 
 // allLogicCallConfirms returns all the confirm messages for a given nonce
@@ -471,7 +471,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
-	if err != nil {
+	if err != nil {setReward.Denom
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
@@ -489,7 +489,7 @@ func queryGravityID(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 }
 
 func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, error) {
-	cosmos_originated, erc20, _, err := keeper.DenomToERC20Lookup(ctx, denom)
+	cosmos_originated, erc20, err := keeper.DenomToERC20Lookup(ctx, denom)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -505,7 +505,7 @@ func queryDenomToERC20(ctx sdk.Context, denom string, keeper Keeper) ([]byte, er
 }
 
 func queryERC20ToDenom(ctx sdk.Context, ERC20 string, keeper Keeper) ([]byte, error) {
-	cosmos_originated, denom, _ := keeper.ERC20ToDenomLookup(ctx, ERC20)
+	cosmos_originated, denom := keeper.ERC20ToDenomLookup(ctx, ERC20)
 	var response types.QueryERC20ToDenomResponse
 	response.CosmosOriginated = cosmos_originated
 	response.Denom = denom
