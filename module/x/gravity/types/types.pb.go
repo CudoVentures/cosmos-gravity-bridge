@@ -52,9 +52,6 @@ func (m *BridgeValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func GetDenomToDecimalsKey(denom string) []byte {
-	return append(DenomToDecimalsKey, []byte(denom)...)
-}
 func (m *BridgeValidator) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_BridgeValidator.Merge(m, src)
 }
@@ -214,8 +211,8 @@ func (m *LastObservedEthereumBlockHeight) GetEthereumBlockHeight() uint64 {
 // This records the relationship between an ERC20 token and the denom
 // of the corresponding Cosmos originated asset
 type ERC20ToDenom struct {
-	Erc20    string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
-	Denom    string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Erc20 string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
+	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 }
 
 func (m *ERC20ToDenom) Reset()         { *m = ERC20ToDenom{} }

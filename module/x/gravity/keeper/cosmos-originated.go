@@ -59,8 +59,6 @@ func (k Keeper) DenomToERC20Lookup(ctx sdk.Context, denom string) (bool, string,
 		return true, tc2, nil
 	}
 
-	_, _ := k.ERC20ToDenomLookup(ctx, denom)
-
 	// This is an ethereum-originated asset
 	return false, tc1, nil
 }

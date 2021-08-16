@@ -447,7 +447,7 @@ func queryLogicCall(ctx sdk.Context, invalidationId string, invalidationNonce st
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	return res, nilsetReward.Denom
+	return res, nil
 }
 
 // allLogicCallConfirms returns all the confirm messages for a given nonce
@@ -471,7 +471,7 @@ func queryAllLogicCallConfirms(ctx sdk.Context, invalidationId string, invalidat
 		return nil, nil
 	}
 	res, err := codec.MarshalJSONIndent(types.ModuleCdc, confirms)
-	if err != nil {setReward.Denom
+	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 
