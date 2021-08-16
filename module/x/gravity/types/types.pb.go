@@ -211,8 +211,9 @@ func (m *LastObservedEthereumBlockHeight) GetEthereumBlockHeight() uint64 {
 // This records the relationship between an ERC20 token and the denom
 // of the corresponding Cosmos originated asset
 type ERC20ToDenom struct {
-	Erc20 string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
-	Denom string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Erc20    string `protobuf:"bytes,1,opt,name=erc20,proto3" json:"erc20,omitempty"`
+	Denom    string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Decimals uint32 `protobuf:"bytes,3,opt,name=decimals,proto3" json:"decimals,omitempty"`
 }
 
 func (m *ERC20ToDenom) Reset()         { *m = ERC20ToDenom{} }
@@ -260,6 +261,13 @@ func (m *ERC20ToDenom) GetDenom() string {
 		return m.Denom
 	}
 	return ""
+}
+
+func (x *ERC20ToDenom) GetDecimals() uint32 {
+	if x != nil {
+		return x.Decimals
+	}
+	return 0
 }
 
 func init() {
@@ -470,6 +478,12 @@ func (m *ERC20ToDenom) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0xa
 	}
+	if m.Decimals != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.Decimals))
+		i--
+		dAtA[i] = 0x8
+	}
+
 	return len(dAtA) - i, nil
 }
 
@@ -555,6 +569,9 @@ func (m *ERC20ToDenom) Size() (n int) {
 	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
+	}
+	if m.Decimals != 0 {
+		n += 1 + sovTypes(uint64(m.Decimals))
 	}
 
 	return n
@@ -1045,6 +1062,25 @@ func (m *ERC20ToDenom) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Decimals", wireType)
+			}
+			m.Decimals = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Decimals |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTypes(dAtA[iNdEx:])

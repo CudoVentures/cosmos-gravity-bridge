@@ -118,6 +118,9 @@ var (
 	// LastSlashedLogicCallBlock indexes the latest slashed logic call block height
 	LastSlashedLogicCallBlock = []byte{0x20}
 
+	// DenomToDecimalsKey prefixes the index of Cosmos originated asset denoms to ERC20s
+	DenomToDecimalsKey = []byte{0x21}
+
 	// LastUnBondingBlockHeight indexes the last validator unbonding block height
 	LastUnBondingBlockHeight = []byte{0xf8}
 
@@ -279,6 +282,10 @@ func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
 
 func GetDenomToERC20Key(denom string) []byte {
 	return append(DenomToERC20Key, []byte(denom)...)
+}
+
+func GetDenomToDecimalsKey(denom string) []byte {
+	return append(DenomToDecimalsKey, []byte(denom)...)
 }
 
 func GetERC20ToDenomKey(erc20 string) []byte {

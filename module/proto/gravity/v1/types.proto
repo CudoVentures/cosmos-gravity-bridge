@@ -41,4 +41,5 @@ message LastObservedEthereumBlockHeight {
 message ERC20ToDenom {
   string erc20 = 1;
   string denom = 2;
+  uint64 decimals = 3;
 }

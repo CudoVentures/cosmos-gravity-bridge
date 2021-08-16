@@ -26,7 +26,7 @@ func (k Keeper) AddToOutgoingPool(ctx sdk.Context, sender sdk.AccAddress, counte
 	// If the coin is a gravity voucher, burn the coins. If not, check if there is a deployed ERC20 contract representing it.
 	// If there is, lock the coins.
 
-	isCosmosOriginated, tokenContract, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
+	isCosmosOriginated, tokenContract, _, err := k.DenomToERC20Lookup(ctx, totalAmount.Denom)
 	if err != nil {
 		return 0, err
 	}
@@ -141,7 +141,7 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 	totalToRefund.Amount = totalToRefund.Amount.Add(tx.Erc20Fee.Amount)
 	totalToRefundCoins := sdk.NewCoins(totalToRefund)
 
-	isCosmosOriginated, _:= k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
+	isCosmosOriginated, _, _ := k.ERC20ToDenomLookup(ctx, tx.Erc20Token.Contract)
 
 	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
 	if isCosmosOriginated {

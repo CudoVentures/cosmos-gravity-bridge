@@ -15,17 +15,58 @@ type AttestationHandler struct {
 	bankKeeper types.BankKeeper
 }
 
+// IntPow calculates n to the mth power. Since the result is an int, it is assumed that m is a positive power
+func IntPow(n, m int64) int64 {
+	if m == 0 {
+		return 1
+	}
+
+	result := n
+	for i := 2; i <= int(m); i++ {
+		result *= n
+	}
+
+	return result
+}
+
 // Handle is the entry point for Attestation processing.
 func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim types.EthereumClaim) error {
 	switch claim := claim.(type) {
 	// deposit in this context means a deposit into the Ethereum side of the bridge
 	case *types.MsgSendToCosmosClaim:
 		// Check if coin is Cosmos-originated asset and get denom
-		isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
+		isCosmosOriginated, denom, ethDecimals := a.keeper.ERC20ToDenomLookup(ctx, claim.TokenContract)
+
+		denomData := a.bankKeeper.GetDenomMetaData(ctx, denom)
+		display := denomData.GetDisplay()
+		var cosmosDecimals uint32
+
+		for _, unit := range denomData.GetDenomUnits() {
+			if unit.GetDenom() == display {
+				cosmosDecimals = unit.GetExponent()
+				break
+			}
+		}
+
+		convertionDecimals := ethDecimals - cosmosDecimals
+		var convertedAmount sdk.Int
+
+		if convertionDecimals >= 0 {
+			convertedAmount = claim.Amount.QuoRaw(IntPow(10, int64(convertionDecimals)))
+		} else {
+			convertedAmount = claim.Amount.MulRaw(IntPow(10, int64(convertionDecimals)*-1))
+		}
+
+		fmt.Println("DECIMAAAAAAAAAALS 1: ")
+		fmt.Println(cosmosDecimals)
+		fmt.Println("DECIMAAAAAAAAAALS 2: ")
+		fmt.Println(ethDecimals)
+		fmt.Println("DECIMAAAAAAAAAALS 3: ")
+		fmt.Println(convertedAmount)
 
 		if isCosmosOriginated {
 			// If it is cosmos originated, unlock the coins
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+			coins := sdk.Coins{sdk.NewCoin(denom, convertedAmount)}
 
 			addr, err := sdk.AccAddressFromBech32(claim.CosmosReceiver)
 			if err != nil {
@@ -37,7 +78,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 			}
 		} else {
 			// If it is not cosmos originated, mint the coins (aka vouchers)
-			coins := sdk.Coins{sdk.NewCoin(denom, claim.Amount)}
+			coins := sdk.Coins{sdk.NewCoin(denom, convertedAmount)}
 
 			if err := a.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
 				return sdkerrors.Wrapf(err, "mint vouchers coins: %s", coins)
@@ -58,7 +99,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		return nil
 	case *types.MsgERC20DeployedClaim:
 		// Check if it already exists
-		existingERC20, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
+		existingERC20, _, exists := a.keeper.GetCosmosOriginatedERC20(ctx, claim.CosmosDenom)
 		if exists {
 			return sdkerrors.Wrap(
 				types.ErrInvalid,
@@ -112,7 +153,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 
 		// Add to denom-erc20 mapping
-		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract)
+		a.keeper.setCosmosOriginatedDenomToERC20(ctx, claim.CosmosDenom, claim.TokenContract, decimals)
 	case *types.MsgValsetUpdatedClaim:
 		// TODO here we should check the contents of the validator set against
 		// the store, if they differ we should take some action to indicate to the
@@ -129,7 +170,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		// token, or burn non cosmos native tokens
 		if claim.RewardAmount.GT(sdk.ZeroInt()) && claim.RewardToken != "0x0000000000000000000000000000000000000000" {
 			// Check if coin is Cosmos-originated asset and get denom
-			isCosmosOriginated, denom := a.keeper.ERC20ToDenomLookup(ctx, claim.RewardToken)
+			isCosmosOriginated, denom, _ := a.keeper.ERC20ToDenomLookup(ctx, claim.RewardToken)
 
 			if isCosmosOriginated {
 				// If it is cosmos originated, mint some coins to account
