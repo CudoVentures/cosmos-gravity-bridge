@@ -228,6 +228,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 		return types.LastObservedEthereumBlockHeight{
 			CosmosBlockHeight:   0,
 			EthereumBlockHeight: 0,
+			CosmosBlockTimeMs:   0,
 		}
 	}
 	height := types.LastObservedEthereumBlockHeight{}
@@ -241,6 +242,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
 	}
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
