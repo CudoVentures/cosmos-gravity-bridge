@@ -20,7 +20,7 @@ type Keeper struct {
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
-	cdc            codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
+	cdc            codec.BinaryCodec // The wire codec for binary encoding/decoding.
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
 
@@ -30,7 +30,7 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -275,6 +275,6 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 // Adding here in gravity keeper as cdc is not available inside endblocker.
 func (k Keeper) DeserializeValidatorIterator(vals []byte) stakingtypes.ValAddresses {
 	validators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshalBinaryBare(vals, &validators)
+	k.cdc.MustUnmarshal(vals, &validators)
 	return validators
 }

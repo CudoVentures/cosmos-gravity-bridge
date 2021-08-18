@@ -145,7 +145,7 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 func (k Keeper) SetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []byte, att *types.Attestation) {
 	store := ctx.KVStore(k.storeKey)
 	aKey := types.GetAttestationKey(eventNonce, claimHash)
-	store.Set(aKey, k.cdc.MustMarshalBinaryBare(att))
+	store.Set(aKey, k.cdc.MustMarshal(att))
 }
 
 // GetAttestation return an attestation given a nonce
@@ -157,7 +157,7 @@ func (k Keeper) GetAttestation(ctx sdk.Context, eventNonce uint64, claimHash []b
 		return nil
 	}
 	var att types.Attestation
-	k.cdc.MustUnmarshalBinaryBare(bz, &att)
+	k.cdc.MustUnmarshal(bz, &att)
 	return &att
 }
 
@@ -199,7 +199,7 @@ func (k Keeper) IterateAttestaions(ctx sdk.Context, cb func([]byte, types.Attest
 
 	for ; iter.Valid(); iter.Next() {
 		att := types.Attestation{}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &att)
+		k.cdc.MustUnmarshal(iter.Value(), &att)
 		// cb returns true to stop early
 		if cb(iter.Key(), att) {
 			return
@@ -232,7 +232,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 		}
 	}
 	height := types.LastObservedEthereumBlockHeight{}
-	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
+	k.cdc.MustUnmarshal(bytes, &height)
 	return height
 }
 
@@ -244,7 +244,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
 		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
 	}
-	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
+	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshal(&height))
 }
 
 // GetLastObservedValset retrieves the last observed validator set from the store
@@ -259,14 +259,14 @@ func (k Keeper) GetLastObservedValset(ctx sdk.Context) *types.Valset {
 		return nil
 	}
 	valset := types.Valset{}
-	k.cdc.MustUnmarshalBinaryBare(bytes, &valset)
+	k.cdc.MustUnmarshal(bytes, &valset)
 	return &valset
 }
 
 // SetLastObservedValset updates the last observed validator set in the store
 func (k Keeper) SetLastObservedValset(ctx sdk.Context, valset types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastObservedValsetKey, k.cdc.MustMarshalBinaryBare(&valset))
+	store.Set(types.LastObservedValsetKey, k.cdc.MustMarshal(&valset))
 }
 
 // setLastObservedEventNonce sets the latest observed event nonce

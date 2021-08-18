@@ -159,6 +159,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		return
 	}
 
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 	unslashedValsets := k.GetUnSlashedValsets(ctx, params.SignedValsetsWindow)
 
 	// unslashedValsets are sorted by nonce in ASC order
@@ -187,7 +188,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// slash validators for not confirming valsets
 				if !found {
 					cons, _ := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
+					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionValset)
 					if !val.IsJailed() {
 						k.StakingKeeper.Jail(ctx, cons)
 					}
@@ -231,7 +232,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 					// slash validators for not confirming valsets
 					if !found {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionValset)
+						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(powerReduction), params.SlashFractionValset)
 						if !validator.IsJailed() {
 							k.StakingKeeper.Jail(ctx, valConsAddr)
 						}
@@ -248,6 +249,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	// We look through the full bonded set (the active set)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 	maxHeight := uint64(0)
 
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
@@ -284,7 +286,7 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 			if !found {
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionBatch)
 				if !val.IsJailed() {
 					k.StakingKeeper.Jail(ctx, cons)
 				}
@@ -300,6 +302,7 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// We look through the full bonded set (the active set)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
 	maxHeight := uint64(0)
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedLogicCallsWindow {
@@ -335,7 +338,7 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 			if !found {
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionLogicCall)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionLogicCall)
 				if !val.IsJailed() {
 					k.StakingKeeper.Jail(ctx, cons)
 				}
