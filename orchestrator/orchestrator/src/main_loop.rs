@@ -173,10 +173,11 @@ pub async fn eth_oracle_main_loop(
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
-        let elapsed = Instant::now() - loop_start;
-        if elapsed < ETH_ORACLE_LOOP_SPEED {
-            delay_for(ETH_ORACLE_LOOP_SPEED - elapsed).await;
-        }
+        loop_delay(loop_start).await;
+        // let elapsed = Instant::now() - loop_start;
+        // if elapsed < ETH_ORACLE_LOOP_SPEED {
+        //     delay_for(ETH_ORACLE_LOOP_SPEED - elapsed).await;
+        // }
     }
 }
 
@@ -195,16 +196,18 @@ pub async fn eth_signer_main_loop(
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
-    let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
-    if gravity_id.is_err() {
-        error!("Failed to get GravityID, check your Eth node");
-        return;
-    }
-    let gravity_id = gravity_id.unwrap();
-    let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
-
+    
     loop {
         let loop_start = Instant::now();
+
+        let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
+        if gravity_id.is_err() {
+            error!("Failed to get GravityID, check your Eth node");
+            loop_delay(loop_start).await;
+            continue;
+        }
+        let gravity_id = gravity_id.unwrap();
+        let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
 
         let latest_eth_block = web3.eth_block_number().await;
         let latest_cosmos_block = contact.get_chain_status().await;
@@ -348,10 +351,11 @@ pub async fn eth_signer_main_loop(
         // a bit of logic that tires to keep things running every LOOP_SPEED seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
-        let elapsed = Instant::now() - loop_start;
-        if elapsed < ETH_SIGNER_LOOP_SPEED {
-            delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
-        }
+        loop_delay(loop_start).await;
+        // let elapsed = Instant::now() - loop_start;
+        // if elapsed < ETH_SIGNER_LOOP_SPEED {
+        //     delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
+        // }
     }
 }
 
@@ -374,5 +378,12 @@ fn check_for_fee_error(res: Result<TxResponse, CosmosGrpcError>, fee: &Coin) {
                 panic!("Hardcoded gas amounts insufficient!");
             }
         }
+    }
+}
+
+async fn loop_delay(loop_start: Instant) {
+    let elapsed = Instant::now() - loop_start;
+    if elapsed < ETH_SIGNER_LOOP_SPEED {
+        delay_for(ETH_SIGNER_LOOP_SPEED - elapsed).await;
     }
 }
