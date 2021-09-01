@@ -92,7 +92,6 @@ func CmdUnsafeETHAddr() *cobra.Command {
 	}
 }
 
-
 func CmdSendToEth() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
@@ -114,8 +113,8 @@ func CmdSendToEth() *cobra.Command {
 				return sdkerrors.Wrap(err, "bridge fee")
 			}
 
-			if len(amount) > 1 || len(bridgeFee) > 1 {
-				return fmt.Errorf("coin amounts too long, expecting just 1 coin amount for both amount and bridgeFee")
+			if len(amount) != 1 || len(bridgeFee) != 1 {
+				return fmt.Errorf("coin amounts too long or zero, expecting just 1 coin amount for both amount and bridgeFee")
 			}
 
 			// Make the message
@@ -151,7 +150,7 @@ func CmdRequestBatch() *cobra.Command {
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
 				Sender: cosmosAddr.String(),
-				Denom:  args[0],//fmt.Sprintf("gravity%s", args[0]),
+				Denom:  args[0], //fmt.Sprintf("gravity%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
