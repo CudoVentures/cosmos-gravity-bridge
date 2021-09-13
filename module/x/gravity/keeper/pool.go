@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -279,7 +280,7 @@ func (k Keeper) GetPoolTransactions(ctx sdk.Context) []*types.OutgoingTransferTx
 // IterateOutgoingPoolByFee iterates over the outgoing pool which is sorted by fee
 func (k Keeper) IterateOutgoingPoolByFee(ctx sdk.Context, contract string, cb func(uint64, *types.OutgoingTransferTx) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.SecondIndexOutgoingTXFeeKey)
-	iter := prefixStore.ReverseIterator(prefixRange([]byte(contract)))
+	iter := prefixStore.ReverseIterator(prefixRange([]byte(strings.ToLower(contract))))
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var ids types.IDSet

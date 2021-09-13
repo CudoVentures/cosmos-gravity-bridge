@@ -233,7 +233,7 @@ func GetOutgoingTxPoolKey(id uint64) []byte {
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
 func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+	return append(append(OutgoingTXBatchKey, []byte(strings.ToLower(tokenContract))...), UInt64Bytes(nonce)...)
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
@@ -249,7 +249,7 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // TODO this should be a sdk.ValAddress
 func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append([]byte(tokenContract), a...)
+	b := append([]byte(strings.ToLower(tokenContract)), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
 }
@@ -265,7 +265,7 @@ func GetFeeSecondIndexKey(fee ERC20Token) []byte {
 	amount = fee.Amount.BigInt().FillBytes(amount)
 	// TODO this won't ever work fix it
 	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(fee.Contract))
+	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(strings.ToLower(fee.Contract)))
 	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Contract):], amount)
 	return r
 }

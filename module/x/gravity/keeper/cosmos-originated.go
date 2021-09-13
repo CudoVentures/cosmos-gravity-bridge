@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,7 +35,7 @@ func (k Keeper) GetCosmosOriginatedERC20(ctx sdk.Context, denom string) (string,
 
 func (k Keeper) setCosmosOriginatedDenomToERC20(ctx sdk.Context, denom string, tokenContract string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetDenomToERC20Key(denom), []byte(tokenContract))
+	store.Set(types.GetDenomToERC20Key(denom), []byte(strings.ToLower(tokenContract)))
 	store.Set(types.GetERC20ToDenomKey(tokenContract), []byte(denom))
 }
 

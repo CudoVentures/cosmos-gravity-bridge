@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -40,7 +42,7 @@ func (k Keeper) SetBatchConfirm(ctx sdk.Context, batch *types.MsgConfirmBatch) [
 // TODO: specify which nonce this is
 func (k Keeper) IterateBatchConfirmByNonceAndTokenContract(ctx sdk.Context, nonce uint64, tokenContract string, cb func([]byte, types.MsgConfirmBatch) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.BatchConfirmKey)
-	prefix := append([]byte(tokenContract), types.UInt64Bytes(nonce)...)
+	prefix := append([]byte(strings.ToLower(tokenContract)), types.UInt64Bytes(nonce)...)
 	iter := prefixStore.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
