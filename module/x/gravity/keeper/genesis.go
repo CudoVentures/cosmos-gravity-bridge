@@ -8,6 +8,9 @@ import (
 
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
+	var lastTxPoolId uint64 = 1
+	var lastBatchNonce uint64 = 1
+
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
 	for _, vs := range data.Valsets {
@@ -24,7 +27,19 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	for _, batch := range data.Batches {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
+		if batch.BatchNonce > lastBatchNonce {
+			lastBatchNonce = batch.BatchNonce
+		}
+		for _, tx := range batch.Transactions {
+			if err := k.setPoolEntry(ctx, tx); err != nil {
+				panic(err)
+			}
+			if tx.Id > lastTxPoolId {
+				lastTxPoolId = tx.Id
+			}
+		}
 	}
+	k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, lastTxPoolId+1)
 
 	// reset batch confirmations in state
 	for _, conf := range data.BatchConfirms {
@@ -48,7 +63,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err := k.setPoolEntry(ctx, tx); err != nil {
 			panic(err)
 		}
+		k.appendToUnbatchedTXIndex(ctx, tx.Erc20Fee.Contract, *tx.Erc20Fee, tx.Id)
+		if tx.Id > lastTxPoolId {
+			lastTxPoolId = tx.Id
+		}
 	}
+
+	k.setIncrementID(ctx, types.KeyLastTXPoolID, lastTxPoolId+1)
 
 	// reset attestations in state
 	for _, att := range data.Attestations {

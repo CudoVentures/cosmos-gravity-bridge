@@ -381,3 +381,10 @@ func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
 	store.Set(idKey, bz)
 	return id
 }
+
+func (k Keeper) setIncrementID(ctx sdk.Context, idKey []byte, id uint64) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := sdk.Uint64ToBigEndian(id)
+	store.Set(idKey, bz)
+	return id
+}
