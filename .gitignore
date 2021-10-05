@@ -5,6 +5,7 @@ tests/test-runner/Cargo.lock
 tests/dockerfile/gravity.tar.gz
 solidity/dist
 orchestrator/bins
+.DS_Store
 
 # IDE files
 .idea/
@@ -14,3 +15,4 @@ cache
 artifacts
 *.test
 *-stamp
+
