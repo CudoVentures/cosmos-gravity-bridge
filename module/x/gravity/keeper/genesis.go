@@ -8,8 +8,8 @@ import (
 
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
-	var lastTxPoolId uint64 = 1
-	var lastBatchNonce uint64 = 1
+	var lastTxPoolId uint64 = 0
+	var lastBatchNonce uint64 = 0
 
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
@@ -39,7 +39,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			}
 		}
 	}
-	k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, lastTxPoolId+1)
+	k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, lastBatchNonce+1)
 
 	// reset batch confirmations in state
 	for _, conf := range data.BatchConfirms {
