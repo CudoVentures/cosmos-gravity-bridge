@@ -371,14 +371,17 @@ func (k Keeper) createBatchFees(ctx sdk.Context, maxElements uint) map[string]*t
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, idKey []byte) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(idKey)
-	var id uint64 = 1
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(idKey, bz)
+	// store := ctx.KVStore(k.storeKey)
+	// bz := store.Get(idKey)
+	// var id uint64 = 1
+	// if bz != nil {
+	// 	id = binary.BigEndian.Uint64(bz)
+	// }
+	// bz = sdk.Uint64ToBigEndian(id + 1)
+	// store.Set(idKey, bz)
+	// return id
+	var id uint64 = k.GetIncrementID(ctx, idKey)
+	k.setIncrementID(ctx, idKey, id+1)
 	return id
 }
 
@@ -386,5 +389,15 @@ func (k Keeper) setIncrementID(ctx sdk.Context, idKey []byte, id uint64) uint64 
 	store := ctx.KVStore(k.storeKey)
 	bz := sdk.Uint64ToBigEndian(id)
 	store.Set(idKey, bz)
+	return id
+}
+
+func (k Keeper) GetIncrementID(ctx sdk.Context, idKey []byte) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(idKey)
+	var id uint64 = 1
+	if bz != nil {
+		id = binary.BigEndian.Uint64(bz)
+	}
 	return id
 }

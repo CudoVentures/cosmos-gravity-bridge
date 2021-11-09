@@ -8,9 +8,6 @@ import (
 
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
-	var lastTxPoolId uint64 = 0
-	var lastBatchNonce uint64 = 0
-
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
 	for _, vs := range data.Valsets {
@@ -27,19 +24,12 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	for _, batch := range data.Batches {
 		// TODO: block height?
 		k.StoreBatchUnsafe(ctx, batch)
-		if batch.BatchNonce > lastBatchNonce {
-			lastBatchNonce = batch.BatchNonce
-		}
 		for _, tx := range batch.Transactions {
 			if err := k.setPoolEntry(ctx, tx); err != nil {
 				panic(err)
 			}
-			if tx.Id > lastTxPoolId {
-				lastTxPoolId = tx.Id
-			}
 		}
 	}
-	k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, lastBatchNonce+1)
 
 	// reset batch confirmations in state
 	for _, conf := range data.BatchConfirms {
@@ -64,12 +54,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 			panic(err)
 		}
 		k.appendToUnbatchedTXIndex(ctx, tx.Erc20Fee.Contract, *tx.Erc20Fee, tx.Id)
-		if tx.Id > lastTxPoolId {
-			lastTxPoolId = tx.Id
-		}
 	}
-
-	k.setIncrementID(ctx, types.KeyLastTXPoolID, lastTxPoolId+1)
 
 	// reset attestations in state
 	for _, att := range data.Attestations {
@@ -151,25 +136,38 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		}
 	}
 
+	if data.LastTxPoolId == 0 {
+		k.setIncrementID(ctx, types.KeyLastTXPoolID, 1)
+	} else {
+		k.setIncrementID(ctx, types.KeyLastTXPoolID, data.LastTxPoolId)
+	}
+
+	if data.LastOutgoingBatchId == 0 {
+		k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, 1)
+	} else {
+		k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, data.LastOutgoingBatchId)
+	}
 }
 
 // ExportGenesis exports all the state needed to restart the chain
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                  = k.GetParams(ctx)
-		calls              = k.GetOutgoingLogicCalls(ctx)
-		batches            = k.GetOutgoingTxBatches(ctx)
-		valsets            = k.GetValsets(ctx)
-		attmap             = k.GetAttestationMapping(ctx)
-		vsconfs            = []*types.MsgValsetConfirm{}
-		batchconfs         = []types.MsgConfirmBatch{}
-		callconfs          = []types.MsgConfirmLogicCall{}
-		attestations       = []types.Attestation{}
-		delegates          = k.GetDelegateKeys(ctx)
-		lastobserved       = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms      = []*types.ERC20ToDenom{}
-		unbatchedTransfers = k.GetPoolTransactions(ctx)
+		p                   = k.GetParams(ctx)
+		calls               = k.GetOutgoingLogicCalls(ctx)
+		batches             = k.GetOutgoingTxBatches(ctx)
+		valsets             = k.GetValsets(ctx)
+		attmap              = k.GetAttestationMapping(ctx)
+		vsconfs             = []*types.MsgValsetConfirm{}
+		batchconfs          = []types.MsgConfirmBatch{}
+		callconfs           = []types.MsgConfirmLogicCall{}
+		attestations        = []types.Attestation{}
+		delegates           = k.GetDelegateKeys(ctx)
+		lastobserved        = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms       = []*types.ERC20ToDenom{}
+		unbatchedTransfers  = k.GetPoolTransactions(ctx)
+		lastTxPoolId        = k.GetIncrementID(ctx, types.KeyLastTXPoolID)
+		lastOutgoingBatchID = k.GetIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	)
 
 	// export valset confirmations from state
@@ -205,17 +203,19 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:             &p,
-		LastObservedNonce:  lastobserved,
-		Valsets:            valsets,
-		ValsetConfirms:     vsconfs,
-		Batches:            batches,
-		BatchConfirms:      batchconfs,
-		LogicCalls:         calls,
-		LogicCallConfirms:  callconfs,
-		Attestations:       attestations,
-		DelegateKeys:       delegates,
-		Erc20ToDenoms:      erc20ToDenoms,
-		UnbatchedTransfers: unbatchedTransfers,
+		Params:              &p,
+		LastObservedNonce:   lastobserved,
+		Valsets:             valsets,
+		ValsetConfirms:      vsconfs,
+		Batches:             batches,
+		BatchConfirms:       batchconfs,
+		LogicCalls:          calls,
+		LogicCallConfirms:   callconfs,
+		Attestations:        attestations,
+		DelegateKeys:        delegates,
+		Erc20ToDenoms:       erc20ToDenoms,
+		UnbatchedTransfers:  unbatchedTransfers,
+		LastTxPoolId:        lastTxPoolId,
+		LastOutgoingBatchId: lastOutgoingBatchID,
 	}
 }
