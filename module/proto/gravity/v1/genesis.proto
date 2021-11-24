@@ -139,4 +139,9 @@ message GenesisState {
   repeated OutgoingTransferTx        unbatched_transfers    = 12;
   uint64                             last_tx_pool_id        = 13;
   uint64                             last_outgoing_batch_id = 14;
+  uint64                             last_slashed_logic_call_block = 15;
+  uint64                             last_slashed_batched_block = 16;
+  uint64                             last_slashed_valset_nonce = 17;
+  uint64                             last_un_bonding_block_height = 18;
+  uint64                             last_latest_valset_nonce = 19;
 }

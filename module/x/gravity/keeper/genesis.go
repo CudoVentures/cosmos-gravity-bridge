@@ -147,27 +147,38 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	} else {
 		k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, data.LastOutgoingBatchId)
 	}
+
+	k.SetLastSlashedLogicCallBlock(ctx, data.LastSlashedLogicCallBlock)
+	k.SetLastSlashedBatchBlock(ctx, data.LastSlashedBatchedBlock)
+	k.SetLastSlashedValsetNonce(ctx, data.LastSlashedValsetNonce)
+	k.SetLastUnBondingBlockHeight(ctx, data.LastUnBondingBlockHeight)
+	k.SetLatestValsetNonce(ctx, data.LastLatestValsetNonce)
 }
 
 // ExportGenesis exports all the state needed to restart the chain
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                   = k.GetParams(ctx)
-		calls               = k.GetOutgoingLogicCalls(ctx)
-		batches             = k.GetOutgoingTxBatches(ctx)
-		valsets             = k.GetValsets(ctx)
-		attmap              = k.GetAttestationMapping(ctx)
-		vsconfs             = []*types.MsgValsetConfirm{}
-		batchconfs          = []types.MsgConfirmBatch{}
-		callconfs           = []types.MsgConfirmLogicCall{}
-		attestations        = []types.Attestation{}
-		delegates           = k.GetDelegateKeys(ctx)
-		lastobserved        = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms       = []*types.ERC20ToDenom{}
-		unbatchedTransfers  = k.GetPoolTransactions(ctx)
-		lastTxPoolId        = k.GetIncrementID(ctx, types.KeyLastTXPoolID)
-		lastOutgoingBatchID = k.GetIncrementID(ctx, types.KeyLastOutgoingBatchID)
+		p                         = k.GetParams(ctx)
+		calls                     = k.GetOutgoingLogicCalls(ctx)
+		batches                   = k.GetOutgoingTxBatches(ctx)
+		valsets                   = k.GetValsets(ctx)
+		attmap                    = k.GetAttestationMapping(ctx)
+		vsconfs                   = []*types.MsgValsetConfirm{}
+		batchconfs                = []types.MsgConfirmBatch{}
+		callconfs                 = []types.MsgConfirmLogicCall{}
+		attestations              = []types.Attestation{}
+		delegates                 = k.GetDelegateKeys(ctx)
+		lastobserved              = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms             = []*types.ERC20ToDenom{}
+		unbatchedTransfers        = k.GetPoolTransactions(ctx)
+		lastTxPoolId              = k.GetIncrementID(ctx, types.KeyLastTXPoolID)
+		lastOutgoingBatchID       = k.GetIncrementID(ctx, types.KeyLastOutgoingBatchID)
+		lastSlashedLogicCallBlock = k.GetLastSlashedLogicCallBlock(ctx)
+		lastSlashedBatchedBlock   = k.GetLastSlashedBatchBlock(ctx)
+		lastSlashedValsetNonce    = k.GetLastSlashedValsetNonce(ctx)
+		lastUnBondingBlockHeight  = k.GetLastUnBondingBlockHeight(ctx)
+		lastLatestValsetNonce     = k.GetLatestValsetNonce(ctx)
 	)
 
 	// export valset confirmations from state
@@ -203,19 +214,24 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	})
 
 	return types.GenesisState{
-		Params:              &p,
-		LastObservedNonce:   lastobserved,
-		Valsets:             valsets,
-		ValsetConfirms:      vsconfs,
-		Batches:             batches,
-		BatchConfirms:       batchconfs,
-		LogicCalls:          calls,
-		LogicCallConfirms:   callconfs,
-		Attestations:        attestations,
-		DelegateKeys:        delegates,
-		Erc20ToDenoms:       erc20ToDenoms,
-		UnbatchedTransfers:  unbatchedTransfers,
-		LastTxPoolId:        lastTxPoolId,
-		LastOutgoingBatchId: lastOutgoingBatchID,
+		Params:                    &p,
+		LastObservedNonce:         lastobserved,
+		Valsets:                   valsets,
+		ValsetConfirms:            vsconfs,
+		Batches:                   batches,
+		BatchConfirms:             batchconfs,
+		LogicCalls:                calls,
+		LogicCallConfirms:         callconfs,
+		Attestations:              attestations,
+		DelegateKeys:              delegates,
+		Erc20ToDenoms:             erc20ToDenoms,
+		UnbatchedTransfers:        unbatchedTransfers,
+		LastTxPoolId:              lastTxPoolId,
+		LastOutgoingBatchId:       lastOutgoingBatchID,
+		LastSlashedLogicCallBlock: lastSlashedLogicCallBlock,
+		LastSlashedBatchedBlock:   lastSlashedBatchedBlock,
+		LastSlashedValsetNonce:    lastSlashedValsetNonce,
+		LastUnBondingBlockHeight:  lastUnBondingBlockHeight,
+		LastLatestValsetNonce:     lastLatestValsetNonce,
 	}
 }
