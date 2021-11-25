@@ -142,6 +142,9 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
+	// this array is used just to keep the order to iteration which is required by the genesis.json file
+	var valAddrs []string
+
 	ethAddresses := make(map[string]string)
 
 	for ; iter.Valid(); iter.Next() {
@@ -153,7 +156,10 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 		value := iter.Value()
 		ethAddress := string(value)
 		valAddress := sdk.ValAddress(key)
-		ethAddresses[valAddress.String()] = ethAddress
+		valAddressAsString := valAddress.String()
+		ethAddresses[valAddressAsString] = ethAddress
+
+		valAddrs = append(valAddrs, valAddressAsString)
 	}
 
 	store = ctx.KVStore(k.storeKey)
@@ -173,7 +179,9 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 
 	var result []*types.MsgSetOrchestratorAddress
 
-	for valAddr, ethAddr := range ethAddresses {
+	// for valAddr, ethAddr := range ethAddresses {
+	for _, valAddr := range valAddrs {
+		ethAddr := ethAddresses[valAddr]
 		orch, ok := orchAddresses[valAddr]
 		if !ok {
 			// this should never happen unless the store
