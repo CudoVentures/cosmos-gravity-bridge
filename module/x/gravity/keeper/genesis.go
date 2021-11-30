@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"sort"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
@@ -25,12 +26,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	// reset batches in state
 	for _, batch := range data.Batches {
 		// TODO: block height?
-		k.StoreBatchUnsafe(ctx, batch)
-		for _, tx := range batch.Transactions {
-			if err := k.setPoolEntry(ctx, tx); err != nil {
-				panic(err)
-			}
+		intBatch, err := batch.ToInternal()
+		if err != nil {
+			panic(sdkerrors.Wrapf(err, "unable to make batch internal: %v", batch))
 		}
+		k.StoreBatchUnsafe(ctx, intBatch)
 	}
 
 	// reset batch confirmations in state
@@ -52,10 +52,13 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 
 	// reset pool transactions in state
 	for _, tx := range data.UnbatchedTransfers {
-		if err := k.setPoolEntry(ctx, tx); err != nil {
+		intTx, err := tx.ToInternal()
+		if err != nil {
+			panic(sdkerrors.Wrapf(err, "invalid unbatched tx: %v", tx))
+		}
+		if err := k.addUnbatchedTX(ctx, intTx); err != nil {
 			panic(err)
 		}
-		k.appendToUnbatchedTXIndex(ctx, tx.Erc20Fee.Contract, *tx.Erc20Fee, tx.Id)
 	}
 
 	// reset attestations in state
@@ -67,7 +70,11 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		}
 
 		// TODO: block height?
-		k.SetAttestation(ctx, claim.GetEventNonce(), claim.ClaimHash(), &att)
+		hash, err := claim.ClaimHash()
+		if err != nil {
+			panic(fmt.Errorf("error when computing ClaimHash for %v", hash))
+		}
+		k.SetAttestation(ctx, claim.GetEventNonce(), hash, &att)
 	}
 	k.setLastObservedEventNonce(ctx, data.LastObservedNonce)
 
@@ -110,6 +117,7 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		if err != nil {
 			panic(err)
 		}
+		ethAddr, _ := types.NewEthAddress(keys.EthAddress) // already validated in keys.ValidateBasic()
 
 		orch, err := sdk.AccAddressFromBech32(keys.Orchestrator)
 		if err != nil {
@@ -119,12 +127,16 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddressForValidator(ctx, val, keys.EthAddress)
+		k.SetEthAddressForValidator(ctx, val, *ethAddr)
 	}
 
 	// populate state with cosmos originated denom-erc20 mapping
-	for _, item := range data.Erc20ToDenoms {
-		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, item.Erc20)
+	for i, item := range data.Erc20ToDenoms {
+		ethAddr, err := types.NewEthAddress(item.Erc20)
+		if err != nil {
+			panic(fmt.Errorf("invalid erc20 address in Erc20ToDenoms for item %d: %s", i, item.Erc20))
+		}
+		k.setCosmosOriginatedDenomToERC20(ctx, item.Denom, *ethAddr)
 	}
 
 	// now that we have the denom-erc20 mapping we need to validate
@@ -138,49 +150,25 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		}
 	}
 
-	if data.LastTxPoolId == 0 {
-		k.setIncrementID(ctx, types.KeyLastTXPoolID, 1)
-	} else {
-		k.setIncrementID(ctx, types.KeyLastTXPoolID, data.LastTxPoolId)
-	}
-
-	if data.LastOutgoingBatchId == 0 {
-		k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, 1)
-	} else {
-		k.setIncrementID(ctx, types.KeyLastOutgoingBatchID, data.LastOutgoingBatchId)
-	}
-
-	k.SetLastSlashedLogicCallBlock(ctx, data.LastSlashedLogicCallBlock)
-	k.SetLastSlashedBatchBlock(ctx, data.LastSlashedBatchedBlock)
-	k.SetLastSlashedValsetNonce(ctx, data.LastSlashedValsetNonce)
-	k.SetLastUnBondingBlockHeight(ctx, data.LastUnBondingBlockHeight)
-	k.SetLatestValsetNonce(ctx, data.LastLatestValsetNonce)
 }
 
 // ExportGenesis exports all the state needed to restart the chain
 // from the current state of the chain
 func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	var (
-		p                         = k.GetParams(ctx)
-		calls                     = k.GetOutgoingLogicCalls(ctx)
-		batches                   = k.GetOutgoingTxBatches(ctx)
-		valsets                   = k.GetValsets(ctx)
-		attmap                    = k.GetAttestationMapping(ctx)
-		vsconfs                   = []*types.MsgValsetConfirm{}
-		batchconfs                = []types.MsgConfirmBatch{}
-		callconfs                 = []types.MsgConfirmLogicCall{}
-		attestations              = []types.Attestation{}
-		delegates                 = k.GetDelegateKeys(ctx)
-		lastobserved              = k.GetLastObservedEventNonce(ctx)
-		erc20ToDenoms             = []*types.ERC20ToDenom{}
-		unbatchedTransfers        = k.GetPoolTransactions(ctx)
-		lastTxPoolId              = k.GetIncrementID(ctx, types.KeyLastTXPoolID)
-		lastOutgoingBatchID       = k.GetIncrementID(ctx, types.KeyLastOutgoingBatchID)
-		lastSlashedLogicCallBlock = k.GetLastSlashedLogicCallBlock(ctx)
-		lastSlashedBatchedBlock   = k.GetLastSlashedBatchBlock(ctx)
-		lastSlashedValsetNonce    = k.GetLastSlashedValsetNonce(ctx)
-		lastUnBondingBlockHeight  = k.GetLastUnBondingBlockHeight(ctx)
-		lastLatestValsetNonce     = k.GetLatestValsetNonce(ctx)
+		p                  = k.GetParams(ctx)
+		calls              = k.GetOutgoingLogicCalls(ctx)
+		batches            = k.GetOutgoingTxBatches(ctx)
+		valsets            = k.GetValsets(ctx)
+		attmap             = k.GetAttestationMapping(ctx)
+		vsconfs            = []*types.MsgValsetConfirm{}
+		batchconfs         = []types.MsgConfirmBatch{}
+		callconfs          = []types.MsgConfirmLogicCall{}
+		attestations       = []types.Attestation{}
+		delegates          = k.GetDelegateKeys(ctx)
+		lastobserved       = k.GetLastObservedEventNonce(ctx)
+		erc20ToDenoms      = []*types.ERC20ToDenom{}
+		unbatchedTransfers = k.GetUnbatchedTransactions(ctx)
 	)
 
 	// export valset confirmations from state
@@ -190,10 +178,12 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	// export batch confirmations from state
-	for _, batch := range batches {
+	extBatches := make([]*types.OutgoingTxBatch, len(batches))
+	for i, batch := range batches {
 		// TODO: set height = 0?
 		batchconfs = append(batchconfs,
 			k.GetBatchConfirmByNonceAndTokenContract(ctx, batch.BatchNonce, batch.TokenContract)...)
+		extBatches[i] = batch.ToExternal()
 	}
 
 	// export logic call confirmations from state
@@ -204,18 +194,10 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	// export attestations from state
-	var keysOrder []uint64
-	for key := range attmap {
-		keysOrder = append(keysOrder, key)
-	}
-	sort.Slice(keysOrder, func(i, j int) bool { return keysOrder[i] < keysOrder[j] })
-	for _, key := range keysOrder {
-		atts := attmap[key]
+	for _, atts := range attmap {
+		// TODO: set height = 0?
 		attestations = append(attestations, atts...)
 	}
-	// for _, atts := range attmap {
-	// 	attestations = append(attestations, atts...)
-	// }
 
 	// export erc20 to denom relations
 	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
@@ -223,25 +205,23 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		return false
 	})
 
+	unbatchedTxs := make([]*types.OutgoingTransferTx, len(unbatchedTransfers))
+	for i, v := range unbatchedTransfers {
+		unbatchedTxs[i] = v.ToExternal()
+	}
+
 	return types.GenesisState{
-		Params:                    &p,
-		LastObservedNonce:         lastobserved,
-		Valsets:                   valsets,
-		ValsetConfirms:            vsconfs,
-		Batches:                   batches,
-		BatchConfirms:             batchconfs,
-		LogicCalls:                calls,
-		LogicCallConfirms:         callconfs,
-		Attestations:              attestations,
-		DelegateKeys:              delegates,
-		Erc20ToDenoms:             erc20ToDenoms,
-		UnbatchedTransfers:        unbatchedTransfers,
-		LastTxPoolId:              lastTxPoolId,
-		LastOutgoingBatchId:       lastOutgoingBatchID,
-		LastSlashedLogicCallBlock: lastSlashedLogicCallBlock,
-		LastSlashedBatchedBlock:   lastSlashedBatchedBlock,
-		LastSlashedValsetNonce:    lastSlashedValsetNonce,
-		LastUnBondingBlockHeight:  lastUnBondingBlockHeight,
-		LastLatestValsetNonce:     lastLatestValsetNonce,
+		Params:             &p,
+		LastObservedNonce:  lastobserved,
+		Valsets:            valsets,
+		ValsetConfirms:     vsconfs,
+		Batches:            extBatches,
+		BatchConfirms:      batchconfs,
+		LogicCalls:         calls,
+		LogicCallConfirms:  callconfs,
+		Attestations:       attestations,
+		DelegateKeys:       delegates,
+		Erc20ToDenoms:      erc20ToDenoms,
+		UnbatchedTransfers: unbatchedTxs,
 	}
 }

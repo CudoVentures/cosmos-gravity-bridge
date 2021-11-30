@@ -38,6 +38,11 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 			return
 		}
 
+		ethAddr, err := types.NewEthAddress(req.EthAddress)
+		if err != nil {
+			return
+		}
+
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/valsetRequest/%s", storeKey, req.Nonce), nil)
 		if err != nil {
 			fmt.Printf("could not get valset")
@@ -45,7 +50,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 			return
 		}
 		var valset types.Valset
-		cliCtx.JSONCodec.MustUnmarshalJSON(res, &valset)
+		cliCtx.JSONMarshaler.MustUnmarshalJSON(res, &valset)
 
 		// TODO: fix this, need to fetch the gravityID from params here
 		checkpoint := valset.GetCheckpoint("fetch-gravity-id-from-params-please-this-should-panic")
@@ -72,7 +77,7 @@ func createValsetConfirmHandler(cliCtx client.Context, storeKey string) http.Han
 		}
 
 		cosmosAddr := cliCtx.GetFromAddress()
-		msg := types.NewMsgValsetConfirm(valset.Nonce, req.EthAddress, cosmosAddr, req.EthSig)
+		msg := types.NewMsgValsetConfirm(valset.Nonce, *ethAddr, cosmosAddr, req.EthSig)
 		err = msg.ValidateBasic()
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "failed to parse request")

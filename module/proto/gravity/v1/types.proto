@@ -34,7 +34,6 @@ message Valset {
 message LastObservedEthereumBlockHeight {
   uint64 cosmos_block_height   = 1;
   uint64 ethereum_block_height = 2;
-  uint64 cosmos_block_time_ms   = 3;
 }
 
 // This records the relationship between an ERC20 token and the denom

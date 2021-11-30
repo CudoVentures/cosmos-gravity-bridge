@@ -7,7 +7,15 @@ on:
     branches: [master, main]
 
 jobs:
-  happy-path:
+  happy-path-hardhat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up happy-path test
+        run: tests/all-up-test.sh
+        env:
+          HARDHAT: True
+  happy-path-geth:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,6 +53,14 @@ jobs:
         run: tests/all-up-test.sh ARBITRARY_LOGIC $ALCHEMY_ID
         env:
           ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}
+  relay-market:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all up relay market test
+        run: tests/all-up-test.sh RELAY_MARKET $ALCHEMY_ID
+        env:
+          ALCHEMY_ID: ${{ secrets.ALCHEMY_ID }}
   orchestrator-keys:
     runs-on: ubuntu-latest
     steps:
@@ -57,9 +73,15 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run the validator set update rewards test
         run: tests/all-up-test.sh VALSET_REWARDS
-  london_hardfork:
+  evidence_based_slashing:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run the London hardfork test
-        run: tests/all-up-test.sh LONDON
+      - name: Run the evidence based slashing test
+        run: tests/all-up-test.sh EVIDENCE
+  transaction-cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the transaction cancel test
+        run: tests/all-up-test.sh TXCANCEL

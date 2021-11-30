@@ -6,6 +6,7 @@ set -eux
 # The tradeoff here is that hardhat is an ETH dev environment and not an actual ETH implementation, as such the outputs
 # may be different
 
+# Note: This is very similar to run-eth-fork but has hardhat running at a lower (older) block height
 export ALCHEMY_ID=$1
 pushd /gravity/solidity
-npm run evm_fork
+npm run solidity_test_fork

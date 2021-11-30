@@ -1,57 +1,13 @@
 package gravity
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
-	createBatch(ctx, k)
-}
-
-func createBatch(ctx sdk.Context, k keeper.Keeper) {
-	msg := types.MsgRequestBatch{
-		Sender: "",
-		Denom:  k.StakingKeeper.GetParams(ctx).BondDenom,
-	}
-
-	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
-	if err != nil {
-		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
-		return
-	}
-
-	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, tokenContract)
-	if lastBatch != nil {
-		nextBatchHeight := lastBatch.Block + 60
-		if uint64(ctx.BlockHeight()) < nextBatchHeight {
-			ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", nextBatchHeight), "module", "gravity", "action", "auto creation of batches")
-			return
-		}
-	}
-
-	currentFees := k.GetBatchFeesByTokenType(ctx, tokenContract, keeper.OutgoingTxBatchSize)
-	if currentFees == nil {
-		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
-		return
-	}
-
-	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, keeper.OutgoingTxBatchSize)
-	if err != nil {
-		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
-		return
-	}
-
-	if batch != nil {
-		ctx.Logger().Info("A batch was created", "module", "gravity", "action", "auto creation of batches")
-	} else {
-		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
-	}
-}
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
@@ -78,7 +34,21 @@ func createValsets(ctx sdk.Context, k keeper.Keeper) {
 	latestValset := k.GetLatestValset(ctx)
 	lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 
-	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || (types.BridgeValidators(k.GetCurrentValset(ctx).Members).PowerDiff(latestValset.Members) > 0.05) {
+	significantPowerDiff := false
+	if latestValset != nil {
+		intCurrMembers, err := types.BridgeValidators(k.GetCurrentValset(ctx).Members).ToInternal()
+		if err != nil {
+			panic(sdkerrors.Wrap(err, "invalid current valset members"))
+		}
+		intLatestMembers, err := types.BridgeValidators(latestValset.Members).ToInternal()
+		if err != nil {
+			panic(sdkerrors.Wrap(err, "invalid latest valset members"))
+		}
+
+		significantPowerDiff = intCurrMembers.PowerDiff(*intLatestMembers) > 0.05
+	}
+
+	if (latestValset == nil) || (lastUnbondingHeight == uint64(ctx.BlockHeight())) || significantPowerDiff {
 		// if the conditions are true, put in a new validator set request to be signed and submitted to Ethereum
 		k.SetValsetRequest(ctx)
 	}
@@ -204,7 +174,6 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 		return
 	}
 
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 	unslashedValsets := k.GetUnSlashedValsets(ctx, params.SignedValsetsWindow)
 
 	// unslashedValsets are sorted by nonce in ASC order
@@ -225,7 +194,7 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				for _, conf := range confirms {
 					// problem site for delegate key rotation, see issue #344
 					ethAddress, foundEthAddress := k.GetEthAddressByValidator(ctx, val.GetOperator())
-					if foundEthAddress && conf.EthAddress == ethAddress {
+					if foundEthAddress && conf.EthAddress == ethAddress.GetAddress() {
 						found = true
 						break
 					}
@@ -233,9 +202,12 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 				// slash validators for not confirming valsets
 				if !found {
 					cons, _ := val.GetConsAddr()
-					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionValset)
+					k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionValset)
 					if !val.IsJailed() {
 						k.StakingKeeper.Jail(ctx, cons)
+						// Our unbonding hook SHOULD be triggered after the above jail
+						// but is not when triggered by the endblocker TODO investigate why
+						k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
 					}
 
 				}
@@ -277,9 +249,12 @@ func ValsetSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 					// slash validators for not confirming valsets
 					if !found {
-						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(powerReduction), params.SlashFractionValset)
+						k.StakingKeeper.Slash(ctx, valConsAddr, ctx.BlockHeight(), validator.ConsensusPower(), params.SlashFractionValset)
 						if !validator.IsJailed() {
 							k.StakingKeeper.Jail(ctx, valConsAddr)
+							// Our unbonding hook SHOULD be triggered after the above jail
+							// but is not when triggered by the endblocker TODO investigate why
+							k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
 						}
 					}
 				}
@@ -294,7 +269,6 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 
 	// We look through the full bonded set (the active set)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 	maxHeight := uint64(0)
 
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
@@ -331,9 +305,12 @@ func BatchSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 			if !found {
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionBatch)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBatch)
 				if !val.IsJailed() {
 					k.StakingKeeper.Jail(ctx, cons)
+					// Our unbonding hook SHOULD be triggered after the above jail
+					// but is not when triggered by the endblocker TODO investigate why
+					k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
 				}
 			}
 		}
@@ -347,7 +324,6 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 	// We look through the full bonded set (the active set)
 	// and we slash users who haven't signed a batch confirmation that is >15hrs in blocks old
 	maxHeight := uint64(0)
-	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 
 	// don't slash in the beginning before there aren't even SignedBatchesWindow blocks yet
 	if uint64(ctx.BlockHeight()) > params.SignedLogicCallsWindow {
@@ -383,9 +359,12 @@ func LogicCallSlashing(ctx sdk.Context, k keeper.Keeper, params types.Params) {
 			}
 			if !found {
 				cons, _ := val.GetConsAddr()
-				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionLogicCall)
+				k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionLogicCall)
 				if !val.IsJailed() {
 					k.StakingKeeper.Jail(ctx, cons)
+					// Our unbonding hook SHOULD be triggered after the above jail
+					// but is not when triggered by the endblocker TODO investigate why
+					k.SetLastUnBondingBlockHeight(ctx, uint64(ctx.BlockHeight()))
 				}
 			}
 		}
@@ -409,6 +388,18 @@ func pruneAttestations(ctx sdk.Context, k keeper.Keeper) {
 	// Then we sort it
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
+	// we delete all attestations earlier than the current event nonce
+	// minus some buffer value. This buffer value is purely to allow
+	// frontends and other UI components to view recent oracle history
+	const eventsToKeep = 1000
+	lastNonce := uint64(k.GetLastObservedEventNonce(ctx))
+	var cutoff uint64
+	if lastNonce <= eventsToKeep {
+		return
+	} else {
+		cutoff = lastNonce - eventsToKeep
+	}
+
 	// This iterates over all keys (event nonces) in the attestation mapping. Each value contains
 	// a slice with one or more attestations at that event nonce. There can be multiple attestations
 	// at one event nonce when validators disagree about what event happened at that nonce.
@@ -417,8 +408,8 @@ func pruneAttestations(ctx sdk.Context, k keeper.Keeper) {
 		// They are ordered by when the first attestation at the event nonce was received.
 		// This order is not important.
 		for _, att := range attmap[nonce] {
-			// we delete all attestations earlier than the current event nonce
-			if nonce < uint64(k.GetLastObservedEventNonce(ctx)) {
+			// delete all before the cutoff
+			if nonce < cutoff {
 				k.DeleteAttestation(ctx, att)
 			}
 		}

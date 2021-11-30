@@ -50,6 +50,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 	tv.input = keeper.CreateTestEnv(t)
 	tv.ctx = tv.input.Context
 	tv.input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(tv.myValAddr)
+	tv.input.GravityKeeper.SetEthAddressForValidator(tv.ctx, tv.myValAddr, *types.ZeroAddress())
 	tv.input.GravityKeeper.SetOrchestratorValidator(tv.ctx, tv.myValAddr, tv.myOrchestratorAddr)
 	tv.h = NewHandler(tv.input.GravityKeeper)
 
@@ -73,12 +74,13 @@ func addDenomToERC20Relation(tv *testingVars) {
 	)
 
 	ethClaim := types.MsgERC20DeployedClaim{
+		EventNonce:    myNonce,
+		BlockHeight:   0,
 		CosmosDenom:   tv.denom,
 		TokenContract: tv.erc20,
 		Name:          "atom",
 		Symbol:        "atom",
 		Decimals:      6,
-		EventNonce:    myNonce,
 		Orchestrator:  tv.myOrchestratorAddr.String(),
 	}
 
@@ -88,7 +90,9 @@ func addDenomToERC20Relation(tv *testingVars) {
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check if attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	hash, err := ethClaim.ClaimHash()
+	require.NoError(tv.t, err)
+	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, hash)
 	require.NotNil(tv.t, a)
 
 	// check if erc20<>denom relation added to db
@@ -96,11 +100,13 @@ func addDenomToERC20Relation(tv *testingVars) {
 	require.NoError(tv.t, err)
 	assert.True(tv.t, isCosmosOriginated)
 
-	isCosmosOriginated, gotDenom := tv.input.GravityKeeper.ERC20ToDenomLookup(tv.ctx, tv.erc20)
+	ethAddr, err := types.NewEthAddress(tv.erc20)
+	require.NoError(tv.t, err)
+	isCosmosOriginated, gotDenom := tv.input.GravityKeeper.ERC20ToDenomLookup(tv.ctx, *ethAddr)
 	assert.True(tv.t, isCosmosOriginated)
 
 	assert.Equal(tv.t, tv.denom, gotDenom)
-	assert.Equal(tv.t, tv.erc20, gotERC20)
+	assert.Equal(tv.t, tv.erc20, gotERC20.GetAddress())
 }
 
 func lockCoinsInModule(tv *testingVars) {
@@ -160,6 +166,7 @@ func acceptDepositEvent(tv *testingVars) {
 
 	ethClaim := types.MsgSendToCosmosClaim{
 		EventNonce:     myNonce,
+		BlockHeight:    0,
 		TokenContract:  myErc20.Contract,
 		Amount:         myErc20.Amount,
 		EthereumSender: anyETHAddr,
@@ -172,7 +179,9 @@ func acceptDepositEvent(tv *testingVars) {
 	EndBlocker(tv.ctx, tv.input.GravityKeeper)
 
 	// check that attestation persisted
-	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, ethClaim.ClaimHash())
+	hash, err := ethClaim.ClaimHash()
+	require.NoError(tv.t, err)
+	a := tv.input.GravityKeeper.GetAttestation(tv.ctx, myNonce, hash)
 	require.NotNil(tv.t, a)
 
 	// Check that user balance has gone up

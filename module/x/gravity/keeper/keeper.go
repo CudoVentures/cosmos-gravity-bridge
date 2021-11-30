@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -20,7 +21,7 @@ type Keeper struct {
 	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
-	cdc            codec.BinaryCodec // The wire codec for binary encoding/decoding.
+	cdc            codec.BinaryMarshaler // The wire codec for binary encoding/decoding.
 	bankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
 
@@ -30,19 +31,20 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
+func NewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
 	k := Keeper{
-		cdc:            cdc,
-		paramSpace:     paramSpace,
-		storeKey:       storeKey,
-		StakingKeeper:  stakingKeeper,
-		bankKeeper:     bankKeeper,
-		SlashingKeeper: slashingKeeper,
+		StakingKeeper:      stakingKeeper,
+		storeKey:           storeKey,
+		paramSpace:         paramSpace,
+		cdc:                cdc,
+		bankKeeper:         bankKeeper,
+		SlashingKeeper:     slashingKeeper,
+		AttestationHandler: nil,
 	}
 	k.AttestationHandler = AttestationHandler{
 		keeper:     k,
@@ -68,10 +70,14 @@ func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 }
 
 // GetBridgeContractAddress returns the bridge contract address on ETH
-func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) string {
+func (k Keeper) GetBridgeContractAddress(ctx sdk.Context) *types.EthAddress {
 	var a string
 	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &a)
-	return a
+	addr, err := types.NewEthAddress(a)
+	if err != nil {
+		panic(sdkerrors.Wrapf(err, "found invalid bridge contract address in store: %v", a))
+	}
+	return addr
 }
 
 // GetBridgeChainID returns the chain id of the ETH chain we are running against
@@ -142,9 +148,6 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 	iter := store.Iterator(prefixRange(prefix))
 	defer iter.Close()
 
-	// this array is used just to keep the order to iteration which is required by the genesis.json file
-	var valAddrs []string
-
 	ethAddresses := make(map[string]string)
 
 	for ; iter.Valid(); iter.Next() {
@@ -154,12 +157,12 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 		// of the actual key
 		key := iter.Key()[len(types.EthAddressByValidatorKey):]
 		value := iter.Value()
-		ethAddress := string(value)
+		ethAddress, err := types.NewEthAddress(string(value))
+		if err != nil {
+			panic(sdkerrors.Wrapf(err, "found invalid ethAddress %v under key %v", string(value), key))
+		}
 		valAddress := sdk.ValAddress(key)
-		valAddressAsString := valAddress.String()
-		ethAddresses[valAddressAsString] = ethAddress
-
-		valAddrs = append(valAddrs, valAddressAsString)
+		ethAddresses[valAddress.String()] = ethAddress.GetAddress()
 	}
 
 	store = ctx.KVStore(k.storeKey)
@@ -179,9 +182,7 @@ func (k Keeper) GetDelegateKeys(ctx sdk.Context) []*types.MsgSetOrchestratorAddr
 
 	var result []*types.MsgSetOrchestratorAddress
 
-	// for valAddr, ethAddr := range ethAddresses {
-	for _, valAddr := range valAddrs {
-		ethAddr := ethAddresses[valAddr]
+	for valAddr, ethAddr := range ethAddresses {
 		orch, ok := orchAddresses[valAddr]
 		if !ok {
 			// this should never happen unless the store
@@ -282,7 +283,9 @@ func prefixRange(prefix []byte) ([]byte, []byte) {
 // DeserializeValidatorIterator returns validators from the validator iterator.
 // Adding here in gravity keeper as cdc is not available inside endblocker.
 func (k Keeper) DeserializeValidatorIterator(vals []byte) stakingtypes.ValAddresses {
-	validators := stakingtypes.ValAddresses{}
-	k.cdc.MustUnmarshal(vals, &validators)
+	validators := stakingtypes.ValAddresses{
+		Addresses: []string{},
+	}
+	k.cdc.MustUnmarshalBinaryBare(vals, &validators)
 	return validators
 }

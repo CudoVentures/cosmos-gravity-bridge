@@ -1,5 +1,5 @@
-use clarity::PrivateKey as EthPrivateKey;
 use clarity::{constants::ZERO_ADDRESS, Address as EthAddress};
+use clarity::{PrivateKey as EthPrivateKey, Signature};
 use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::private_key::PrivateKey;
@@ -13,8 +13,6 @@ use ethereum_gravity::message_signatures::{
 use ethereum_gravity::utils::downcast_uint256;
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_proto::cosmos_sdk_proto::cosmos::tx::v1beta1::BroadcastMode;
-use gravity_proto::gravity::MsgBatchSendToEthClaim;
-use gravity_proto::gravity::MsgConfirmBatch;
 use gravity_proto::gravity::MsgConfirmLogicCall;
 use gravity_proto::gravity::MsgErc20DeployedClaim;
 use gravity_proto::gravity::MsgLogicCallExecutedClaim;
@@ -24,9 +22,12 @@ use gravity_proto::gravity::MsgSendToEth;
 use gravity_proto::gravity::MsgSetOrchestratorAddress;
 use gravity_proto::gravity::MsgValsetConfirm;
 use gravity_proto::gravity::MsgValsetUpdatedClaim;
+use gravity_proto::gravity::{MsgBatchSendToEthClaim, MsgSubmitBadSignatureEvidence};
+use gravity_proto::gravity::{MsgCancelSendToEth, MsgConfirmBatch};
 use gravity_utils::types::*;
-use crate::utils::wait_for_tx_with_retry;
 use std::{collections::HashMap, time::Duration};
+
+use crate::utils::BadSignatureEvidence;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -81,8 +82,7 @@ pub async fn set_gravity_delegate_addresses(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for an array of validator sets, it's far more efficient to send these
@@ -135,8 +135,7 @@ pub async fn send_valset_confirms(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for a specific transaction batch
@@ -188,8 +187,7 @@ pub async fn send_batch_confirm(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Send in a confirmation for a specific logic call
@@ -241,8 +239,7 @@ pub async fn send_logic_call_confirm(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -359,8 +356,7 @@ pub async fn send_ethereum_claims(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -428,8 +424,7 @@ pub async fn send_to_eth(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 pub async fn send_request_batch(
@@ -437,6 +432,7 @@ pub async fn send_request_batch(
     denom: String,
     fee: Coin,
     contact: &Contact,
+    timeout: Option<Duration>,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
 
@@ -463,6 +459,87 @@ pub async fn send_request_batch(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    match timeout {
+        Some(duration) => contact.wait_for_tx(response, duration).await,
+        None => Ok(response),
+    }
+}
+
+/// Sends evidence of a bad signature to the chain to slash the malicious validator
+/// who signed an invalid message with their Ethereum key
+pub async fn submit_bad_signature_evidence(
+    private_key: PrivateKey,
+    fee: Coin,
+    contact: &Contact,
+    signed_object: BadSignatureEvidence,
+    signature: Signature,
+) -> Result<TxResponse, CosmosGrpcError> {
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
+
+    let any = signed_object.to_any();
+
+    let msg_submit_bad_signature_evidence = MsgSubmitBadSignatureEvidence {
+        subject: Some(any),
+        signature: bytes_to_hex_str(&signature.to_bytes()),
+        sender: our_address.to_string(),
+    };
+
+    let fee = Fee {
+        amount: vec![fee],
+        gas_limit: 500_000_000u64,
+        granter: None,
+        payer: None,
+    };
+
+    let msg = Msg::new(
+        "/gravity.v1.MsgSubmitBadSignatureEvidence",
+        msg_submit_bad_signature_evidence,
+    );
+
+    let args = contact.get_message_args(our_address, fee).await?;
+    trace!("got optional tx info");
+
+    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
+        .await?;
+
+    contact.wait_for_tx(response, TIMEOUT).await
+}
+
+/// Cancels a user provided SendToEth transaction, provided it's not already in a batch
+/// you should check with `QueryPendingSendToEth`
+pub async fn cancel_send_to_eth(
+    private_key: PrivateKey,
+    fee: Coin,
+    contact: &Contact,
+    transaction_id: u64,
+) -> Result<TxResponse, CosmosGrpcError> {
+    let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
+
+    let msg_cancel_send_to_eth = MsgCancelSendToEth {
+        transaction_id,
+        sender: our_address.to_string(),
+    };
+
+    let fee = Fee {
+        amount: vec![fee],
+        gas_limit: 600_000u64,
+        granter: None,
+        payer: None,
+    };
+
+    let msg = Msg::new("/gravity.v1.MsgCancelSendToEth", msg_cancel_send_to_eth);
+
+    let args = contact.get_message_args(our_address, fee).await?;
+    trace!("got optional tx info");
+
+    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+
+    let response = contact
+        .send_transaction(msg_bytes, BroadcastMode::Sync)
+        .await?;
+
+    contact.wait_for_tx(response, TIMEOUT).await
 }

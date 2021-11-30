@@ -17,8 +17,17 @@ import (
 // GetOutgoingLogicCall gets an outgoing logic call
 func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
 	store := ctx.KVStore(k.storeKey)
-	call := types.OutgoingLogicCall{}
-	k.cdc.MustUnmarshal(store.Get(types.GetOutgoingLogicCallKey(invalidationID, invalidationNonce)), &call)
+	call := types.OutgoingLogicCall{
+		Transfers:            []*types.ERC20Token{},
+		Fees:                 []*types.ERC20Token{},
+		LogicContractAddress: "",
+		Payload:              []byte{},
+		Timeout:              0,
+		InvalidationId:       invalidationID,
+		InvalidationNonce:    invalidationNonce,
+		Block:                0,
+	}
+	k.cdc.MustUnmarshalBinaryBare(store.Get(types.GetOutgoingLogicCallKey(invalidationID, invalidationNonce)), &call)
 	return &call
 }
 
@@ -31,7 +40,7 @@ func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicC
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
 	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
-		k.cdc.MustMarshal(call))
+		k.cdc.MustMarshalBinaryBare(call))
 }
 
 // DeleteOutgoingLogicCall deletes outgoing logic calls
@@ -46,7 +55,7 @@ func (k Keeper) IterateOutgoingLogicCalls(ctx sdk.Context, cb func([]byte, *type
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var call types.OutgoingLogicCall
-		k.cdc.MustUnmarshal(iter.Value(), &call)
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &call)
 		// cb returns true to stop early
 		if cb(iter.Key(), &call) {
 			break
@@ -100,7 +109,7 @@ func (k Keeper) SetLogicCallConfirm(ctx sdk.Context, msg *types.MsgConfirmLogicC
 	}
 
 	ctx.KVStore(k.storeKey).
-		Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshal(msg))
+		Set(types.GetLogicConfirmKey(bytes, msg.InvalidationNonce, acc), k.cdc.MustMarshalBinaryBare(msg))
 }
 
 // GetLogicCallConfirm gets a logic confirm from the store
@@ -110,8 +119,14 @@ func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, inva
 	if data == nil {
 		return nil
 	}
-	out := types.MsgConfirmLogicCall{}
-	k.cdc.MustUnmarshal(data, &out)
+	out := types.MsgConfirmLogicCall{
+		InvalidationId:    "",
+		InvalidationNonce: invalidationNonce,
+		EthSigner:         "",
+		Orchestrator:      "",
+		Signature:         "",
+	}
+	k.cdc.MustUnmarshalBinaryBare(data, &out)
 	return &out
 }
 
@@ -135,8 +150,14 @@ func (k Keeper) IterateLogicConfirmByInvalidationIDAndNonce(
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmLogicCall{}
-		k.cdc.MustUnmarshal(iter.Value(), &confirm)
+		confirm := types.MsgConfirmLogicCall{
+			InvalidationId:    "",
+			InvalidationNonce: invalidationNonce,
+			EthSigner:         "",
+			Orchestrator:      "",
+			Signature:         "",
+		}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), &confirm) {
 			break

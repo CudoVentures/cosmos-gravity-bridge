@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
@@ -30,11 +31,12 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
+	bridgeAddr := k.GetBridgeContractAddress(ctx)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyContract, bridgeAddr.GetAddress()),
 			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
@@ -48,14 +50,14 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
 	valset.Height = uint64(ctx.BlockHeight())
-	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshal(valset))
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
 // StoreValsetUnsafe is for storing a valiator set at a given height
 func (k Keeper) StoreValsetUnsafe(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshal(valset))
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
@@ -95,7 +97,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 		return nil
 	}
 	var valset types.Valset
-	k.cdc.MustUnmarshal(bz, &valset)
+	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
 	return &valset
 }
 
@@ -106,7 +108,7 @@ func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.V
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var valset types.Valset
-		k.cdc.MustUnmarshal(iter.Value(), &valset)
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
 		// cb returns true to stop early
 		if cb(iter.Key(), &valset) {
 			break
@@ -193,7 +195,7 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 
 	for ; iter.Valid(); iter.Next() {
 		var valset types.Valset
-		k.cdc.MustUnmarshal(iter.Value(), &valset)
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
 		// cb returns true to stop early
 		if cb(iter.Key(), &valset) {
 			break
@@ -231,7 +233,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// allocate enough space for all validators, but len zero, we then append
 	// so that we have an array with extra capacity but the correct length depending
 	// on how many validators have keys set.
-	bridgeValidators := make([]*types.BridgeValidator, 0, len(validators))
+	bridgeValidators := make([]*types.InternalBridgeValidator, 0, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
@@ -241,8 +243,12 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 
 		if ethAddr, found := k.GetEthAddressByValidator(ctx, val); found {
-			bv := &types.BridgeValidator{Power: p, EthereumAddress: ethAddr}
-			bridgeValidators = append(bridgeValidators, bv)
+			bv := types.BridgeValidator{Power: p, EthereumAddress: ethAddr.GetAddress()}
+			ibv, err := types.NewInternalBridgeValidator(bv)
+			if err != nil {
+				panic(sdkerrors.Wrapf(err, "discovered invalid eth address stored for validator %v", val))
+			}
+			bridgeValidators = append(bridgeValidators, ibv)
 			totalPower += p
 		}
 	}
@@ -253,13 +259,13 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 
 	// get the reward from the params store
 	reward := k.GetParams(ctx).ValsetReward
-	var rewardToken string
+	var rewardToken *types.EthAddress
 	var rewardAmount sdk.Int
 	if !reward.IsValid() || reward.IsZero() {
 		// the case where a validator has 'no reward'. The 'no reward' value is interpreted as having a zero
 		// address for the ERC20 token and a zero value for the reward amount. Since we store a coin with the
 		// params, a coin with a blank denom and/or zero amount is interpreted in this way.
-		rewardToken = "0x0000000000000000000000000000000000000000"
+		rewardToken = types.ZeroAddress()
 		rewardAmount = sdk.NewIntFromUint64(0)
 
 	} else {
@@ -269,7 +275,11 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// increment the nonce, since this potential future valset should be after the current valset
 	valsetNonce := k.GetLatestValsetNonce(ctx) + 1
 
-	return types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
+	valset, err := types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, *rewardToken)
+	if err != nil {
+		panic(sdkerrors.Wrap(err, "generated invalid valset"))
+	}
+	return valset
 }
 
 /////////////////////////////
@@ -283,8 +293,13 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.Ac
 	if entity == nil {
 		return nil
 	}
-	confirm := types.MsgValsetConfirm{}
-	k.cdc.MustUnmarshal(entity, &confirm)
+	confirm := types.MsgValsetConfirm{
+		Nonce:        nonce,
+		Orchestrator: "",
+		EthAddress:   "",
+		Signature:    "",
+	}
+	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
 	return &confirm
 }
 
@@ -296,7 +311,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 		panic(err)
 	}
 	key := types.GetValsetConfirmKey(valsetConf.Nonce, addr)
-	store.Set(key, k.cdc.MustMarshal(&valsetConf))
+	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
 	return key
 }
 
@@ -309,8 +324,13 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgValsetConfirm{}
-		k.cdc.MustUnmarshal(iterator.Value(), &confirm)
+		confirm := types.MsgValsetConfirm{
+			Nonce:        nonce,
+			Orchestrator: "",
+			EthAddress:   "",
+			Signature:    "",
+		}
+		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
 
@@ -324,8 +344,13 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
-		k.cdc.MustUnmarshal(iter.Value(), &confirm)
+		confirm := types.MsgValsetConfirm{
+			Nonce:        nonce,
+			Orchestrator: "",
+			EthAddress:   "",
+			Signature:    "",
+		}
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
 			break

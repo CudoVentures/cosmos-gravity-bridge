@@ -48,7 +48,7 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
     let amount = gravity_coin.clone();
     let bridge_fee = Coin {
         denom: gravity_coin.denom.clone(),
-        amount: 0u64.into(),
+        amount: 1u64.into(),
     };
     check_for_fee(&gravity_coin, cosmos_address, &contact).await;
     check_for_fee(&fee, cosmos_address, &contact).await;
@@ -87,20 +87,26 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
         eth_dest,
         amount.clone(),
         bridge_fee.clone(),
-        fee.clone(),
+        fee,
         &contact,
     )
     .await;
     match res {
         Ok(tx_id) => info!("Send to Eth txid {}", tx_id.txhash),
-        Err(e) => error!("Failed to send tokens! {:?}", e),
+        Err(e) => info!("Failed to send tokens! {:?}", e),
     }
 
     if !no_batch {
         info!("Requesting a batch to push transaction along immediately");
-        send_request_batch(cosmos_key, gravity_coin.denom, fee, &contact)
-            .await
-            .expect("Failed to request batch");
+        send_request_batch(
+            cosmos_key,
+            gravity_coin.denom,
+            bridge_fee,
+            &contact,
+            Some(TIMEOUT),
+        )
+        .await
+        .expect("Failed to request batch");
     } else {
         info!("--no-batch specified, your transfer will wait until someone requests a batch for this token type")
     }

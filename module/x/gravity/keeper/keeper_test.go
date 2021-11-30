@@ -12,6 +12,7 @@ import (
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
+//nolint: exhaustivestruct
 func TestPrefixRange(t *testing.T) {
 	cases := map[string]struct {
 		src      []byte
@@ -45,6 +46,7 @@ func TestPrefixRange(t *testing.T) {
 	}
 }
 
+//nolint: exhaustivestruct
 func TestCurrentValsetNormalization(t *testing.T) {
 	specs := map[string]struct {
 		srcPowers []uint64
@@ -72,15 +74,20 @@ func TestCurrentValsetNormalization(t *testing.T) {
 					Operator: cAddr,
 					Power:    int64(v),
 				}
-				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, "0xf71402f886b45c134743F4c00750823Bbf5Fd045")
+				ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
+				require.NoError(t, err)
+				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, *ethAddr)
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentValset(ctx)
-			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
+			rMembers, err := types.BridgeValidators(r.Members).ToInternal()
+			require.NoError(t, err)
+			assert.Equal(t, spec.expPowers, rMembers.GetPowers())
 		})
 	}
 }
 
+//nolint: exhaustivestruct
 func TestAttestationIterator(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -110,8 +117,13 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	hash1, err := dep1.ClaimHash()
+	require.NoError(t, err)
+	hash2, err := dep2.ClaimHash()
+	require.NoError(t, err)
+
+	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, hash1, att1)
+	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, hash2, att2)
 
 	atts := []types.Attestation{}
 	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
@@ -122,6 +134,7 @@ func TestAttestationIterator(t *testing.T) {
 	require.Len(t, atts, 2)
 }
 
+//nolint: exhaustivestruct
 func TestDelegateKeys(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -148,7 +161,9 @@ func TestDelegateKeys(t *testing.T) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddressForValidator(ctx, val, ethAddrs[i])
+		ethAddr, err := types.NewEthAddress(ethAddrs[i])
+		require.NoError(t, err)
+		k.SetEthAddressForValidator(ctx, val, *ethAddr)
 	}
 
 	addresses := k.GetDelegateKeys(ctx)
@@ -161,10 +176,10 @@ func TestDelegateKeys(t *testing.T) {
 
 }
 
+//nolint: exhaustivestruct
 func TestLastSlashedValsetNonce(t *testing.T) {
-	input := CreateTestEnv(t)
+	input, ctx := SetupFiveValChain(t)
 	k := input.GravityKeeper
-	ctx := input.Context
 
 	vs := k.GetCurrentValset(ctx)
 
