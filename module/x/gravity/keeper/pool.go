@@ -189,7 +189,7 @@ func (k Keeper) addUnbatchedTX(ctx sdk.Context, val *types.InternalOutgoingTrans
 
 	extVal := val.ToExternal()
 
-	bz, err := k.cdc.MarshalBinaryBare(extVal)
+	bz, err := k.cdc.Marshal(extVal)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (k Keeper) GetUnbatchedTxByFeeAndId(ctx sdk.Context, fee types.InternalERC2
 		return nil, sdkerrors.Wrap(types.ErrUnknown, "pool transaction")
 	}
 	var r types.OutgoingTransferTx
-	k.cdc.UnmarshalBinaryBare(bz, &r)
+	k.cdc.Unmarshal(bz, &r)
 	intR, err := r.ToInternal()
 	if err != nil {
 		panic(sdkerrors.Wrapf(err, "invalid unbatched tx in store: %v", r))
@@ -278,7 +278,7 @@ func (k Keeper) IterateUnbatchedTransactions(ctx sdk.Context, prefixKey []byte, 
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var transact types.OutgoingTransferTx
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &transact)
+		k.cdc.MustUnmarshal(iter.Value(), &transact)
 		intTx, err := transact.ToInternal()
 		if err != nil {
 			panic(sdkerrors.Wrapf(err, "invalid unbatched transaction in store: %v", transact))

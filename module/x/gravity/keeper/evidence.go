@@ -38,6 +38,7 @@ func (k Keeper) CheckBadSignatureEvidence(
 func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types.EthereumSigned, signature string) error {
 	// Get checkpoint of the supposed bad signature (fake valset, batch, or logic call submitted to eth)
 	gravityID := k.GetGravityID(ctx)
+	powerReduction := k.StakingKeeper.PowerReduction(ctx)
 	checkpoint := subject.GetCheckpoint(gravityID)
 
 	// Try to find the checkpoint in the archives. If it exists, we don't slash because
@@ -76,7 +77,7 @@ func (k Keeper) checkBadSignatureEvidenceInternal(ctx sdk.Context, subject types
 	}
 
 	params := k.GetParams(ctx)
-	k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(), params.SlashFractionBadEthSignature)
+	k.StakingKeeper.Slash(ctx, cons, ctx.BlockHeight(), val.ConsensusPower(powerReduction), params.SlashFractionBadEthSignature)
 	if !val.IsJailed() {
 		k.StakingKeeper.Jail(ctx, cons)
 	}
