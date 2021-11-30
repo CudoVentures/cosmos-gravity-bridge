@@ -50,14 +50,14 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 func (k Keeper) StoreValset(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
 	valset.Height = uint64(ctx.BlockHeight())
-	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshal(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
 // StoreValsetUnsafe is for storing a valiator set at a given height
 func (k Keeper) StoreValsetUnsafe(ctx sdk.Context, valset *types.Valset) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshalBinaryBare(valset))
+	store.Set(types.GetValsetKey(valset.Nonce), k.cdc.MustMarshal(valset))
 	k.SetLatestValsetNonce(ctx, valset.Nonce)
 }
 
@@ -97,7 +97,7 @@ func (k Keeper) GetValset(ctx sdk.Context, nonce uint64) *types.Valset {
 		return nil
 	}
 	var valset types.Valset
-	k.cdc.MustUnmarshalBinaryBare(bz, &valset)
+	k.cdc.MustUnmarshal(bz, &valset)
 	return &valset
 }
 
@@ -108,7 +108,7 @@ func (k Keeper) IterateValsets(ctx sdk.Context, cb func(key []byte, val *types.V
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var valset types.Valset
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+		k.cdc.MustUnmarshal(iter.Value(), &valset)
 		// cb returns true to stop early
 		if cb(iter.Key(), &valset) {
 			break
@@ -195,7 +195,7 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 
 	for ; iter.Valid(); iter.Next() {
 		var valset types.Valset
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &valset)
+		k.cdc.MustUnmarshal(iter.Value(), &valset)
 		// cb returns true to stop early
 		if cb(iter.Key(), &valset) {
 			break
@@ -299,7 +299,7 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.Ac
 		EthAddress:   "",
 		Signature:    "",
 	}
-	k.cdc.MustUnmarshalBinaryBare(entity, &confirm)
+	k.cdc.MustUnmarshal(entity, &confirm)
 	return &confirm
 }
 
@@ -311,7 +311,7 @@ func (k Keeper) SetValsetConfirm(ctx sdk.Context, valsetConf types.MsgValsetConf
 		panic(err)
 	}
 	key := types.GetValsetConfirmKey(valsetConf.Nonce, addr)
-	store.Set(key, k.cdc.MustMarshalBinaryBare(&valsetConf))
+	store.Set(key, k.cdc.MustMarshal(&valsetConf))
 	return key
 }
 
@@ -330,7 +330,7 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 			EthAddress:   "",
 			Signature:    "",
 		}
-		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &confirm)
+		k.cdc.MustUnmarshal(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
 
@@ -350,7 +350,7 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 			EthAddress:   "",
 			Signature:    "",
 		}
-		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &confirm)
+		k.cdc.MustUnmarshal(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {
 			break
