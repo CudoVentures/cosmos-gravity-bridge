@@ -197,7 +197,7 @@ pub async fn transaction_stress_test(
     let denom = denoms.iter().next().unwrap().clone();
     let bridge_fee = Coin {
         denom,
-        amount: 1u8.into(),
+        amount: 0u8.into(),
     };
     // cancel all outgoing transactions for this user
     for tx in pending.unbatched_transfers {
