@@ -87,7 +87,7 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
         eth_dest,
         amount.clone(),
         bridge_fee.clone(),
-        fee,
+        fee.clone(),
         &contact,
     )
     .await;
@@ -101,7 +101,7 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
         send_request_batch(
             cosmos_key,
             gravity_coin.denom,
-            bridge_fee,
+            fee,
             &contact,
             Some(TIMEOUT),
         )
