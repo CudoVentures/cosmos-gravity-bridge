@@ -141,6 +141,8 @@ pub struct LastObservedEthereumBlockHeight {
     pub cosmos_block_height: u64,
     #[prost(uint64, tag="2")]
     pub ethereum_block_height: u64,
+    #[prost(uint64, tag="3")]
+    pub cosmos_block_time_ms: u64,
 }
 /// This records the relationship between an ERC20 token and the denom
 /// of the corresponding Cosmos originated asset
