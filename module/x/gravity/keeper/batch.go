@@ -76,17 +76,28 @@ func (k Keeper) BuildOutgoingTXBatch(
 // This gets the batch timeout height in Ethereum blocks.
 func (k Keeper) getBatchTimeoutHeight(ctx sdk.Context) uint64 {
 	params := k.GetParams(ctx)
-	currentCosmosHeight := ctx.BlockHeight()
+	// currentCosmosHeight := ctx.BlockHeight()
+	currentCosmosTimeMs := uint64(ctx.BlockTime().UnixNano() / 1000000)
 	// we store the last observed Cosmos and Ethereum heights, we do not concern ourselves if these values are zero because
 	// no batch can be produced if the last Ethereum block height is not first populated by a deposit event.
 	heights := k.GetLastObservedEthereumBlockHeight(ctx)
-	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 {
+	if heights.CosmosBlockHeight == 0 || heights.EthereumBlockHeight == 0 || heights.CosmosBlockTimeMs == 0 {
 		return 0
 	}
 	// we project how long it has been in milliseconds since the last Ethereum block height was observed
-	projectedMillis := (uint64(currentCosmosHeight) - heights.CosmosBlockHeight) * params.AverageBlockTime
+	// projectedMillis := (uint64(currentCosmosHeight) - heights.CosmosBlockHeight) * params.AverageBlockTime
+
+	// directlly calculate the difference between current time and the last cosmos block when Ethereum update occured
+	realMillis := currentCosmosTimeMs - heights.CosmosBlockTimeMs
+	// There is a delay between actual Ethereum event and its observation.
+	// This results to the fact that heights.CosmosBlockHeight and heights.EthereumBlockHeight are not in the same time.
+	// The difference between them is equal to the delay, which is usually less than 5 minutes.
+	// Even if it is more than 5 minutes, the logic is save as long as the delay is lower than batch_timeout parameter, which by default is 12h.
+	// In order to make it as precise as possible, we set 300000ms as a contants which purpose is to cover the usual delay between the two events.
+	ethereumOffset := 300000 / params.AverageEthereumBlockTime
 	// we convert that projection into the current Ethereum height using the average Ethereum block time in millis
-	projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight
+	// projectedCurrentEthereumHeight := (projectedMillis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight
+	projectedCurrentEthereumHeight := (realMillis / params.AverageEthereumBlockTime) + heights.EthereumBlockHeight + ethereumOffset
 	// we convert our target time for block timeouts (lets say 12 hours) into a number of blocks to
 	// place on top of our projection of the current Ethereum block height.
 	blocksToAdd := params.TargetBatchTimeout / params.AverageEthereumBlockTime
