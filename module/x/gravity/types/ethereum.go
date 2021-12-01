@@ -34,7 +34,7 @@ type EthAddress struct {
 
 // Returns the contained address as a string
 func (ea EthAddress) GetAddress() string {
-	return ea.address
+	return strings.ToLower(ea.address)
 }
 
 // Sets the contained address, performing validation before updating the value
@@ -42,7 +42,7 @@ func (ea EthAddress) SetAddress(address string) error {
 	if err := ValidateEthAddress(address); err != nil {
 		return err
 	}
-	ea.address = address
+	ea.address = strings.ToLower(address)
 	return nil
 }
 
@@ -51,7 +51,7 @@ func NewEthAddress(address string) (*EthAddress, error) {
 	if err := ValidateEthAddress(address); err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid input address")
 	}
-	addr := EthAddress{address}
+	addr := EthAddress{strings.ToLower(address)}
 	return &addr, nil
 }
 
