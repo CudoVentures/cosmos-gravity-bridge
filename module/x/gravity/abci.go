@@ -9,6 +9,41 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+	createBatch(ctx, k)
+}
+
+func createBatch(ctx sdk.Context, k keeper.Keeper) {
+	msg := types.MsgRequestBatch{
+		Sender: "",
+		Denom:  k.StakingKeeper.GetParams(ctx).BondDenom,
+	}
+
+	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
+	if err != nil {
+		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
+		return
+	}
+
+	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
+	if !hasUnbatchedTransactions {
+		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+		return
+	}
+
+	batch, err := k.BuildOutgoingTXBatch(ctx, *tokenContract, keeper.OutgoingTxBatchSize)
+	if err != nil {
+		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
+		return
+	}
+
+	if batch != nil {
+		ctx.Logger().Info("A batch was created", "module", "gravity", "action", "auto creation of batches")
+	} else {
+		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+	}
+}
+
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
