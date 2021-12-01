@@ -339,7 +339,7 @@ pub async fn eth_signer_main_loop(
                 check_for_fee_error(res, &fee);
             }
             Ok(None) => trace!("No unsigned logic call! Everything good!"),
-            Err(e) => info!(
+            Err(e) => error!(
                 "Failed to get unsigned Logic Calls, check your Cosmos gRPC {:?}",
                 e
             ),
