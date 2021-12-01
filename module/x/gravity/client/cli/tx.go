@@ -123,8 +123,8 @@ func CmdSendToEth() *cobra.Command {
 				return sdkerrors.Wrap(err, "invalid eth address")
 			}
 
-			if len(amount) > 1 || len(bridgeFee) > 1 {
-				return fmt.Errorf("coin amounts too long, expecting just 1 coin amount for both amount and bridgeFee")
+			if len(amount) != 1 || len(bridgeFee) != 1 {
+				return fmt.Errorf("coin amounts too long or zero, expecting just 1 coin amount for both amount and bridgeFee")
 			}
 
 			// Make the message

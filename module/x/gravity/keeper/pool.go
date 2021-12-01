@@ -310,6 +310,17 @@ func (k Keeper) GetBatchFeeByTokenType(ctx sdk.Context, tokenContractAddr types.
 	return &batchFee
 }
 
+func (k Keeper) HasUnbatchedTransactionsByTokenType(ctx sdk.Context, tokenContractAddr types.EthAddress) bool {
+	hasUnbatchedTransactions := false
+
+	k.IterateUnbatchedTransactions(ctx, types.GetOutgoingTxPoolContractPrefix(tokenContractAddr), func(_ []byte, tx *types.InternalOutgoingTransferTx) bool {
+		hasUnbatchedTransactions = true
+		return true
+	})
+
+	return hasUnbatchedTransactions
+}
+
 // GetAllBatchFees creates a fee entry for every batch type currently in the store
 // this can be used by relayers to determine what batch types are desireable to request
 func (k Keeper) GetAllBatchFees(ctx sdk.Context, maxElements uint) (batchFees []*types.BatchFees) {
