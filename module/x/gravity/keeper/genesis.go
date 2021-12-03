@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -219,10 +220,19 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 	}
 
 	// export attestations from state
-	for _, atts := range attmap {
-		// TODO: set height = 0?
+	var keysOrder []uint64
+	for key := range attmap {
+		keysOrder = append(keysOrder, key)
+	}
+	sort.Slice(keysOrder, func(i, j int) bool { return keysOrder[i] < keysOrder[j] })
+	for _, key := range keysOrder {
+		atts := attmap[key]
 		attestations = append(attestations, atts...)
 	}
+	// for _, atts := range attmap {
+	// 	// TODO: set height = 0?
+	// 	attestations = append(attestations, atts...)
+	// }
 
 	// export erc20 to denom relations
 	k.IterateERC20ToDenom(ctx, func(key []byte, erc20ToDenom *types.ERC20ToDenom) bool {
