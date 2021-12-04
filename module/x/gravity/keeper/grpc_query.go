@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -189,7 +190,7 @@ func (k Keeper) OutgoingLogicCalls(
 func (k Keeper) BatchRequestByNonce(
 	c context.Context,
 	req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
-	addr, err := types.NewEthAddress(req.ContractAddress);
+	addr, err := types.NewEthAddress(req.ContractAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
@@ -350,7 +351,7 @@ func (k Keeper) GetDelegateKeyByEth(
 		return nil, sdkerrors.Wrap(err, "invalid eth address")
 	}
 	for _, key := range keys {
-		if req.EthAddress == key.EthAddress {
+		if strings.EqualFold(req.EthAddress, key.EthAddress) {
 			return &types.QueryDelegateKeysByEthAddressResponse{
 				ValidatorAddress:    key.Validator,
 				OrchestratorAddress: key.Orchestrator,
