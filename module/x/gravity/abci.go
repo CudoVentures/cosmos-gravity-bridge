@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
@@ -23,6 +24,15 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 	if err != nil {
 		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
 		return
+	}
+
+	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, *tokenContract)
+	if lastBatch != nil {
+		nextBatchHeight := lastBatch.Block + 60
+		if uint64(ctx.BlockHeight()) < nextBatchHeight {
+			ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", nextBatchHeight), "module", "gravity", "action", "auto creation of batches")
+			return
+		}
 	}
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
