@@ -12,7 +12,7 @@ import (
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	params := k.GetParams(ctx)
-	slashing(ctx, k)
+	// slashing(ctx, k)
 	attestationTally(ctx, k)
 	cleanupTimedOutBatches(ctx, k)
 	cleanupTimedOutLogicCalls(ctx, k)
