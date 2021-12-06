@@ -5,5 +5,5 @@ relayer_enabled = true
 
 [relayer]
 valset_market_enabled = false
-batch_market_enabled = true
-logic_call_market_enabled = true
+batch_market_enabled = false
+logic_call_market_enabled = false

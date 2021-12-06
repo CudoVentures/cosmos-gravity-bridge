@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/cosmos/cosmos-sdk v0.44.4
+	github.com/cosmos/cosmos-sdk v0.44.5
 	github.com/cosmos/ibc-go v1.2.3
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/gin-gonic/gin v1.7.0 // indirect
