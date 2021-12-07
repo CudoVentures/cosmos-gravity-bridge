@@ -151,6 +151,9 @@ func (msg MsgSendToEth) ValidateBasic() error {
 	if !msg.BridgeFee.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "fee")
 	}
+	if msg.EthDest == "0x0000000000000000000000000000000000000000" {
+		return sdkerrors.Wrap(fmt.Errorf("sending to 0th address"), "ethereum address")
+	}
 	if err := ValidateEthAddress(msg.EthDest); err != nil {
 		return sdkerrors.Wrap(err, "ethereum address")
 	}
