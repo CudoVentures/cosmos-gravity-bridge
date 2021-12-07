@@ -22,7 +22,7 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 
 	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
 	if err != nil {
-		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
+		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
 		return
 	}
 
@@ -30,27 +30,27 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 	if lastBatch != nil {
 		nextBatchHeight := lastBatch.Block + 60
 		if uint64(ctx.BlockHeight()) < nextBatchHeight {
-			ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", nextBatchHeight), "module", "gravity", "action", "auto creation of batches")
+			ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", nextBatchHeight), "module", types.ModuleName, "action", "auto creation of batches")
 			return
 		}
 	}
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
 	if !hasUnbatchedTransactions {
-		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
 	batch, err := k.BuildOutgoingTXBatch(ctx, *tokenContract, keeper.OutgoingTxBatchSize)
 	if err != nil {
-		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
+		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
 		return
 	}
 
 	if batch != nil {
-		ctx.Logger().Info("A batch was created", "module", "gravity", "action", "auto creation of batches")
+		ctx.Logger().Info("A batch was created", "module", types.ModuleName, "action", "auto creation of batches")
 	} else {
-		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 	}
 }
 

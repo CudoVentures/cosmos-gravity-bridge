@@ -33,14 +33,15 @@ func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, inv
 
 // SetOutogingLogicCall sets an outgoing logic call
 func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
-	store := ctx.KVStore(k.storeKey)
+	ctx.Logger().Error("SetOutgoingLogicCall is not supported", "module", types.ModuleName)
+	// store := ctx.KVStore(k.storeKey)
 
-	// Store checkpoint to prove that this logic call actually happened
-	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
-	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+	// // Store checkpoint to prove that this logic call actually happened
+	// checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
+	// k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
-	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
-		k.cdc.MustMarshal(call))
+	// store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
+	// 	k.cdc.MustMarshal(call))
 }
 
 // DeleteOutgoingLogicCall deletes outgoing logic calls
