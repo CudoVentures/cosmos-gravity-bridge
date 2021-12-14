@@ -125,6 +125,8 @@ var (
 
 	// PastEthSignatureCheckpointKey indexes eth signature checkpoints that have existed
 	PastEthSignatureCheckpointKey = []byte{0x1b}
+
+	StaticValCosmosAddrKey = []byte{0x40}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -161,6 +163,10 @@ func GetValsetKey(nonce uint64) []byte {
 // MARK finish-batches: this is where the key is created in the old (presumed working) code
 func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(UInt64Bytes(nonce), validator.Bytes()...)...)
+}
+
+func GetStaticValCosmosAddrKey(cosmosAddr string) []byte {
+	return append(StaticValCosmosAddrKey, []byte(cosmosAddr)...)
 }
 
 // GetClaimKey returns the following key format

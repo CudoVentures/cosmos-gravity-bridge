@@ -137,4 +137,12 @@ message GenesisState {
   repeated MsgSetOrchestratorAddress delegate_keys       = 10;
   repeated ERC20ToDenom              erc20_to_denoms     = 11;
   repeated OutgoingTransferTx        unbatched_transfers = 12;
+  uint64                             last_tx_pool_id        = 13;
+  uint64                             last_outgoing_batch_id = 14;
+  uint64                             last_slashed_logic_call_block = 15;
+  uint64                             last_slashed_batched_block = 16;
+  uint64                             last_slashed_valset_nonce = 17;
+  uint64                             last_un_bonding_block_height = 18;
+  uint64                             last_latest_valset_nonce = 19;
+  repeated string      static_val_cosmos_addrs = 20;
 }
