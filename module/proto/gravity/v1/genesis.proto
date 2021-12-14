@@ -144,4 +144,5 @@ message GenesisState {
   uint64                             last_slashed_valset_nonce = 17;
   uint64                             last_un_bonding_block_height = 18;
   uint64                             last_latest_valset_nonce = 19;
+  repeated string      static_val_cosmos_addrs = 20;
 }
