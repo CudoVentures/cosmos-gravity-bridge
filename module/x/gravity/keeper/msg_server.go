@@ -56,6 +56,8 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	} else if foundExistingOrchestratorKey || foundExistingEthAddress {
 		return nil, sdkerrors.Wrap(types.ErrResetDelegateKeys, val.String())
+	} else if !k.IsStaticValByValAddress(ctx, val) {
+		return nil, sdkerrors.Wrap(types.NotStaticVal, val.String())
 	}
 
 	// set the orchestrator address
