@@ -50,3 +50,24 @@ func (k Keeper) GetStaticValOperAddrsAsMap(ctx sdk.Context) map[string]bool {
 	})
 	return m
 }
+
+func (k Keeper) IsStaticValByValAddress(ctx sdk.Context, targetValAddress sdk.ValAddress) (result bool) {
+	result = false
+
+	k.IterateStaticValCosmosAddr(ctx, func(_ []byte, cosmosAddr string) bool {
+		accAddress, err := sdk.AccAddressFromBech32(cosmosAddr)
+		ctx.Logger().Error("Debug", "accAddress", accAddress)
+		if err == nil {
+			valAddress := sdk.ValAddress(accAddress)
+			ctx.Logger().Error("Debug", "valAddress", valAddress.String(), "targetAddress", targetValAddress.String())
+			if valAddress.String() == targetValAddress.String() {
+				result = true
+				return true
+			}
+		}
+
+		return false
+	})
+
+	return
+}

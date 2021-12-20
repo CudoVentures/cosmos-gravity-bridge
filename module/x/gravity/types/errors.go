@@ -16,4 +16,5 @@ var (
 	ErrNonContiguousEventNonce = sdkerrors.Register(ModuleName, 9, "non contiguous event nonce")
 	ErrResetDelegateKeys       = sdkerrors.Register(ModuleName, 10, "can not set orchestrator addresses more than once")
 	ErrMismatched              = sdkerrors.Register(ModuleName, 11, "mismatched")
+	NotStaticVal               = sdkerrors.Register(ModuleName, 12, "this validator is not allowed to have an orchestrator")
 )
