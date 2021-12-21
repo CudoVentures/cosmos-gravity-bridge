@@ -84,18 +84,18 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 
 		var staticTotalPower uint64 = 0
 		for _, validator := range validators {
-			ctx.Logger().Error("Attesation", "validator.OperatorAddress", validator.OperatorAddress)
+			// ctx.Logger().Error("Debug Attesation", "validator.OperatorAddress", validator.OperatorAddress)
 			if _, found := staticValOperAddrsMap[validator.OperatorAddress]; !found {
-				ctx.Logger().Error("Attesation", "Skipped validator.OperatorAddress", validator.OperatorAddress)
+				// ctx.Logger().Error("Debug Attesation", "Skipped validator.OperatorAddress", validator.OperatorAddress)
 				continue
 			}
 
-			ctx.Logger().Error("Attesation", "Static validator.OperatorAddress", validator.OperatorAddress)
+			// ctx.Logger().Error("Debug Attesation", "Static validator.OperatorAddress", validator.OperatorAddress)
 			val := validator.GetOperator()
 			p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 			staticTotalPower += p
 		}
-		ctx.Logger().Error("Attesation", "staticTotalPower", staticTotalPower)
+		// ctx.Logger().Error("Debug Attesation", "staticTotalPower", staticTotalPower)
 		totalPower := sdk.NewIntFromUint64(staticTotalPower)
 
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
