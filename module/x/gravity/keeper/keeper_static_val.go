@@ -56,10 +56,8 @@ func (k Keeper) IsStaticValByValAddress(ctx sdk.Context, targetValAddress sdk.Va
 
 	k.IterateStaticValCosmosAddr(ctx, func(_ []byte, cosmosAddr string) bool {
 		accAddress, err := sdk.AccAddressFromBech32(cosmosAddr)
-		ctx.Logger().Error("Debug", "accAddress", accAddress)
 		if err == nil {
 			valAddress := sdk.ValAddress(accAddress)
-			ctx.Logger().Error("Debug", "valAddress", valAddress.String(), "targetAddress", targetValAddress.String())
 			if valAddress.String() == targetValAddress.String() {
 				result = true
 				return true
