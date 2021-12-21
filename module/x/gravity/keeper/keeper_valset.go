@@ -239,15 +239,15 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
 
-	ctx.Logger().Error("Keeper_valset", "staticValOperAddrsMap", staticValOperAddrsMap)
+	// ctx.Logger().Error("Debug Keeper_valset", "staticValOperAddrsMap", staticValOperAddrsMap)
 	for _, validator := range validators {
 		val := validator.GetOperator()
 
-		ctx.Logger().Error("Keeper_valset", "Check Validator", validator.OperatorAddress)
+		// ctx.Logger().Error("Debug Keeper_valset", "Check Validator", validator.OperatorAddress)
 		if _, found := staticValOperAddrsMap[validator.OperatorAddress]; !found {
 			continue
 		}
-		ctx.Logger().Error("Keeper_valset", "Static Validator", validator.OperatorAddress)
+		// ctx.Logger().Error("Debug Keeper_valset", "Static Validator", validator.OperatorAddress)
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 
@@ -288,7 +288,7 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	if err != nil {
 		panic(sdkerrors.Wrap(err, "generated invalid valset"))
 	}
-	ctx.Logger().Error("Debug", "valset", valset)
+	// ctx.Logger().Error("Debug Valset", "valset", valset)
 	return valset
 }
 
