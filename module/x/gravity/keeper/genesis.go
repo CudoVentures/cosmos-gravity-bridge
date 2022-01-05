@@ -173,6 +173,12 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 		k.SetStaticValCosmosAddr(ctx, cosmosAddr)
 	}
 
+	var bridgeContractAddress string
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyBridgeContractAddress, &bridgeContractAddress)
+	if bridgeContractAddress == "" {
+		k.paramSpace.Set(ctx, types.ParamsStoreKeyBridgeContractAddress, types.ZeroAddressString)
+	}
+
 }
 
 // ExportGenesis exports all the state needed to restart the chain
