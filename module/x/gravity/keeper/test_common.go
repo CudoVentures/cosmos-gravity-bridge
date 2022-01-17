@@ -245,6 +245,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 		// Set the account in state
 		input.AccountKeeper.SetAccount(input.Context, acc)
 
+		input.GravityKeeper.SetStaticValCosmosAddr(input.Context, AccAddrs[i].String())
 		// Create a validator for that account using some of the tokens in the account
 		// and the staking handler
 		_, err := sh(
@@ -252,7 +253,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 			NewTestMsgCreateValidator(ValAddrs[i], ConsPubKeys[i], StakingAmount),
 		)
 
-		// Return error if one exists
+		// Return error if one
 		require.NoError(t, err)
 	}
 
@@ -385,7 +386,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 
 	// total supply to track this
-	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
+	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100500000))
 	bankKeeper.MintCoins(ctx, "gravity", totalSupply)
 	// bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
 
@@ -394,7 +395,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		mod := authtypes.NewEmptyModuleAccount(name, perms...)
 		if name == stakingtypes.NotBondedPoolName {
 			// err = bankKeeper.SetBalances(ctx, mod.GetAddress(), totalSupply)
-			err = bankKeeper.SendCoinsFromModuleToModule(ctx, "gravity", mod.GetName(), totalSupply)
+			err = bankKeeper.SendCoinsFromModuleToModule(ctx, "gravity", mod.GetName(), totalSupply.Sub(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000))))
 			require.NoError(t, err)
 		} else if name == distrtypes.ModuleName {
 			// some big pot to pay out

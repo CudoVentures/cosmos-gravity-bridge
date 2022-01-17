@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,15 +67,17 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
-				cAddr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+				cAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+				vAddr := sdk.ValAddress(cAddr)
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
-					Operator: cAddr,
+					Operator: vAddr,
 					Power:    int64(v),
 				}
 				ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
 				require.NoError(t, err)
-				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, *ethAddr)
+				input.GravityKeeper.SetEthAddressForValidator(ctx, vAddr, *ethAddr)
+				input.GravityKeeper.SetStaticValCosmosAddr(ctx, cAddr.String())
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentValset(ctx)
@@ -140,9 +141,9 @@ func TestDelegateKeys(t *testing.T) {
 	ctx := input.Context
 	k := input.GravityKeeper
 	var (
-		ethAddrs = []string{"0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09",
-			"0x610277F0208D342C576b991daFdCb36E36515e76", "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4",
-			"0xb2A7F3E84F8FdcA1da46c810AEa110dd96BAE6bF"}
+		ethAddrs = []string{"0x3146d2d6eed46afa423969f5ddc3152dfc359b09",
+			"0x610277f0208d342c576b991dafdcb36e36515e76", "0x835973768750b3ed2d5c3ef5adcd5edb44d12ad4",
+			"0xb2a7f3e84f8fdca1da46c810aea110dd96bae6bf"}
 
 		valAddrs = []string{"cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4",
 			"cosmosvaloper15n79nty2fj37ant3p2gj4wju4ls6eu6tjwmdt0", "cosmosvaloper16dnkc6ac6ruuyr6l372fc3p77jgjpet6fka0cq",
@@ -222,5 +223,4 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	// when signedValsetsWindow > latest valset's height
 	unslashedValsets = k.GetUnSlashedValsets(ctx, heightDiff-6)
 	assert.Equal(t, len(unslashedValsets), 6)
-	fmt.Println("unslashedValsetsRange", unslashedValsets)
 }

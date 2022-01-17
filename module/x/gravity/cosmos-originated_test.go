@@ -7,6 +7,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
@@ -41,7 +42,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 
 	tv.t = t
 
-	tv.myOrchestratorAddr = make([]byte, sdk.AddrLen)
+	tv.myOrchestratorAddr = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	tv.myValAddr = sdk.ValAddress(tv.myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 
 	tv.erc20 = "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
@@ -50,6 +51,7 @@ func initializeTestingVars(t *testing.T) *testingVars {
 	tv.input = keeper.CreateTestEnv(t)
 	tv.ctx = tv.input.Context
 	tv.input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(tv.myValAddr)
+	tv.input.GravityKeeper.SetStaticValCosmosAddr(tv.ctx, tv.myOrchestratorAddr.String())
 	tv.input.GravityKeeper.SetEthAddressForValidator(tv.ctx, tv.myValAddr, *types.ZeroAddress())
 	tv.input.GravityKeeper.SetOrchestratorValidator(tv.ctx, tv.myValAddr, tv.myOrchestratorAddr)
 	tv.h = NewHandler(tv.input.GravityKeeper)
@@ -119,7 +121,7 @@ func lockCoinsInModule(tv *testingVars) {
 		startingCoins      sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
 		sendingCoin        sdk.Coin  = sdk.NewCoin(denom, sendAmount)
 		feeCoin            sdk.Coin  = sdk.NewCoin(denom, feeAmount)
-		ethDestination               = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+		ethDestination               = "0x3c9289da00b02dc623d0d8d907619890301d26d4"
 	)
 
 	// we start by depositing some funds into the users balance to send
@@ -153,10 +155,9 @@ func lockCoinsInModule(tv *testingVars) {
 
 func acceptDepositEvent(tv *testingVars) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
-		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
-		myNonce                           = uint64(2)
-		anyETHAddr                        = "0xf9613b532673Cc223aBa451dFA8539B87e1F666D"
+		myCosmosAddr, _ = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
+		myNonce         = uint64(2)
+		anyETHAddr      = "0xf9613b532673cc223aba451dfa8539b87e1f666d"
 	)
 
 	myErc20 := types.ERC20Token{
@@ -171,7 +172,7 @@ func acceptDepositEvent(tv *testingVars) {
 		Amount:         myErc20.Amount,
 		EthereumSender: anyETHAddr,
 		CosmosReceiver: myCosmosAddr.String(),
-		Orchestrator:   myOrchestratorAddr.String(),
+		Orchestrator:   tv.myOrchestratorAddr.String(),
 	}
 
 	_, err := tv.h(tv.ctx, &ethClaim)
