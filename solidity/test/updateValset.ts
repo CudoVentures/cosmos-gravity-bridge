@@ -1,7 +1,9 @@
+//@ts-nocheck
 import chai from "chai";
 import { ethers} from "hardhat";
 import { solidity } from "ethereum-waffle";
 
+import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -29,7 +31,13 @@ async function runTest(opts: {
   notEnoughReward?: boolean;
   withReward?: boolean;
 }) {
+
+  let bridgeAccessControl:any
+
+  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
+  bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
   const signers = await ethers.getSigners();
+
   const gravityId = ethers.utils.formatBytes32String("foo");
 
   // This is the power distribution on the Cosmos hub as of 7/14/2020
@@ -42,7 +50,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, powerThreshold, validators, powers);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -309,14 +317,14 @@ describe("updateValset Go test hash", function () {
     // or over in test-utils/pure.ts is incorrect
     expect(valsetDigest).equal(checkpoint)
 
-    console.log("elements in Valset digest:", {
-      "gravityId": gravityId,
-      "validators": validators,
-      "powers": powers,
-      "valsetNonce": newValset.valsetNonce,
-      "rewardAmount": newValset.rewardAmount,
-      "rewardToken": newValset.rewardToken
-    })
-    console.log("abiEncodedValset:", abiEncodedValset)
-    console.log("valsetDigest:", valsetDigest)
+    // console.log("elements in Valset digest:", {
+    //   "gravityId": gravityId,
+    //   "validators": validators,
+    //   "powers": powers,
+    //   "valsetNonce": newValset.valsetNonce,
+    //   "rewardAmount": newValset.rewardAmount,
+    //   "rewardToken": newValset.rewardToken
+    // })
+    // console.log("abiEncodedValset:", abiEncodedValset)
+    // console.log("valsetDigest:", valsetDigest)
 })});

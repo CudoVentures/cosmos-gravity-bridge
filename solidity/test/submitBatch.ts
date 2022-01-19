@@ -2,6 +2,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
+import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -14,6 +15,7 @@ import {
 
 chai.use(solidity);
 const { expect } = chai;
+let bridgeAccessControl:any
 
 async function runTest(opts: {
   // Issues with the tx batch
@@ -29,6 +31,12 @@ async function runTest(opts: {
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
 }) {
+
+  
+
+  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
+  bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
@@ -41,7 +49,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -246,7 +254,7 @@ describe("submitBatch Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint,
-    } = await deployContracts(gravityId, powerThreshold, validators, powers);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
 
     // Prepare batch
     // ===============================
@@ -294,18 +302,18 @@ describe("submitBatch Go test hash", function () {
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
 
-    console.log("elements in batch digest:", {
-      gravityId: gravityId,
-      batchMethodName: batchMethodName,
-      txAmounts: txAmounts,
-      txDestinations: txDestinations,
-      txFees: txFees,
-      batchNonce: batchNonce,
-      batchTimeout: batchTimeout,
-      tokenContract: testERC20.address,
-    });
-    console.log("abiEncodedBatch:", abiEncodedBatch);
-    console.log("batchDigest:", batchDigest);
+    // console.log("elements in batch digest:", {
+    //   gravityId: gravityId,
+    //   batchMethodName: batchMethodName,
+    //   txAmounts: txAmounts,
+    //   txDestinations: txDestinations,
+    //   txFees: txFees,
+    //   batchNonce: batchNonce,
+    //   batchTimeout: batchTimeout,
+    //   tokenContract: testERC20.address,
+    // });
+    // console.log("abiEncodedBatch:", abiEncodedBatch);
+    // console.log("batchDigest:", batchDigest);
 
     const sigs = await signHash(validators, batchDigest);
     const currentValsetNonce = 0;
