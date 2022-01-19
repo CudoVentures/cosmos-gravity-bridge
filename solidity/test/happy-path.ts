@@ -2,6 +2,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
+import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -16,6 +17,15 @@ const { expect } = chai;
 
 
 describe("Gravity happy path valset update + batch submit", function () {
+
+  let bridgeAccessControl:any
+
+  beforeEach(async () => {
+    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
+    bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+  });
+
+
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
@@ -40,7 +50,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers);
+    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, bridgeAccessControl.address);
 
 
 

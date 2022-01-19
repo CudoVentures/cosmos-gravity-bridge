@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
+import "./BridgeAccessControl.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -58,6 +59,8 @@ contract Gravity is ReentrancyGuard {
 	// These are set once at initialization
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
+
+	BridgeAccessControl public bridgeAccessControl;
 
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
@@ -571,6 +574,14 @@ contract Gravity is ReentrancyGuard {
 		);
 	}
 
+	function withdrawERC20(
+		address _tokenAddress) 
+		external {
+		require(bridgeAccessControl.hasAdminRole(msg.sender), "Recipient is not an admin");
+		uint256 totalBalance = IERC20(_tokenAddress).balanceOf(address(this));
+		IERC20(_tokenAddress).safeTransfer(msg.sender , totalBalance);
+	}
+
 	constructor(
 		// A unique identifier for this gravity instance to use in signatures
 		bytes32 _gravityId,
@@ -579,12 +590,14 @@ contract Gravity is ReentrancyGuard {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-		uint256[] memory _powers
+        uint256[] memory _powers,
+		BridgeAccessControl _bridgeAccessControl
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
+		require(address(_bridgeAccessControl) != address(0), "Access control contract address is incorrect");
 
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
@@ -610,6 +623,8 @@ contract Gravity is ReentrancyGuard {
 		state_gravityId = _gravityId;
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
+
+		bridgeAccessControl = _bridgeAccessControl;
 
 		// LOGS
 
