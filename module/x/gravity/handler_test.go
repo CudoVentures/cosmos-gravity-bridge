@@ -1,13 +1,13 @@
 package gravity
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
@@ -79,7 +79,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 //nolint: exhaustivestruct
 func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	var (
-		myOrchestratorAddr sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myOrchestratorAddr sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 		myCosmosAddr, _                   = sdk.AccAddressFromBech32("cosmos16ahjkfqxpp6lvfy9fpfnfjg39xr96qett0alj5")
 		myValAddr                         = sdk.ValAddress(myOrchestratorAddr) // revisit when proper mapping is impl in keeper
 		myNonce                           = uint64(1)
@@ -94,6 +94,7 @@ func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(myValAddr)
 	input.GravityKeeper.SetEthAddressForValidator(ctx, myValAddr, *types.ZeroAddress())
 	input.GravityKeeper.SetOrchestratorValidator(ctx, myValAddr, myOrchestratorAddr)
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, myOrchestratorAddr.String())
 	h := NewHandler(input.GravityKeeper)
 
 	myErc20 := types.ERC20Token{
@@ -202,6 +203,9 @@ func TestMsgSendToCosmosClaimsMultiValidator(t *testing.T) {
 	input.GravityKeeper.SetOrchestratorValidator(ctx, valAddr1, orchestratorAddr1)
 	input.GravityKeeper.SetOrchestratorValidator(ctx, valAddr2, orchestratorAddr2)
 	input.GravityKeeper.SetOrchestratorValidator(ctx, valAddr3, orchestratorAddr3)
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, orchestratorAddr1.String())
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, orchestratorAddr2.String())
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, orchestratorAddr3.String())
 	h := NewHandler(input.GravityKeeper)
 
 	myErc20 := types.ERC20Token{
@@ -278,19 +282,23 @@ func TestMsgSendToCosmosClaimsMultiValidator(t *testing.T) {
 //nolint: exhaustivestruct
 func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	var (
-		ethAddress, _                 = types.NewEthAddress("0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255")
-		cosmosAddress  sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		ethAddress2, _                = types.NewEthAddress("0x26126048c706fB45a5a6De8432F428e794d0b952")
-		cosmosAddress2 sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
-		valAddress     sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		ethAddress, _                 = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
+		cosmosAddress  sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
+		valAddress     sdk.ValAddress = sdk.ValAddress(cosmosAddress)
+		ethAddress2, _                = types.NewEthAddress("0x26126048c706fb45a5a6deb432f428e794d0b952")
+		cosmosAddress2 sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
+		valAddress2    sdk.ValAddress = sdk.ValAddress(cosmosAddress2)
 		blockTime                     = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
 		blockTime2                    = time.Date(2020, 9, 15, 15, 20, 10, 0, time.UTC)
 		blockHeight    int64          = 200
 		blockHeight2   int64          = 210
 	)
 	input := keeper.CreateTestEnv(t)
-	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress)
+	input.GravityKeeper.StakingKeeper = keeper.NewStakingKeeperMock(valAddress2)
 	ctx := input.Context
+
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, cosmosAddress2.String())
+
 	wctx := sdk.WrapSDKContext(ctx)
 	k := input.GravityKeeper
 	h := NewHandler(input.GravityKeeper)
@@ -300,35 +308,41 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	msg := types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress, *ethAddress)
 	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
 	_, err := h(ctx, msg)
+	require.Error(t, err)
+
+	// test setting keys
+	msg = types.NewMsgSetOrchestratorAddress(valAddress2, cosmosAddress2, *ethAddress2)
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err = h(ctx, msg)
 	require.NoError(t, err)
 
 	// test all lookup methods
 
 	// individual lookups
-	ethLookup, found := k.GetEthAddressByValidator(ctx, valAddress)
+	ethLookup, found := k.GetEthAddressByValidator(ctx, valAddress2)
 	assert.True(t, found)
-	assert.Equal(t, ethLookup, ethAddress)
+	assert.Equal(t, ethLookup, ethAddress2)
 
-	valLookup, found := k.GetOrchestratorValidator(ctx, cosmosAddress)
+	valLookup, found := k.GetOrchestratorValidator(ctx, cosmosAddress2)
 	assert.True(t, found)
-	assert.Equal(t, valLookup.GetOperator(), valAddress)
+	assert.Equal(t, valLookup.GetOperator(), valAddress2)
 
 	// query endpoints
 	queryO := types.QueryDelegateKeysByOrchestratorAddress{
-		OrchestratorAddress: cosmosAddress.String(),
+		OrchestratorAddress: cosmosAddress2.String(),
 	}
 	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
 	require.NoError(t, err)
 
 	queryE := types.QueryDelegateKeysByEthAddress{
-		EthAddress: ethAddress.GetAddress(),
+		EthAddress: ethAddress2.GetAddress(),
 	}
 	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
 	require.NoError(t, err)
 
 	// try to set values again. This should fail see issue #344 for why allowing this
 	// would require keeping a history of all validators delegate keys forever
-	msg = types.NewMsgSetOrchestratorAddress(valAddress, cosmosAddress2, *ethAddress2)
+	msg = types.NewMsgSetOrchestratorAddress(valAddress2, cosmosAddress2, *ethAddress2)
 	ctx = ctx.WithBlockTime(blockTime2).WithBlockHeight(blockHeight2)
 	_, err = h(ctx, msg)
 	require.Error(t, err)

@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
@@ -43,10 +44,12 @@ func (msg *MsgSetOrchestratorAddress) Type() string { return "set_operator_addre
 
 // ValidateBasic performs stateless checks
 func (msg *MsgSetOrchestratorAddress) ValidateBasic() (err error) {
-	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil {
+	if _, err = sdk.ValAddressFromBech32(msg.Validator); err != nil ||
+		len(sdk.ValAddress(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())).String()) != len(msg.Validator) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Validator)
 	}
-	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+	if _, err = sdk.AccAddressFromBech32(msg.Orchestrator); err != nil ||
+		len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes()).String()) != len(msg.Orchestrator) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
 	}
 	if err := ValidateEthAddress(msg.EthAddress); err != nil {

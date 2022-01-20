@@ -31,7 +31,7 @@ func TestBatches(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
@@ -238,9 +238,9 @@ func TestBatchesFullCoins(t *testing.T) {
 	var (
 		now                 = time.Now().UTC()
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
 		receiverAddr, _     = types.NewEthAddress(myReceiver)
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"   // Pickle
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"   // Pickle
 		totalCoins, _       = sdk.NewIntFromString("1500000000000000000000") // 1,500 ETH worth
 		oneEth, _           = sdk.NewIntFromString("1000000000000000000")
 		token, err          = types.NewInternalERC20Token(totalCoins, myTokenContractAddr)
@@ -254,7 +254,7 @@ func TestBatchesFullCoins(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
@@ -478,7 +478,7 @@ func TestManyBatches(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
@@ -566,7 +566,7 @@ func TestPoolTxRefund(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
