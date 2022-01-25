@@ -20,7 +20,7 @@ describe("Gas tests", function () {
 
     beforeEach(async () => {
       const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-      bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+      bridgeAccessControl = (await BridgeAccessControl.deploy()) ;
     });
 
     it("makeCheckpoint in isolation", async function () {
