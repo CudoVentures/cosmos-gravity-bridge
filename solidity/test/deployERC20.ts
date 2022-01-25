@@ -21,7 +21,7 @@ async function runTest(opts: {}) {
   let bridgeAccessControl:any
 
   const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+  bridgeAccessControl = (await BridgeAccessControl.deploy());
 
   // Prep and deploy Gravity contract
   // ========================

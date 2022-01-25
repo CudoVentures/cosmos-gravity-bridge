@@ -22,7 +22,7 @@ describe("Gravity happy path valset update + batch submit", function () {
 
   beforeEach(async () => {
     const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-    bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+    bridgeAccessControl = (await BridgeAccessControl.deploy());
   });
 
 

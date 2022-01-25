@@ -22,7 +22,7 @@ async function runTest(opts: {}) {
 
 
   const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+  bridgeAccessControl = (await BridgeAccessControl.deploy());
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();

@@ -62,7 +62,7 @@ async function prep() {
   // ================
 
   const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+  bridgeAccessControl = (await BridgeAccessControl.deploy());
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
 
