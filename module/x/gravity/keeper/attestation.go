@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"encoding/hex"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -173,10 +174,11 @@ func (k Keeper) emitObservedEvent(ctx sdk.Context, att *types.Attestation, claim
 		sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 		// todo: serialize with hex/ base64 ?
 		sdk.NewAttribute(types.AttributeKeyAttestationID,
-			string(types.GetAttestationKey(claim.GetEventNonce(), hash))),
+			hex.EncodeToString(types.GetAttestationKey(claim.GetEventNonce(), hash))),
 		sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(claim.GetEventNonce())),
 		// TODO: do we want to emit more information?
 	)
+
 	ctx.EventManager().EmitEvent(observationEvent)
 }
 
