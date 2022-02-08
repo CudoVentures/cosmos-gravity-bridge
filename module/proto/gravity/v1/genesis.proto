@@ -92,7 +92,8 @@ message Params {
   option (gogoproto.stringer) = false;
 
   string gravity_id                  = 1;
-  string contract_source_hash        = 2;
+  string minimum_transfer_to_eth     = 2;
+  string contract_source_hash        = 3;
   string bridge_ethereum_address     = 4;
   uint64 bridge_chain_id             = 5;
   uint64 signed_valsets_window       = 6;
