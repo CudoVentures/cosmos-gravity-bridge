@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sort"
 	"testing"
@@ -172,4 +173,16 @@ func exportImport(t *testing.T, input *TestInput) {
 	batches := input.GravityKeeper.GetOutgoingTxBatches(input.Context)
 	require.Empty(t, batches)
 	InitGenesis(input.Context, input.GravityKeeper, genesisState)
+}
+
+// Test parsing invalid Minimum Transaction Amount to panic
+func InitGenesisWithFailData(t *testing.T, input *TestInput) {
+	invalidValue := "5.5"
+	expectedPanicMessage := "error while parsing: 5.5"
+	
+	genesisState := ExportGenesis(input.Context, input.GravityKeeper)
+	genesisState.Params.MinimumTransferToEth = invalidValue
+	newEnv := CreateTestEnv(t)
+	input = &newEnv
+	assert.PanicsWithError(t, expectedPanicMessage, func(){InitGenesis(input.Context, input.GravityKeeper, genesisState)})
 }
