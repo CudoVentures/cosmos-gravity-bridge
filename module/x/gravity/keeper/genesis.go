@@ -11,6 +11,12 @@ import (
 
 // InitGenesis starts a chain from a genesis state
 func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
+	
+	_, ok := sdk.NewIntFromString(data.Params.MinimumTransferToEth)
+	if !ok {
+		panic(fmt.Errorf("error while parsing: %s", data.Params.MinimumTransferToEth))
+	}
+	
 	k.SetParams(ctx, *data.Params)
 	// reset valsets in state
 	for _, vs := range data.Valsets {
