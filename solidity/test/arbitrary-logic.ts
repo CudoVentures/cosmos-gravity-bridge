@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { TestLogicContract } from "../typechain/TestLogicContract";
 import { SimpleLogicBatchMiddleware } from "../typechain/SimpleLogicBatchMiddleware";
+import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -35,6 +36,11 @@ async function runTest(opts: {
 
   // Prep and deploy contract
   // ========================
+  let bridgeAccessControl: any
+
+  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
+  bridgeAccessControl = await BridgeAccessControl.deploy();
+
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
   // This is the power distribution on the Cosmos hub as of 7/14/2020
@@ -45,7 +51,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId,  powerThreshold, validators, powers);
+  } = await deployContracts(gravityId,  powerThreshold, validators, powers, bridgeAccessControl.address);
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
   // contract a bunch of times in a batch.
@@ -295,7 +301,14 @@ describe("submitLogicCall tests", function () {
 
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
-describe("logicCall Go test hash", function () {
+describe("logicCall Go test hash", async function () {
+  let bridgeAccessControl:any
+
+  beforeEach(async () => {
+    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
+    bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+  });
+
   it("produces good hash", async function () {
 
 
@@ -310,7 +323,7 @@ describe("logicCall Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, validators, powers);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
 
 
 
@@ -405,28 +418,28 @@ describe("logicCall Go test hash", function () {
       logicCallArgs
     )
 
-    console.log("elements in logic call digest:", {
-      "gravityId": gravityId,
-      "logicMethodName": methodName,
-      "transferAmounts": logicCallArgs.transferAmounts,
-      "transferTokenContracts": logicCallArgs.transferTokenContracts,
-      "feeAmounts": logicCallArgs.feeAmounts,
-      "feeTokenContracts": logicCallArgs.feeTokenContracts,
-      "logicContractAddress": logicCallArgs.logicContractAddress,
-      "payload": logicCallArgs.payload,
-      "timeout": logicCallArgs.timeOut,
-      "invalidationId": logicCallArgs.invalidationId,
-      "invalidationNonce": logicCallArgs.invalidationNonce
-    })
-    console.log("abiEncodedCall:", abiEncodedLogicCall)
-    console.log("callDigest:", logicCallDigest)
+    // console.log("elements in logic call digest:", {
+    //   "gravityId": gravityId,
+    //   "logicMethodName": methodName,
+    //   "transferAmounts": logicCallArgs.transferAmounts,
+    //   "transferTokenContracts": logicCallArgs.transferTokenContracts,
+    //   "feeAmounts": logicCallArgs.feeAmounts,
+    //   "feeTokenContracts": logicCallArgs.feeTokenContracts,
+    //   "logicContractAddress": logicCallArgs.logicContractAddress,
+    //   "payload": logicCallArgs.payload,
+    //   "timeout": logicCallArgs.timeOut,
+    //   "invalidationId": logicCallArgs.invalidationId,
+    //   "invalidationNonce": logicCallArgs.invalidationNonce
+    // })
+    // console.log("abiEncodedCall:", abiEncodedLogicCall)
+    // console.log("callDigest:", logicCallDigest)
 
-    console.log("elements in logic call function call:", {
-      "currentValidators": await getSignerAddresses(validators),
-      "currentPowers": powers,
-      "currentValsetNonce": currentValsetNonce,
-      "sigs": sigs,
-    })
-    console.log("Function call bytes:", res.data)
+    // console.log("elements in logic call function call:", {
+    //   "currentValidators": await getSignerAddresses(validators),
+    //   "currentPowers": powers,
+    //   "currentValsetNonce": currentValsetNonce,
+    //   "sigs": sigs,
+    // })
+    // console.log("Function call bytes:", res.data)
 
 })});

@@ -10,7 +10,8 @@ import { getSignerAddresses } from "../test-utils/pure";
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Hashing test", function() {
+describe("Hashing test", function() { 
+  
   it("Hashing test", async function() {
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
