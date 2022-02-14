@@ -6,6 +6,7 @@ use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
 use ethereum_gravity::utils::get_gravity_id;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_utils::types::RelayerConfig;
 use std::time::{Duration, Instant};
 use tokio::time::sleep as delay_for;
 use tonic::transport::Channel;
@@ -20,9 +21,9 @@ pub async fn relayer_main_loop(
     web3: Web3,
     grpc_client: GravityQueryClient<Channel>,
     gravity_contract_address: EthAddress,
+    relayer_config: &RelayerConfig,
 ) {
     let mut grpc_client = grpc_client;
-
     loop {
         let loop_start = Instant::now();
 
@@ -39,11 +40,9 @@ pub async fn relayer_main_loop(
             get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
         if gravity_id.is_err() {
             error!("Failed to get GravityID, check your Eth node");
-            loop_delay(loop_start).await;
             continue;
         }
         let gravity_id = gravity_id.unwrap();
-        let gravity_id = String::from_utf8(gravity_id.clone()).expect("Invalid GravityID");
 
         relay_valsets(
             current_valset.clone(),
@@ -53,6 +52,7 @@ pub async fn relayer_main_loop(
             gravity_contract_address,
             gravity_id.clone(),
             LOOP_SPEED,
+            relayer_config,
         )
         .await;
 
@@ -64,6 +64,7 @@ pub async fn relayer_main_loop(
             gravity_contract_address,
             gravity_id.clone(),
             LOOP_SPEED,
+            relayer_config,
         )
         .await;
 
@@ -75,23 +76,16 @@ pub async fn relayer_main_loop(
             gravity_contract_address,
             gravity_id.clone(),
             LOOP_SPEED,
+            relayer_config,
         )
         .await;
 
         // a bit of logic that tires to keep things running every 5 seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
         // the timing being off significantly
-        loop_delay(loop_start).await;
-        // let elapsed = Instant::now() - loop_start;
-        // if elapsed < LOOP_SPEED {
-        //     delay_for(LOOP_SPEED - elapsed).await;
-        // }
-    }
-}
-
-async fn loop_delay(loop_start: Instant) {
-    let elapsed = Instant::now() - loop_start;
-    if elapsed < LOOP_SPEED {
-        delay_for(LOOP_SPEED - elapsed).await;
+        let elapsed = Instant::now() - loop_start;
+        if elapsed < LOOP_SPEED {
+            delay_for(LOOP_SPEED - elapsed).await;
+        }
     }
 }

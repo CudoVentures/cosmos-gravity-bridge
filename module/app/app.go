@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/gorilla/mux"
@@ -88,6 +89,14 @@ import (
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
 
+	// "github.com/osmosis-labs/bech32-ibc/x/bech32ibc"
+	// bech32ibckeeper "github.com/osmosis-labs/bech32-ibc/x/bech32ibc/keeper"
+	// bech32ibctypes "github.com/osmosis-labs/bech32-ibc/x/bech32ibc/types"
+	// "github.com/osmosis-labs/bech32-ibc/x/bech32ics20"
+	// bech32ics20keeper "github.com/osmosis-labs/bech32-ibc/x/bech32ics20/keeper"
+
+	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
@@ -129,6 +138,8 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		gravity.AppModuleBasic{},
+		// bech32ibc.AppModuleBasic{},
+		// bech32ics20.AppModuleBasic{},
 		feegrantmod.AppModuleBasic{},
 	)
 
@@ -196,8 +207,10 @@ type Gravity struct {
 	ibcKeeper        *ibckeeper.Keeper
 	evidenceKeeper   evidencekeeper.Keeper
 	transferKeeper   ibctransferkeeper.Keeper
-	gravityKeeper    keeper.Keeper
-	feegrantKeeper   feegrantkeeper.Keeper
+	// bech32IBCKeeper   bech32ibckeeper.Keeper
+	// bech32ICS20Keeper bech32ics20keeper.Keeper
+	gravityKeeper  keeper.Keeper
+	feegrantKeeper feegrantkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -238,11 +251,14 @@ func NewGravityApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		gravitytypes.StoreKey, feegrant.StoreKey,
+		gravitytypes.StoreKey,
+		// bech32ibctypes.StoreKey,
+		feegrant.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
+	//nolint: exhaustivestruct
 	var app = &Gravity{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
@@ -333,14 +349,6 @@ func NewGravityApp(
 		app.BaseApp,
 	)
 
-	app.stakingKeeper = *stakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(
-			app.distrKeeper.Hooks(),
-			app.slashingKeeper.Hooks(),
-			app.gravityKeeper.Hooks(),
-		),
-	)
-
 	app.feegrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.accountKeeper)
 
 	app.ibcKeeper = ibckeeper.NewKeeper(
@@ -375,6 +383,16 @@ func NewGravityApp(
 		app.accountKeeper, app.bankKeeper, scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.transferKeeper)
+	// app.bech32IBCKeeper = *bech32ibckeeper.NewKeeper(
+	// 	app.ibcKeeper.ChannelKeeper, appCodec, keys[bech32ibctypes.StoreKey],
+	// 	app.transferKeeper,
+	// )
+
+	// app.bech32ICS20Keeper = *bech32ics20keeper.NewKeeper(
+	// 	app.ibcKeeper.ChannelKeeper,
+	// 	app.bankKeeper, app.transferKeeper,
+	// 	app.bech32IBCKeeper, app.transferKeeper, appCodec,
+	// )
 
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
@@ -388,6 +406,11 @@ func NewGravityApp(
 	)
 	app.evidenceKeeper = *evidenceKeeper
 
+	// app.bech32IBCKeeper = *bech32ibckeeper.NewKeeper(
+	// 	app.ibcKeeper.ChannelKeeper, appCodec, keys[bech32ibctypes.StoreKey],
+	// 	app.transferKeeper,
+	// )
+
 	app.gravityKeeper = keeper.NewKeeper(
 		appCodec,
 		keys[gravitytypes.StoreKey],
@@ -395,6 +418,14 @@ func NewGravityApp(
 		stakingKeeper,
 		app.bankKeeper,
 		app.slashingKeeper,
+	)
+
+	app.stakingKeeper = *stakingKeeper.SetHooks(
+		stakingtypes.NewMultiStakingHooks(
+			app.distrKeeper.Hooks(),
+			app.slashingKeeper.Hooks(),
+			app.gravityKeeper.Hooks(),
+		),
 	)
 
 	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
@@ -468,6 +499,8 @@ func NewGravityApp(
 			app.bankKeeper,
 		),
 		feegrantmod.NewAppModule(appCodec, app.accountKeeper, app.bankKeeper, app.feegrantKeeper, app.interfaceRegistry),
+		// bech32ibc.NewAppModule(appCodec, app.bech32IBCKeeper),
+		// bech32ics20.NewAppModule(appCodec, app.bech32ICS20Keeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(
@@ -500,13 +533,14 @@ func NewGravityApp(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		gravitytypes.ModuleName,
+		// bech32ibctypes.ModuleName,
+		// bech32ics20types.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	// app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
 	// app.mm.RegisterServices(module.NewConfigurator(app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	app.mm.RegisterServices(module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
 
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.accountKeeper, authsims.RandomGenesisAccounts),
@@ -560,7 +594,31 @@ func NewGravityApp(
 		// that in-memory capabilities get regenerated on app restart.
 		// Note that since this reads from the store, we can only perform it when
 		// `loadLatest` is set to true.
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{
+			Version: tmversion.Consensus{
+				Block: 0,
+				App:   0,
+			},
+			ChainID: "",
+			Height:  0,
+			Time:    time.Time{},
+			LastBlockId: tmproto.BlockID{
+				Hash: []byte{},
+				PartSetHeader: tmproto.PartSetHeader{
+					Total: 0,
+					Hash:  []byte{},
+				},
+			},
+			LastCommitHash:     []byte{},
+			DataHash:           []byte{},
+			ValidatorsHash:     []byte{},
+			NextValidatorsHash: []byte{},
+			ConsensusHash:      []byte{},
+			AppHash:            []byte{},
+			LastResultsHash:    []byte{},
+			EvidenceHash:       []byte{},
+			ProposerAddress:    []byte{},
+		})
 		app.capabilityKeeper.InitMemStore(ctx)
 		app.capabilityKeeper.Seal()
 	}

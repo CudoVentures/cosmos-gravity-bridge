@@ -17,21 +17,31 @@ import (
 // GetOutgoingLogicCall gets an outgoing logic call
 func (k Keeper) GetOutgoingLogicCall(ctx sdk.Context, invalidationID []byte, invalidationNonce uint64) *types.OutgoingLogicCall {
 	store := ctx.KVStore(k.storeKey)
-	call := types.OutgoingLogicCall{}
+	call := types.OutgoingLogicCall{
+		Transfers:            []*types.ERC20Token{},
+		Fees:                 []*types.ERC20Token{},
+		LogicContractAddress: "",
+		Payload:              []byte{},
+		Timeout:              0,
+		InvalidationId:       invalidationID,
+		InvalidationNonce:    invalidationNonce,
+		Block:                0,
+	}
 	k.cdc.MustUnmarshal(store.Get(types.GetOutgoingLogicCallKey(invalidationID, invalidationNonce)), &call)
 	return &call
 }
 
 // SetOutogingLogicCall sets an outgoing logic call
 func (k Keeper) SetOutgoingLogicCall(ctx sdk.Context, call *types.OutgoingLogicCall) {
-	store := ctx.KVStore(k.storeKey)
+	ctx.Logger().Error("SetOutgoingLogicCall is not supported", "module", types.ModuleName)
+	// store := ctx.KVStore(k.storeKey)
 
-	// Store checkpoint to prove that this logic call actually happened
-	checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
-	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
+	// // Store checkpoint to prove that this logic call actually happened
+	// checkpoint := call.GetCheckpoint(k.GetGravityID(ctx))
+	// k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
-	store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
-		k.cdc.MustMarshal(call))
+	// store.Set(types.GetOutgoingLogicCallKey(call.InvalidationId, call.InvalidationNonce),
+	// 	k.cdc.MustMarshal(call))
 }
 
 // DeleteOutgoingLogicCall deletes outgoing logic calls
@@ -110,7 +120,13 @@ func (k Keeper) GetLogicCallConfirm(ctx sdk.Context, invalidationId []byte, inva
 	if data == nil {
 		return nil
 	}
-	out := types.MsgConfirmLogicCall{}
+	out := types.MsgConfirmLogicCall{
+		InvalidationId:    "",
+		InvalidationNonce: invalidationNonce,
+		EthSigner:         "",
+		Orchestrator:      "",
+		Signature:         "",
+	}
 	k.cdc.MustUnmarshal(data, &out)
 	return &out
 }
@@ -135,7 +151,13 @@ func (k Keeper) IterateLogicConfirmByInvalidationIDAndNonce(
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgConfirmLogicCall{}
+		confirm := types.MsgConfirmLogicCall{
+			InvalidationId:    "",
+			InvalidationNonce: invalidationNonce,
+			EthSigner:         "",
+			Orchestrator:      "",
+			Signature:         "",
+		}
 		k.cdc.MustUnmarshal(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), &confirm) {

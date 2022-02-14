@@ -53,6 +53,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
@@ -80,7 +81,10 @@ var (
 	)
 
 	// Ensure that StakingKeeperMock implements required interface
-	_ types.StakingKeeper = &StakingKeeperMock{}
+	_ types.StakingKeeper = &StakingKeeperMock{
+		BondedValidators: []stakingtypes.Validator{},
+		ValidatorPower:   map[string]int64{},
+	}
 )
 
 var (
@@ -194,12 +198,10 @@ var (
 		AverageEthereumBlockTime:     15000,
 		SlashFractionValset:          sdk.NewDecWithPrec(1, 2),
 		SlashFractionBatch:           sdk.NewDecWithPrec(1, 2),
+		SlashFractionLogicCall:       sdk.Dec{},
 		UnbondSlashingValsetsWindow:  15,
 		SlashFractionBadEthSignature: sdk.NewDecWithPrec(1, 2),
-		ValsetReward: sdk.Coin{
-			Denom:  "",
-			Amount: sdk.ZeroInt(),
-		},
+		ValsetReward:                 sdk.Coin{Denom: "", Amount: sdk.ZeroInt()},
 	}
 )
 
@@ -243,6 +245,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 		// Set the account in state
 		input.AccountKeeper.SetAccount(input.Context, acc)
 
+		input.GravityKeeper.SetStaticValCosmosAddr(input.Context, AccAddrs[i].String())
 		// Create a validator for that account using some of the tokens in the account
 		// and the staking handler
 		_, err := sh(
@@ -250,7 +253,7 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 			NewTestMsgCreateValidator(ValAddrs[i], ConsPubKeys[i], StakingAmount),
 		)
 
-		// Return error if one exists
+		// Return error if one
 		require.NoError(t, err)
 	}
 
@@ -259,7 +262,11 @@ func SetupFiveValChain(t *testing.T) (TestInput, sdk.Context) {
 
 	// Register eth addresses for each validator
 	for i, addr := range ValAddrs {
-		input.GravityKeeper.SetEthAddressForValidator(input.Context, addr, EthAddrs[i].String())
+		ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
+		if err != nil {
+			panic("found invalid address in EthAddrs")
+		}
+		input.GravityKeeper.SetEthAddressForValidator(input.Context, addr, *ethAddr)
 	}
 
 	// Return the test input
@@ -298,8 +305,29 @@ func CreateTestEnv(t *testing.T) TestInput {
 
 	// Create sdk.Context
 	ctx := sdk.NewContext(ms, tmproto.Header{
-		Height: 1234567,
-		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		Version: tmversion.Consensus{
+			Block: 0,
+			App:   0,
+		},
+		ChainID: "",
+		Height:  1234567,
+		Time:    time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+		LastBlockId: tmproto.BlockID{
+			Hash: []byte{},
+			PartSetHeader: tmproto.PartSetHeader{
+				Total: 0,
+				Hash:  []byte{},
+			},
+		},
+		LastCommitHash:     []byte{},
+		DataHash:           []byte{},
+		ValidatorsHash:     []byte{},
+		NextValidatorsHash: []byte{},
+		ConsensusHash:      []byte{},
+		AppHash:            []byte{},
+		LastResultsHash:    []byte{},
+		EvidenceHash:       []byte{},
+		ProposerAddress:    []byte{},
 	}, false, log.TestingLogger())
 
 	cdc := MakeTestCodec()
@@ -343,7 +371,10 @@ func CreateTestEnv(t *testing.T) TestInput {
 		getSubspace(paramsKeeper, banktypes.ModuleName),
 		blockedAddr,
 	)
-	bankKeeper.SetParams(ctx, banktypes.Params{DefaultSendEnabled: true})
+	bankKeeper.SetParams(ctx, banktypes.Params{
+		SendEnabled:        []*banktypes.SendEnabled{},
+		DefaultSendEnabled: true,
+	})
 
 	stakingKeeper := stakingkeeper.NewKeeper(marshaler, keyStaking, accountKeeper, bankKeeper, getSubspace(paramsKeeper, stakingtypes.ModuleName))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -355,7 +386,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 	distKeeper.SetFeePool(ctx, distrtypes.InitialFeePool())
 
 	// total supply to track this
-	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
+	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100500000))
 	bankKeeper.MintCoins(ctx, "gravity", totalSupply)
 	// bankKeeper.SetSupply(ctx, banktypes.NewSupply(totalSupply))
 
@@ -364,7 +395,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		mod := authtypes.NewEmptyModuleAccount(name, perms...)
 		if name == stakingtypes.NotBondedPoolName {
 			// err = bankKeeper.SetBalances(ctx, mod.GetAddress(), totalSupply)
-			err = bankKeeper.SendCoinsFromModuleToModule(ctx, "gravity", mod.GetName(), totalSupply)
+			err = bankKeeper.SendCoinsFromModuleToModule(ctx, "gravity", mod.GetName(), totalSupply.Sub(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000))))
 			require.NoError(t, err)
 		} else if name == distrtypes.ModuleName {
 			// some big pot to pay out
@@ -380,9 +411,15 @@ func CreateTestEnv(t *testing.T) TestInput {
 	require.NotNil(t, moduleAcct)
 
 	router := baseapp.NewRouter()
-	router.AddRoute(bank.AppModule{}.Route())
-	router.AddRoute(staking.AppModule{}.Route())
-	router.AddRoute(distribution.AppModule{}.Route())
+	router.AddRoute(bank.AppModule{
+		AppModuleBasic: bank.AppModuleBasic{},
+	}.Route())
+	router.AddRoute(staking.AppModule{
+		AppModuleBasic: staking.AppModuleBasic{},
+	}.Route())
+	router.AddRoute(distribution.AppModule{
+		AppModuleBasic: distribution.AppModuleBasic{},
+	}.Route())
 
 	// Load default wasm config
 
@@ -465,7 +502,7 @@ func MakeTestMarshaler() codec.Codec {
 }
 
 // MintVouchersFromAir creates new gravity vouchers given erc20tokens
-func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.ERC20Token) sdk.Coin {
+func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
 	coin := amount.GravityCoin()
 	vouchers := sdk.Coins{coin}
 	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
@@ -485,7 +522,35 @@ func NewStakingKeeperMock(operators ...sdk.ValAddress) *StakingKeeperMock {
 	for _, a := range operators {
 		r.BondedValidators = append(r.BondedValidators, stakingtypes.Validator{
 			OperatorAddress: a.String(),
+			ConsensusPubkey: &codectypes.Any{
+				TypeUrl:              "",
+				Value:                []byte{},
+				XXX_NoUnkeyedLiteral: struct{}{},
+				XXX_unrecognized:     []byte{},
+				XXX_sizecache:        0,
+			},
+			Jailed:          false,
 			Status:          stakingtypes.Bonded,
+			Tokens:          InitTokens,
+			DelegatorShares: sdk.Dec{},
+			Description: stakingtypes.Description{
+				Moniker:         "",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			},
+			UnbondingHeight: 0,
+			UnbondingTime:   time.Time{},
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.Dec{},
+					MaxRate:       sdk.Dec{},
+					MaxChangeRate: sdk.Dec{},
+				},
+				UpdateTime: time.Time{},
+			},
+			MinSelfDelegation: sdk.Int{},
 		})
 		r.ValidatorPower[a.String()] = defaultTestPower
 	}
@@ -508,7 +573,35 @@ func NewStakingKeeperWeightedMock(t ...MockStakingValidatorData) *StakingKeeperM
 	for i, a := range t {
 		r.BondedValidators[i] = stakingtypes.Validator{
 			OperatorAddress: a.Operator.String(),
+			ConsensusPubkey: &codectypes.Any{
+				TypeUrl:              "",
+				Value:                []byte{},
+				XXX_NoUnkeyedLiteral: struct{}{},
+				XXX_unrecognized:     []byte{},
+				XXX_sizecache:        0,
+			},
+			Jailed:          false,
 			Status:          stakingtypes.Bonded,
+			Tokens:          InitTokens,
+			DelegatorShares: sdk.Dec{},
+			Description: stakingtypes.Description{
+				Moniker:         "",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			},
+			UnbondingHeight: 0,
+			UnbondingTime:   time.Time{},
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.Dec{},
+					MaxRate:       sdk.Dec{},
+					MaxChangeRate: sdk.Dec{},
+				},
+				UpdateTime: time.Time{},
+			},
+			MinSelfDelegation: sdk.Int{},
 		}
 		r.ValidatorPower[a.Operator.String()] = a.Power
 	}
@@ -608,7 +701,38 @@ func (s *StakingKeeperMock) GetValidator(ctx sdk.Context, addr sdk.ValAddress) (
 			return val, true
 		}
 	}
-	return stakingtypes.Validator{}, false
+	return stakingtypes.Validator{
+		OperatorAddress: "",
+		ConsensusPubkey: &codectypes.Any{
+			TypeUrl:              "",
+			Value:                []byte{},
+			XXX_NoUnkeyedLiteral: struct{}{},
+			XXX_unrecognized:     []byte{},
+			XXX_sizecache:        0,
+		},
+		Jailed:          false,
+		Status:          0,
+		Tokens:          InitTokens,
+		DelegatorShares: sdk.Dec{},
+		Description: stakingtypes.Description{
+			Moniker:         "",
+			Identity:        "",
+			Website:         "",
+			SecurityContact: "",
+			Details:         "",
+		},
+		UnbondingHeight: 0,
+		UnbondingTime:   time.Time{},
+		Commission: stakingtypes.Commission{
+			CommissionRates: stakingtypes.CommissionRates{
+				Rate:          sdk.Dec{},
+				MaxRate:       sdk.Dec{},
+				MaxChangeRate: sdk.Dec{},
+			},
+			UpdateTime: time.Time{},
+		},
+		MinSelfDelegation: sdk.Int{},
+	}, false
 }
 
 func (s *StakingKeeperMock) ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator {
@@ -682,7 +806,13 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, am
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	out, err := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin("stake", amt),
-		stakingtypes.Description{}, commission, sdk.OneInt(),
+		stakingtypes.Description{
+			Moniker:         "",
+			Identity:        "",
+			Website:         "",
+			SecurityContact: "",
+			Details:         "",
+		}, commission, sdk.OneInt(),
 	)
 	if err != nil {
 		panic(err)

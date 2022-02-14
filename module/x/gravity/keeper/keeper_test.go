@@ -1,10 +1,9 @@
 package keeper
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +11,7 @@ import (
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
+//nolint: exhaustivestruct
 func TestPrefixRange(t *testing.T) {
 	cases := map[string]struct {
 		src      []byte
@@ -45,6 +45,7 @@ func TestPrefixRange(t *testing.T) {
 	}
 }
 
+//nolint: exhaustivestruct
 func TestCurrentValsetNormalization(t *testing.T) {
 	specs := map[string]struct {
 		srcPowers []uint64
@@ -66,21 +67,28 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
-				cAddr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+				cAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+				vAddr := sdk.ValAddress(cAddr)
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
-					Operator: cAddr,
+					Operator: vAddr,
 					Power:    int64(v),
 				}
-				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, "0xf71402f886b45c134743F4c00750823Bbf5Fd045")
+				ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
+				require.NoError(t, err)
+				input.GravityKeeper.SetEthAddressForValidator(ctx, vAddr, *ethAddr)
+				input.GravityKeeper.SetStaticValCosmosAddr(ctx, cAddr.String())
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentValset(ctx)
-			assert.Equal(t, spec.expPowers, types.BridgeValidators(r.Members).GetPowers())
+			rMembers, err := types.BridgeValidators(r.Members).ToInternal()
+			require.NoError(t, err)
+			assert.Equal(t, spec.expPowers, rMembers.GetPowers())
 		})
 	}
 }
 
+//nolint: exhaustivestruct
 func TestAttestationIterator(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -110,8 +118,13 @@ func TestAttestationIterator(t *testing.T) {
 		CosmosReceiver: AccAddrs[0].String(),
 		Orchestrator:   AccAddrs[0].String(),
 	}
-	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, dep1.ClaimHash(), att1)
-	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, dep2.ClaimHash(), att2)
+	hash1, err := dep1.ClaimHash()
+	require.NoError(t, err)
+	hash2, err := dep2.ClaimHash()
+	require.NoError(t, err)
+
+	input.GravityKeeper.SetAttestation(ctx, dep1.EventNonce, hash1, att1)
+	input.GravityKeeper.SetAttestation(ctx, dep2.EventNonce, hash2, att2)
 
 	atts := []types.Attestation{}
 	input.GravityKeeper.IterateAttestaions(ctx, func(_ []byte, att types.Attestation) bool {
@@ -122,14 +135,15 @@ func TestAttestationIterator(t *testing.T) {
 	require.Len(t, atts, 2)
 }
 
+//nolint: exhaustivestruct
 func TestDelegateKeys(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	k := input.GravityKeeper
 	var (
-		ethAddrs = []string{"0x3146D2d6Eed46Afa423969f5dDC3152DfC359b09",
-			"0x610277F0208D342C576b991daFdCb36E36515e76", "0x835973768750b3ED2D5c3EF5AdcD5eDb44d12aD4",
-			"0xb2A7F3E84F8FdcA1da46c810AEa110dd96BAE6bF"}
+		ethAddrs = []string{"0x3146d2d6eed46afa423969f5ddc3152dfc359b09",
+			"0x610277f0208d342c576b991dafdcb36e36515e76", "0x835973768750b3ed2d5c3ef5adcd5edb44d12ad4",
+			"0xb2a7f3e84f8fdca1da46c810aea110dd96bae6bf"}
 
 		valAddrs = []string{"cosmosvaloper1jpz0ahls2chajf78nkqczdwwuqcu97w6z3plt4",
 			"cosmosvaloper15n79nty2fj37ant3p2gj4wju4ls6eu6tjwmdt0", "cosmosvaloper16dnkc6ac6ruuyr6l372fc3p77jgjpet6fka0cq",
@@ -148,7 +162,9 @@ func TestDelegateKeys(t *testing.T) {
 		// set the orchestrator address
 		k.SetOrchestratorValidator(ctx, val, orch)
 		// set the ethereum address
-		k.SetEthAddressForValidator(ctx, val, ethAddrs[i])
+		ethAddr, err := types.NewEthAddress(ethAddrs[i])
+		require.NoError(t, err)
+		k.SetEthAddressForValidator(ctx, val, *ethAddr)
 	}
 
 	addresses := k.GetDelegateKeys(ctx)
@@ -161,10 +177,10 @@ func TestDelegateKeys(t *testing.T) {
 
 }
 
+//nolint: exhaustivestruct
 func TestLastSlashedValsetNonce(t *testing.T) {
-	input := CreateTestEnv(t)
+	input, ctx := SetupFiveValChain(t)
 	k := input.GravityKeeper
-	ctx := input.Context
 
 	vs := k.GetCurrentValset(ctx)
 
@@ -207,5 +223,4 @@ func TestLastSlashedValsetNonce(t *testing.T) {
 	// when signedValsetsWindow > latest valset's height
 	unslashedValsets = k.GetUnSlashedValsets(ctx, heightDiff-6)
 	assert.Equal(t, len(unslashedValsets), 6)
-	fmt.Println("unslashedValsetsRange", unslashedValsets)
 }

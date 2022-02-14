@@ -1,9 +1,8 @@
 package types
 
 import (
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -57,9 +56,6 @@ var (
 
 	// DenomiatorPrefix indexes token contract addresses from ETH on gravity
 	DenomiatorPrefix = []byte{0x8}
-
-	// SecondIndexOutgoingTXFeeKey indexes fee amounts by token contract address
-	SecondIndexOutgoingTXFeeKey = []byte{0x9}
 
 	// OutgoingTXBatchKey indexes outgoing tx batches under a nonce and token address
 	OutgoingTXBatchKey = []byte{0xa}
@@ -129,6 +125,8 @@ var (
 
 	// PastEthSignatureCheckpointKey indexes eth signature checkpoints that have existed
 	PastEthSignatureCheckpointKey = []byte{0x1b}
+
+	StaticValCosmosAddrKey = []byte{0x40}
 )
 
 // GetOrchestratorAddressKey returns the following key format
@@ -148,8 +146,8 @@ func GetEthAddressByValidatorKey(validator sdk.ValAddress) []byte {
 // GetValidatorByEthAddressKey returns the following key format
 // prefix              cosmos-validator
 // [0xf9][0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B]
-func GetValidatorByEthAddressKey(ethAddress string) []byte {
-	return append(ValidatorByEthAddressKey, []byte(ethAddress)...)
+func GetValidatorByEthAddressKey(ethAddress EthAddress) []byte {
+	return append(ValidatorByEthAddressKey, []byte(ethAddress.GetAddress())...)
 }
 
 // GetValsetKey returns the following key format
@@ -167,6 +165,10 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 	return append(ValsetConfirmKey, append(UInt64Bytes(nonce), validator.Bytes()...)...)
 }
 
+func GetStaticValCosmosAddrKey(cosmosAddr string) []byte {
+	return append(StaticValCosmosAddrKey, []byte(cosmosAddr)...)
+}
+
 // GetClaimKey returns the following key format
 // prefix type               cosmos-validator-address                       nonce                             attestation-details-hash
 // [0x0][0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
@@ -175,7 +177,11 @@ func GetValsetConfirmKey(nonce uint64, validator sdk.AccAddress) []byte {
 func GetClaimKey(details EthereumClaim) []byte {
 	var detailsHash []byte
 	if details != nil {
-		detailsHash = details.ClaimHash()
+		var err error
+		detailsHash, err = details.ClaimHash()
+		if err != nil {
+			panic(sdkerrors.Wrap(err, "unable to compute claim hash"))
+		}
 	} else {
 		panic("No claim without details!")
 	}
@@ -184,7 +190,7 @@ func GetClaimKey(details EthereumClaim) []byte {
 	addr := []byte{byte(details.GetType())}
 	key := make([]byte, len(OracleClaimKey)+claimTypeLen+len(addr)+len(nonceBz)+len(detailsHash))
 	copy(key[0:], OracleClaimKey)
-	copy(key[len(OracleClaimKey):], addr)
+	copy(key[len(OracleClaimKey):], []byte{byte(details.GetType())})
 	// TODO this is the delegate address, should be stored by the valaddress
 	copy(key[len(OracleClaimKey)+claimTypeLen:], details.GetClaimer())
 	copy(key[len(OracleClaimKey)+claimTypeLen+len(addr):], nonceBz)
@@ -207,33 +213,34 @@ func GetAttestationKey(eventNonce uint64, claimHash []byte) []byte {
 	return key
 }
 
-// GetAttestationKeyWithHash returns the following key format
-// prefix     nonce                             claim-details-hash
-// [0x5][0 0 0 0 0 0 0 1][fd1af8cec6c67fcf156f1b61fdf91ebc04d05484d007436e75342fc05bbff35a]
-// An attestation is an event multiple people are voting on, this function needs the claim
-// details because each Attestation is aggregating all claims of a specific event, lets say
-// validator X and validator y where making different claims about the same event nonce
-// Note that the claim hash does NOT include the claimer address and only identifies an event
-func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
-	key := make([]byte, len(OracleAttestationKey)+len(UInt64Bytes(0))+len(claimHash))
-	copy(key[0:], OracleAttestationKey)
-	copy(key[len(OracleAttestationKey):], UInt64Bytes(eventNonce))
-	copy(key[len(OracleAttestationKey)+len(UInt64Bytes(0)):], claimHash)
-	return key
+// GetOutgoingTxPoolContractPrefix returns the following key format
+// prefix	feeContract
+// [0x6][0xc783df8a850f42e7F7e57013759C285caa701eB6]
+// This prefix is used for iterating over unbatched transactions for a given contract
+func GetOutgoingTxPoolContractPrefix(contractAddress EthAddress) []byte {
+	return append(OutgoingTXPoolKey, []byte(contractAddress.GetAddress())...)
 }
 
 // GetOutgoingTxPoolKey returns the following key format
-// prefix     id
-// [0x6][0 0 0 0 0 0 0 1]
-func GetOutgoingTxPoolKey(id uint64) []byte {
-	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
+// prefix	feeContract		feeAmount     id
+// [0x6][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000][0 0 0 0 0 0 0 1]
+func GetOutgoingTxPoolKey(fee InternalERC20Token, id uint64) []byte {
+	// sdkInts have a size limit of 255 bits or 32 bytes
+	// therefore this will never panic and is always safe
+	amount := make([]byte, 32)
+	amount = fee.Amount.BigInt().FillBytes(amount)
+
+	a := append(amount, UInt64Bytes(id)...)
+	b := append([]byte(fee.Contract.GetAddress()), a...)
+	r := append(OutgoingTXPoolKey, b...)
+	return r
 }
 
 // GetOutgoingTxBatchKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, []byte(strings.ToLower(tokenContract))...), UInt64Bytes(nonce)...)
+func GetOutgoingTxBatchKey(tokenContract EthAddress, nonce uint64) []byte {
+	return append(append(OutgoingTXBatchKey, []byte(tokenContract.GetAddress())...), UInt64Bytes(nonce)...)
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
@@ -247,27 +254,11 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
+func GetBatchConfirmKey(tokenContract EthAddress, batchNonce uint64, validator sdk.AccAddress) []byte {
 	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append([]byte(strings.ToLower(tokenContract)), a...)
+	b := append([]byte(tokenContract.GetAddress()), a...)
 	c := append(BatchConfirmKey, b...)
 	return c
-}
-
-// GetFeeSecondIndexKey returns the following key format
-// prefix            eth-contract-address            fee_amount
-// [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
-func GetFeeSecondIndexKey(fee ERC20Token) []byte {
-	r := make([]byte, 1+ETHContractAddressLen+32)
-	// sdkInts have a size limit of 255 bits or 32 bytes
-	// therefore this will never panic and is always safe
-	amount := make([]byte, 32)
-	amount = fee.Amount.BigInt().FillBytes(amount)
-	// TODO this won't ever work fix it
-	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(strings.ToLower(fee.Contract)))
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(fee.Contract):], amount)
-	return r
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
@@ -282,8 +273,8 @@ func GetDenomToERC20Key(denom string) []byte {
 	return append(DenomToERC20Key, []byte(denom)...)
 }
 
-func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(ERC20ToDenomKey, []byte(strings.ToLower(erc20))...)
+func GetERC20ToDenomKey(erc20 EthAddress) []byte {
+	return append(ERC20ToDenomKey, []byte(erc20.GetAddress())...)
 }
 
 func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {

@@ -1,7 +1,6 @@
 package gravity
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
@@ -67,158 +65,177 @@ func TestValsetSlashing_ValsetCreated_Before_ValidatorBonded(t *testing.T) {
 	require.False(t, val.IsJailed())
 }
 
-func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
-	//	Slashing Conditions for Bonded Validator
+//Slashing in gravity has been removed
 
-	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	params := input.GravityKeeper.GetParams(ctx)
+// func TestValsetSlashing_ValsetCreated_After_ValidatorBonded(t *testing.T) {
+// 	//	Slashing Conditions for Bonded Validator
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
-	vs := pk.GetCurrentValset(ctx)
-	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
-	vs.Height = height
+// 	input, ctx := keeper.SetupFiveValChain(t)
+// 	pk := input.GravityKeeper
+// 	params := input.GravityKeeper.GetParams(ctx)
 
-	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
-	pk.StoreValsetUnsafe(ctx, vs)
+// 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
+// 	vs := pk.GetCurrentValset(ctx)
+// 	height := uint64(ctx.BlockHeight()) - (params.SignedValsetsWindow + 1)
+// 	vs.Height = height
 
-	for i, val := range keeper.AccAddrs {
-		if i == 0 {
-			// don't sign with first validator
-			continue
-		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
-	}
+// 	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
+// 	pk.StoreValsetUnsafe(ctx, vs)
 
-	EndBlocker(ctx, pk)
+// 	for i, val := range keeper.AccAddrs {
+// 		if i == 0 {
+// 			// don't sign with first validator
+// 			continue
+// 		}
+// 		ethAddr, err := types.NewEthAddress(keeper.EthAddrs[i].String())
+// 		require.NoError(t, err)
 
-	// ensure that the  validator who is bonded before valset is created is slashed
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	require.True(t, val.IsJailed())
+// 		conf := types.NewMsgValsetConfirm(vs.Nonce, *ethAddr, val, "dummysig")
+// 		pk.SetValsetConfirm(ctx, *conf)
+// 	}
 
-	// ensure that the  validator who attested the valset is not slashed.
-	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
-	require.False(t, val.IsJailed())
+// 	EndBlocker(ctx, pk)
 
-}
+// 	// ensure that the  validator who is bonded before valset is created is slashed
+// 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+// 	require.True(t, val.IsJailed())
 
-func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T) {
-	//	Slashing Conditions for Unbonding Validator
+// 	// ensure that the  validator who attested the valset is not slashed.
+// 	val = input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+// 	require.False(t, val.IsJailed())
 
-	//  Create 5 validators
-	input, ctx := keeper.SetupFiveValChain(t)
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	fmt.Println("val1  tokens", val.GetTokens().ToDec())
+// }
 
-	pk := input.GravityKeeper
-	params := input.GravityKeeper.GetParams(ctx)
+// func TestValsetSlashing_UnbondingValidator_UnbondWindow_NotExpired(t *testing.T) {
+// 	//	Slashing Conditions for Unbonding Validator
 
-	// Define slashing variables
-	validatorStartHeight := ctx.BlockHeight()                                                        // 0
-	valsetRequestHeight := validatorStartHeight + 1                                                  // 1
-	valUnbondingHeight := valsetRequestHeight + 1                                                    // 2
-	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedValsetsWindow)                // 11
-	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingValsetsWindow) // 17
-	currentBlockHeight := valsetRequestSlashedAt + 1                                                 // 12
+// 	//  Create 5 validators
+// 	input, ctx := keeper.SetupFiveValChain(t)
+// 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+// 	fmt.Println("val1  tokens", val.GetTokens().ToDec())
 
-	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
-	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
+// 	pk := input.GravityKeeper
+// 	params := input.GravityKeeper.GetParams(ctx)
 
-	// Create Valset request
-	ctx = ctx.WithBlockHeight(valsetRequestHeight)
-	vs := pk.GetCurrentValset(ctx)
-	vs.Height = uint64(valsetRequestHeight)
-	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
-	pk.StoreValsetUnsafe(ctx, vs)
+// 	// Define slashing variables
+// 	validatorStartHeight := ctx.BlockHeight()                                                        // 0
+// 	valsetRequestHeight := validatorStartHeight + 1                                                  // 1
+// 	valUnbondingHeight := valsetRequestHeight + 1                                                    // 2
+// 	valsetRequestSlashedAt := valsetRequestHeight + int64(params.SignedValsetsWindow)                // 11
+// 	validatorUnbondingWindowExpiry := valUnbondingHeight + int64(params.UnbondSlashingValsetsWindow) // 17
+// 	currentBlockHeight := valsetRequestSlashedAt + 1                                                 // 12
 
-	// Start Unbonding validators
-	// Validator-1  Unbond slash window is not expired. if not attested, slash
-	// Validator-2  Unbond slash window is not expired. if attested, don't slash
-	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
-	sh := staking.NewHandler(input.StakingKeeper)
-	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
-	sh(input.Context, undelegateMsg1)
-	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
-	sh(input.Context, undelegateMsg2)
+// 	assert.True(t, valsetRequestSlashedAt < currentBlockHeight)
+// 	assert.True(t, valsetRequestHeight < validatorUnbondingWindowExpiry)
 
-	for i, val := range keeper.AccAddrs {
-		if i == 0 {
-			// don't sign with first validator
-			continue
-		}
-		conf := types.NewMsgValsetConfirm(vs.Nonce, keeper.EthAddrs[i].String(), val, "dummysig")
-		pk.SetValsetConfirm(ctx, *conf)
-	}
-	staking.EndBlocker(input.Context, input.StakingKeeper)
+// 	// Create Valset request
+// 	ctx = ctx.WithBlockHeight(valsetRequestHeight)
+// 	vs := pk.GetCurrentValset(ctx)
+// 	vs.Height = uint64(valsetRequestHeight)
+// 	vs.Nonce = pk.GetLatestValsetNonce(ctx) + 1
+// 	pk.StoreValsetUnsafe(ctx, vs)
 
-	ctx = ctx.WithBlockHeight(currentBlockHeight)
-	EndBlocker(ctx, pk)
+// 	// Start Unbonding validators
+// 	// Validator-1  Unbond slash window is not expired. if not attested, slash
+// 	// Validator-2  Unbond slash window is not expired. if attested, don't slash
+// 	input.Context = ctx.WithBlockHeight(valUnbondingHeight)
+// 	sh := staking.NewHandler(input.StakingKeeper)
+// 	undelegateMsg1 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[0], keeper.StakingAmount)
+// 	sh(input.Context, undelegateMsg1)
+// 	undelegateMsg2 := keeper.NewTestMsgUnDelegateValidator(keeper.ValAddrs[1], keeper.StakingAmount)
+// 	sh(input.Context, undelegateMsg2)
 
-	// Assertions
-	val1 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	assert.True(t, val1.IsJailed())
-	fmt.Println("val1  tokens", val1.GetTokens().ToDec())
-	// check if tokens are slashed for val1.
+// 	for i, val := range keeper.AccAddrs {
+// 		if i == 0 {
+// 			// don't sign with first validator
+// 			continue
+// 		}
+// 		ethAddr, err := types.NewEthAddress(keeper.EthAddrs[i].String())
+// 		require.NoError(t, err)
 
-	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
-	assert.True(t, val2.IsJailed())
-	fmt.Println("val2  tokens", val2.GetTokens().ToDec())
-	// check if tokens shouldn't be slashed for val2.
-}
+// 		conf := types.NewMsgValsetConfirm(vs.Nonce, *ethAddr, val, "dummysig")
+// 		pk.SetValsetConfirm(ctx, *conf)
+// 	}
+// 	staking.EndBlocker(input.Context, input.StakingKeeper)
 
-func TestBatchSlashing(t *testing.T) {
-	input, ctx := keeper.SetupFiveValChain(t)
-	pk := input.GravityKeeper
-	params := pk.GetParams(ctx)
+// 	ctx = ctx.WithBlockHeight(currentBlockHeight)
+// 	EndBlocker(ctx, pk)
 
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
+// 	// Assertions
+// 	val1 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+// 	assert.True(t, val1.IsJailed())
+// 	fmt.Println("val1  tokens", val1.GetTokens().ToDec())
+// 	// check if tokens are slashed for val1.
 
-	// First store a batch
-	batch := &types.OutgoingTxBatch{
-		BatchNonce:    1,
-		Transactions:  []*types.OutgoingTransferTx{},
-		TokenContract: keeper.TokenContractAddrs[0],
-		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
-	}
-	pk.StoreBatchUnsafe(ctx, batch)
+// 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+// 	assert.True(t, val2.IsJailed())
+// 	fmt.Println("val2  tokens", val2.GetTokens().ToDec())
+// 	// check if tokens shouldn't be slashed for val2.
+// }
 
-	for i, val := range keeper.AccAddrs {
-		if i == 0 {
-			// don't sign with first validator
-			continue
-		}
-		if i == 1 {
-			// don't sign with 2nd validator. set val bond height > batch block height
-			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
-			valConsAddr, _ := validator.GetConsAddr()
-			valSigningInfo := slashingtypes.ValidatorSigningInfo{StartHeight: int64(batch.Block + 1)}
-			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
-			continue
-		}
-		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
-			Nonce:         batch.BatchNonce,
-			TokenContract: keeper.TokenContractAddrs[0],
-			EthSigner:     keeper.EthAddrs[i].String(),
-			Orchestrator:  val.String(),
-		})
-	}
+// func TestBatchSlashing(t *testing.T) {
+// 	input, ctx := keeper.SetupFiveValChain(t)
+// 	pk := input.GravityKeeper
+// 	params := pk.GetParams(ctx)
 
-	EndBlocker(ctx, pk)
+// 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + int64(params.SignedValsetsWindow) + 2)
 
-	// ensure that the  validator is jailed and slashed
-	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
-	require.True(t, val.IsJailed())
+// 	// First store a batch
 
-	// ensure that the 2nd  validator is not jailed and slashed
-	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
-	require.False(t, val2.IsJailed())
+// 	batch, err := types.NewInternalOutgingTxBatchFromExternalBatch(types.OutgoingTxBatch{
+// 		BatchNonce:    1,
+// 		BatchTimeout:  0,
+// 		Transactions:  []*types.OutgoingTransferTx{},
+// 		TokenContract: keeper.TokenContractAddrs[0],
+// 		Block:         uint64(ctx.BlockHeight() - int64(params.SignedBatchesWindow+1)),
+// 	})
+// 	require.NoError(t, err)
+// 	pk.StoreBatchUnsafe(ctx, batch)
 
-	// Ensure that the last slashed valset nonce is set properly
-	lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx)
-	assert.Equal(t, lastSlashedBatchBlock, batch.Block)
+// 	for i, val := range keeper.AccAddrs {
+// 		if i == 0 {
+// 			// don't sign with first validator
+// 			continue
+// 		}
+// 		if i == 1 {
+// 			// don't sign with 2nd validator. set val bond height > batch block height
+// 			validator := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[i])
+// 			valConsAddr, _ := validator.GetConsAddr()
+// 			valSigningInfo := slashingtypes.ValidatorSigningInfo{
+// 				Address:             "",
+// 				StartHeight:         int64(batch.Block + 1),
+// 				IndexOffset:         0,
+// 				JailedUntil:         time.Time{},
+// 				Tombstoned:          false,
+// 				MissedBlocksCounter: 0,
+// 			}
+// 			input.SlashingKeeper.SetValidatorSigningInfo(ctx, valConsAddr, valSigningInfo)
+// 			continue
+// 		}
+// 		pk.SetBatchConfirm(ctx, &types.MsgConfirmBatch{
+// 			Nonce:         batch.BatchNonce,
+// 			TokenContract: keeper.TokenContractAddrs[0],
+// 			EthSigner:     keeper.EthAddrs[i].String(),
+// 			Orchestrator:  val.String(),
+// 			Signature:     "",
+// 		})
+// 	}
 
-}
+// 	EndBlocker(ctx, pk)
+
+// 	// ensure that the  validator is jailed and slashed
+// 	val := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[0])
+// 	require.True(t, val.IsJailed())
+
+// 	// ensure that the 2nd  validator is not jailed and slashed
+// 	val2 := input.StakingKeeper.Validator(ctx, keeper.ValAddrs[1])
+// 	require.False(t, val2.IsJailed())
+
+// 	// Ensure that the last slashed valset nonce is set properly
+// 	lastSlashedBatchBlock := input.GravityKeeper.GetLastSlashedBatchBlock(ctx)
+// 	assert.Equal(t, lastSlashedBatchBlock, batch.Block)
+
+// }
 
 func TestValsetEmission(t *testing.T) {
 	input, ctx := keeper.SetupFiveValChain(t)
@@ -227,7 +244,9 @@ func TestValsetEmission(t *testing.T) {
 	// Store a validator set with a power change as the most recent validator set
 	vs := pk.GetCurrentValset(ctx)
 	vs.Nonce--
-	delta := float64(types.BridgeValidators(vs.Members).TotalPower()) * 0.05
+	internalMembers, err := types.BridgeValidators(vs.Members).ToInternal()
+	require.NoError(t, err)
+	delta := float64(internalMembers.TotalPower()) * 0.05
 	vs.Members[0].Power = uint64(float64(vs.Members[0].Power) - delta/2)
 	vs.Members[1].Power = uint64(float64(vs.Members[1].Power) + delta/2)
 	pk.StoreValset(ctx, vs)
@@ -257,10 +276,14 @@ func TestBatchTimeout(t *testing.T) {
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
 		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
 		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
-		allVouchers         = sdk.NewCoins(
-			types.NewERC20Token(99999, myTokenContractAddr).GravityCoin(),
-		)
+		token, err          = types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+		allVouchers         = sdk.NewCoins(token.GravityCoin())
 	)
+	require.NoError(t, err)
+	receiver, err := types.NewEthAddress(myReceiver)
+	require.NoError(t, err)
+	tokenContract, err := types.NewEthAddress(myTokenContractAddr)
+	require.NoError(t, err)
 
 	require.Greater(t, params.AverageBlockTime, uint64(0))
 	require.Greater(t, params.AverageEthereumBlockTime, uint64(0))
@@ -269,13 +292,18 @@ func TestBatchTimeout(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// add some TX to the pool
 	for i, v := range []uint64{2, 3, 2, 1, 5, 6} {
-		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
-		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
+		require.NoError(t, err)
+		amount := amountToken.GravityCoin()
+		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		require.NoError(t, err)
+		fee := feeToken.GravityCoin()
+
+		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, *receiver, amount, fee)
 		require.NoError(t, err)
 	}
 
@@ -284,16 +312,16 @@ func TestBatchTimeout(t *testing.T) {
 	ctx = ctx.WithBlockHeight(250)
 
 	// check that we can make a batch without first setting an ethereum block height
-	b1, err1 := pk.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	b1, err1 := pk.BuildOutgoingTXBatch(ctx, *tokenContract, 2)
 	require.NoError(t, err1)
 	require.Equal(t, b1.BatchTimeout, uint64(0))
 
 	pk.SetLastObservedEthereumBlockHeight(ctx, 500)
 
-	b2, err2 := pk.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	b2, err2 := pk.BuildOutgoingTXBatch(ctx, *tokenContract, 2)
 	require.NoError(t, err2)
 	// this is exactly block 500 plus twelve hours
-	require.Equal(t, b2.BatchTimeout, uint64(504))
+	require.Equal(t, b2.BatchTimeout, uint64(524))
 
 	// make sure the batches got stored in the first place
 	gotFirstBatch := input.GravityKeeper.GetOutgoingTXBatch(ctx, b1.TokenContract, b1.BatchNonce)
@@ -305,8 +333,8 @@ func TestBatchTimeout(t *testing.T) {
 	ctx = ctx.WithBlockTime(now)
 	ctx = ctx.WithBlockHeight(9)
 
-	b3, err2 := pk.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
-	require.NoError(t, err2)
+	b3, err3 := pk.BuildOutgoingTXBatch(ctx, *tokenContract, 2)
+	require.NoError(t, err3)
 
 	EndBlocker(ctx, pk)
 
@@ -329,5 +357,5 @@ func TestBatchTimeout(t *testing.T) {
 	gotSecondBatch = input.GravityKeeper.GetOutgoingTXBatch(ctx, b2.TokenContract, b2.BatchNonce)
 	require.Nil(t, gotSecondBatch)
 	gotThirdBatch = input.GravityKeeper.GetOutgoingTXBatch(ctx, b3.TokenContract, b3.BatchNonce)
-	require.NotNil(t, gotThirdBatch)
+	require.Nil(t, gotThirdBatch)
 }
