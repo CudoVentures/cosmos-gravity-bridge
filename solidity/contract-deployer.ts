@@ -3,6 +3,7 @@ import { TestERC20A } from "./typechain/TestERC20A";
 import { TestERC20B } from "./typechain/TestERC20B";
 import { TestERC20C } from "./typechain/TestERC20C";
 import { TestUniswapLiquidity } from "./typechain/TestUniswapLiquidity";
+import { BridgeAccessControl } from "./typechain/BridgeAccessControl";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
@@ -183,6 +184,14 @@ async function deploy() {
   const gravityIdString = await getGravityId();
   const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
+  
+  let bridgeAccessControl:any
+  const AcArts = getContractArtifacts("artifacts/contracts/BridgeAccessControl.sol/BridgeAccessControl.json");
+  const AcFactory = new ethers.ContractFactory(AcArts.abi, AcArts.bytecode, wallet);
+
+  console.log("Deploying AccessControl contract...")
+  bridgeAccessControl = (await AcFactory.deploy());
+
   console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
   const factory = new ethers.ContractFactory(abi, bytecode, wallet);
@@ -223,7 +232,7 @@ async function deploy() {
     vote_power,
     eth_addresses,
     powers,
-    overrides
+    bridgeAccessControl.address
   )) as Gravity;
 
   await gravity.deployed();
