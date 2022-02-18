@@ -47,22 +47,23 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // not to attempt any reward. This is the default for bootstrapping.
 type Params struct {
 	GravityId                    string                                 `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
-	MinimumTransferToEth         string                                 `protobuf:"bytes,2,opt,name=minimum_transfer_to_eth,json=minimumTransferToEth,proto3" json:"minimum_transfer_to_eth,omitempty"`
-	ContractSourceHash           string                                 `protobuf:"bytes,3,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
-	BridgeEthereumAddress        string                                 `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
-	BridgeChainId                uint64                                 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
-	SignedValsetsWindow          uint64                                 `protobuf:"varint,6,opt,name=signed_valsets_window,json=signedValsetsWindow,proto3" json:"signed_valsets_window,omitempty"`
-	SignedBatchesWindow          uint64                                 `protobuf:"varint,7,opt,name=signed_batches_window,json=signedBatchesWindow,proto3" json:"signed_batches_window,omitempty"`
-	SignedLogicCallsWindow       uint64                                 `protobuf:"varint,8,opt,name=signed_logic_calls_window,json=signedLogicCallsWindow,proto3" json:"signed_logic_calls_window,omitempty"`
-	TargetBatchTimeout           uint64                                 `protobuf:"varint,9,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
-	AverageBlockTime             uint64                                 `protobuf:"varint,10,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
-	AverageEthereumBlockTime     uint64                                 `protobuf:"varint,11,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
-	SlashFractionValset          github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=slash_fraction_valset,json=slashFractionValset,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_valset"`
-	SlashFractionBatch           github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=slash_fraction_batch,json=slashFractionBatch,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch"`
-	SlashFractionLogicCall       github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=slash_fraction_logic_call,json=slashFractionLogicCall,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_logic_call"`
-	UnbondSlashingValsetsWindow  uint64                                 `protobuf:"varint,15,opt,name=unbond_slashing_valsets_window,json=unbondSlashingValsetsWindow,proto3" json:"unbond_slashing_valsets_window,omitempty"`
-	SlashFractionBadEthSignature github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,16,opt,name=slash_fraction_bad_eth_signature,json=slashFractionBadEthSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_bad_eth_signature"`
-	ValsetReward                 types.Coin                             `protobuf:"bytes,17,opt,name=valset_reward,json=valsetReward,proto3" json:"valset_reward"`
+	MinimumTransferToEth         github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=minimum_transfer_to_eth,json=minimumTransferToEth,proto3" json:"minimum_transfer_to_eth,omitempty"`
+	MinimumFeeTransferToEth      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=minimum_fee_transfer_to_eth,json=minimumFeeTransferToEth,proto3" json:"minimum_fee_transfer_to_eth,omitempty"`
+	ContractSourceHash           string                                 `protobuf:"bytes,4,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
+	BridgeEthereumAddress        string                                 `protobuf:"bytes,5,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
+	BridgeChainId                uint64                                 `protobuf:"varint,6,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
+	SignedValsetsWindow          uint64                                 `protobuf:"varint,7,opt,name=signed_valsets_window,json=signedValsetsWindow,proto3" json:"signed_valsets_window,omitempty"`
+	SignedBatchesWindow          uint64                                 `protobuf:"varint,8,opt,name=signed_batches_window,json=signedBatchesWindow,proto3" json:"signed_batches_window,omitempty"`
+	SignedLogicCallsWindow       uint64                                 `protobuf:"varint,9,opt,name=signed_logic_calls_window,json=signedLogicCallsWindow,proto3" json:"signed_logic_calls_window,omitempty"`
+	TargetBatchTimeout           uint64                                 `protobuf:"varint,10,opt,name=target_batch_timeout,json=targetBatchTimeout,proto3" json:"target_batch_timeout,omitempty"`
+	AverageBlockTime             uint64                                 `protobuf:"varint,11,opt,name=average_block_time,json=averageBlockTime,proto3" json:"average_block_time,omitempty"`
+	AverageEthereumBlockTime     uint64                                 `protobuf:"varint,12,opt,name=average_ethereum_block_time,json=averageEthereumBlockTime,proto3" json:"average_ethereum_block_time,omitempty"`
+	SlashFractionValset          github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=slash_fraction_valset,json=slashFractionValset,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_valset"`
+	SlashFractionBatch           github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=slash_fraction_batch,json=slashFractionBatch,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_batch"`
+	SlashFractionLogicCall       github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,15,opt,name=slash_fraction_logic_call,json=slashFractionLogicCall,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_logic_call"`
+	UnbondSlashingValsetsWindow  uint64                                 `protobuf:"varint,16,opt,name=unbond_slashing_valsets_window,json=unbondSlashingValsetsWindow,proto3" json:"unbond_slashing_valsets_window,omitempty"`
+	SlashFractionBadEthSignature github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,17,opt,name=slash_fraction_bad_eth_signature,json=slashFractionBadEthSignature,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_bad_eth_signature"`
+	ValsetReward                 types.Coin                             `protobuf:"bytes,18,opt,name=valset_reward,json=valsetReward,proto3" json:"valset_reward"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -105,11 +106,18 @@ func (m *Params) GetGravityId() string {
 	return ""
 }
 
-func (m *Params) GetMinimumTransferToEth() string {
+func (m *Params) GetMinimumTransferToEth() types.Int {
 	if m != nil {
 		return m.MinimumTransferToEth
 	}
-	return ""
+	return types.OneInt()
+}
+
+func (m *Params) GetMinimumFeeTransferToEth() types.Int {
+	if m != nil {
+		return m.MinimumFeeTransferToEth
+	}
+	return types.OneInt()
 }
 
 func (m *Params) GetContractSourceHash() string {
@@ -538,6 +546,13 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 	}
 	if len(m.MinimumTransferToEth) > 0 {
+		i -= len(m.MinimumTransferToEth)
+		copy(dAtA[i:], m.MinimumTransferToEth)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.MinimumFeeTransferToEth) > 0 {
 		i -= len(m.MinimumTransferToEth)
 		copy(dAtA[i:], m.MinimumTransferToEth)
 		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))

@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
-	
 )
 
 func GetTxCmd(storeKey string) *cobra.Command {
@@ -114,13 +113,6 @@ func CmdSendToEth() *cobra.Command {
 			amount, err := sdk.ParseCoinsNormalized(args[1])
 			if err != nil {
 				return sdkerrors.Wrap(err, "amount")
-			}
-
-			// ADDS CUSTOM LOGIC TO REJECT TRANSFERS UNDER THE MINIMUM REQUIRED AMOUNT
-			minAmount := types.DefaultParams().GetMinimumTransferToEth()
-			minimumTransferAmount, _ := sdk.ParseCoinsNormalized(minAmount)
-			if amount.IsAllLT(minimumTransferAmount) {
-				return fmt.Errorf("amount does not meet minimum sending amount requirement: %s", minimumTransferAmount)
 			}
 
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
