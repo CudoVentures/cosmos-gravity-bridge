@@ -47,6 +47,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // not to attempt any reward. This is the default for bootstrapping.
 type Params struct {
 	GravityId                    string                                 `protobuf:"bytes,1,opt,name=gravity_id,json=gravityId,proto3" json:"gravity_id,omitempty"`
+	MinimumFeeTransferToEth      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=minimum_fee_transfer_to_eth,json=minimumFeeTransferToEth,proto3" json:"minimum_fee_transfer_to_eth,omitempty"`
 	ContractSourceHash           string                                 `protobuf:"bytes,2,opt,name=contract_source_hash,json=contractSourceHash,proto3" json:"contract_source_hash,omitempty"`
 	BridgeEthereumAddress        string                                 `protobuf:"bytes,4,opt,name=bridge_ethereum_address,json=bridgeEthereumAddress,proto3" json:"bridge_ethereum_address,omitempty"`
 	BridgeChainId                uint64                                 `protobuf:"varint,5,opt,name=bridge_chain_id,json=bridgeChainId,proto3" json:"bridge_chain_id,omitempty"`
@@ -103,6 +104,12 @@ func (m *Params) GetGravityId() string {
 	}
 	return ""
 }
+
+func (m *Params) GetMinimumFeeTransferToEth() types.Int {
+	if m != nil {
+		return m.MinimumFeeTransferToEth
+	}
+	return types.OneInt()
 
 func (m *Params) GetContractSourceHash() string {
 	if m != nil {
@@ -513,6 +520,20 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.ContractSourceHash)
 		copy(dAtA[i:], m.ContractSourceHash)
 		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ContractSourceHash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.MinimumTransferToEth) > 0 {
+		i -= len(m.MinimumTransferToEth)
+		copy(dAtA[i:], m.MinimumTransferToEth)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.MinimumFeeTransferToEth) > 0 {
+		i -= len(m.MinimumTransferToEth)
+		copy(dAtA[i:], m.MinimumTransferToEth)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))
 		i--
 		dAtA[i] = 0x12
 	}

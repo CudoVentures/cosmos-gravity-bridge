@@ -117,6 +117,18 @@ func (k Keeper) SetGravityID(ctx sdk.Context, v string) {
 	k.paramSpace.Set(ctx, types.ParamsStoreKeyGravityID, v)
 }
 
+// GetMinimumFeeTransferToEth GETs the minimum fee for CUDOS -> ETH
+func (k Keeper) GetMinimumFeeTransferToEth(ctx sdk.Context) sdk.Int {
+	var a sdk.Int
+	k.paramSpace.Get(ctx, types.ParamsStoreKeyMinimumFeeTransferToEth, &a)
+	return a
+}
+
+// SetMinimumFeeTransferToEth SETs the minimum fee for CUDOS -> ETH
+func (k Keeper) SetMinimumFeeTransferToEth(ctx sdk.Context, mft sdk.Int) {
+	k.paramSpace.Set(ctx, types.ParamsStoreKeyMinimumFeeTransferToEth, mft)
+}
+
 // logger returns a module-specific logger.
 func (k Keeper) logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))

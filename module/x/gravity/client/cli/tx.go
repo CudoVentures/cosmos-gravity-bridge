@@ -113,6 +113,7 @@ func CmdSendToEth() *cobra.Command {
 			if err != nil {
 				return sdkerrors.Wrap(err, "amount")
 			}
+
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return sdkerrors.Wrap(err, "bridge fee")

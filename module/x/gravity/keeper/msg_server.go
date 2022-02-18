@@ -110,7 +110,17 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 
 // SendToEth handles MsgSendToEth
 func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MsgSendToEth")
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
+	mft := k.GetMinimumFeeTransferToEth(ctx)
+	if msg.Amount.Amount.LT(mft) {
+		return nil, fmt.Errorf("fee does not meet minimum fee requirement: %s", mft)
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "invalid sender")
