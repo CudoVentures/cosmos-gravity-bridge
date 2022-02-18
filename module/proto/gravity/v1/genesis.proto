@@ -107,20 +107,20 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_batch = 13 [
+  bytes slash_fraction_batch = 14 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  bytes slash_fraction_logic_call = 14 [
+  bytes slash_fraction_logic_call = 15 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  uint64 unbond_slashing_valsets_window = 15;
-  bytes slash_fraction_bad_eth_signature = 16 [
+  uint64 unbond_slashing_valsets_window = 16;
+  bytes slash_fraction_bad_eth_signature = 17 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
-  cosmos.base.v1beta1.Coin valset_reward = 17 [
+  cosmos.base.v1beta1.Coin valset_reward = 18 [
     (gogoproto.nullable)   = false
   ];
 }
