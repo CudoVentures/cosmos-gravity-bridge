@@ -385,7 +385,7 @@ var xxx_messageInfo_MsgSendToEthResponse proto.InternalMessageInfo
 // the value of the parameter to be set
 // this is the min fee required
 type MsgSetMinFeeTransferToEth struct {
-	Admin string                                 `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	Sender string                                 `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Fee   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
 }
 
@@ -422,9 +422,9 @@ func (m *MsgSetMinFeeTransferToEth) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSetMinFeeTransferToEth proto.InternalMessageInfo
 
-func (m *MsgSetMinFeeTransferToEth) GetAdmin() string {
+func (m *MsgSetMinFeeTransferToEth) GetSender() string {
 	if m != nil {
-		return m.Admin
+		return m.Sender
 	}
 	return ""
 }
@@ -2547,10 +2547,10 @@ func (m *MsgSetMinFeeTransferToEth) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	}
 	i--
 	dAtA[i] = 0x12
-	if len(m.Admin) > 0 {
-		i -= len(m.Admin)
-		copy(dAtA[i:], m.Admin)
-		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Admin)))
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Sender)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -3477,7 +3477,7 @@ func (m *MsgSetMinFeeTransferToEth) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Admin)
+	l = len(m.Sender)
 	if l > 0 {
 		n += 1 + l + sovMsgs(uint64(l))
 	}
@@ -4548,7 +4548,7 @@ func (m *MsgSetMinFeeTransferToEth) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4576,7 +4576,7 @@ func (m *MsgSetMinFeeTransferToEth) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Admin = string(dAtA[iNdEx:postIndex])
+			m.Sender = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

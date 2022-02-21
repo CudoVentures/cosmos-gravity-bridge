@@ -175,10 +175,10 @@ func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
 }
 
 // NewMsgSetMinFeeTransferToEth returns a new MsgSetMinFeeTransferToEth
-func NewMsgSetMinFeeTransferToEth(admin sdk.AccAddress, feeAmount sdk.Int) *MsgSetMinFeeTransferToEth {
+func NewMsgSetMinFeeTransferToEth(sender sdk.AccAddress, feeAmount sdk.Int) *MsgSetMinFeeTransferToEth {
 	return &MsgSetMinFeeTransferToEth{
-		Admin: admin,
-		Fee:   feeAmount,
+		Sender: sender.String(),
+		Fee:    feeAmount,
 	}
 }
 
@@ -206,7 +206,7 @@ func (msg MsgSetMinFeeTransferToEth) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSetMinFeeTransferToEth) GetSigners() []sdk.AccAddress {
-	acc, err := sdk.AccAddressFromBech32(msg.Admin)
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
 	}
