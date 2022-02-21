@@ -226,10 +226,14 @@ func exportImport(t *testing.T, input *TestInput) {
 func InitGenesisWithFailData(t *testing.T, input *TestInput) {
 	invalidValue := "5.5"
 	expectedPanicMessage := "error while parsing: 5.5"
-	
+
 	genesisState := ExportGenesis(input.Context, input.GravityKeeper)
-	genesisState.Params.MinimumTransferToEth = invalidValue
+
+	var ok bool
+	genesisState.Params.MinimumTransferToEth, ok = sdk.NewIntFromString(invalidValue)
+
+	assert.False(t, ok)
 	newEnv := CreateTestEnv(t)
 	input = &newEnv
-	assert.PanicsWithError(t, expectedPanicMessage, func(){InitGenesis(input.Context, input.GravityKeeper, genesisState)})
+	assert.PanicsWithError(t, expectedPanicMessage, func() { InitGenesis(input.Context, input.GravityKeeper, genesisState) })
 }
