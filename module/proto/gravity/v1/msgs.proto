@@ -16,6 +16,9 @@ service Msg {
   rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_eth";
   }
+  rpc SetMinFeeTransferToEth(MsgSetMinFeeTransferToEth) returns (MsgSetMinFeeTransferToEthResponse) {
+    option (google.api.http).post = "/gravity/v1/set_min_fee_transfer_to_eth";
+  }
   rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/gravity/v1/request_batch";
   }
@@ -122,6 +125,22 @@ message MsgSendToEth {
 }
 
 message MsgSendToEthResponse {}
+
+// MsgSetMinFeeTransferToEth
+// This is the message that a user calls when they want to change the
+// paameterMinFeeTransferToEth used to send from cosmos to eth 
+// -------------
+// FEE:
+// the value of the parameter to be set
+// this is the min fee required
+message MsgSetMinFeeTransferToEth {
+  string fee   = 1  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message MsgSetMinFeeTransferToEthResponse {}
 
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to
