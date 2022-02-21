@@ -76,7 +76,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 
 	// send transaction not meeting the minimum transaction requirement
-	sendingCoin.Amount, _ = sdk.NewIntFromString("4")
+	sendingCoin.Amount = sdk.NewInt(4)
 	expectedErrMsg := "amount does not meet minimum sending amount requirement: 5"
 	msg3 := &types.MsgSendToEth{
 		Sender:    userCosmosAddr.String(),
@@ -87,6 +87,20 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	_, err3 := h(ctx, msg3)
 	require.Error(t, err3)
 	assert.Equal(t, expectedErrMsg, err3.Error())
+
+	// send transaction not meeting the minimum transaction FEE requirement
+	sendingCoin.Amount = sdk.NewInt(40)
+	feeCoin.Amount = sdk.NewInt(4)
+	expectedErrMsg = "fee does not meet minimum fee requirement: 5"
+	msg4 := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err4 := h(ctx, msg4)
+	require.Error(t, err4)
+	assert.Equal(t, expectedErrMsg, err4.Error())
 }
 
 //nolint: exhaustivestruct
