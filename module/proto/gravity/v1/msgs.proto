@@ -134,7 +134,7 @@ message MsgSendToEthResponse {}
 // the value of the parameter to be set
 // this is the min fee required
 message MsgSetMinFeeTransferToEth {
-  string admin  = 1;
+  string sender  = 1;
   string fee   = 2  [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable)   = false

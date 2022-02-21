@@ -118,7 +118,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	}
 
 	mft := k.GetMinimumFeeTransferToEth(ctx)
-	if msg.Amount.Amount.LT(mft) {
+	if msg.BridgeFee.Amount.LT(mft) {
 		return nil, fmt.Errorf("fee does not meet minimum fee requirement: %s", mft)
 	}
 
@@ -157,21 +157,18 @@ func (k msgServer) SetMinFeeTransferToEth(c context.Context, msg *types.MsgSetMi
 
 	//get signer admin tokens
 	sAddr := msg.GetSigners()[0]
-	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("admin")
+	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
 
 	if sat.LT(sdk.OneInt()) {
-		return nil, fmt.Errorf("Only accounts with admin tokens can change the min bridge fee")
+		fmt.Println("HERE1")
+		return nil, fmt.Errorf("only accounts with admin tokens can change the min bridge fee")
 	}
 
-	r, err := k.SetMinFeeTransferToEth(c, msg)
-
-	if err != nil {
-		return nil, err
-	}
+	k.SetMinimumFeeTransferToEth(ctx, msg.Fee)
 
 	ctx.EventManager().EmitTypedEvent(msg)
 
-	return r, nil
+	return &types.MsgSetMinFeeTransferToEthResponse{}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
