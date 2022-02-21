@@ -275,8 +275,12 @@ func validateMinimumFeeTransferToEth(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
+	if v.IsNil() {
+		return fmt.Errorf("minimumFeeTransferToEth param should not be empty")
+	}
+
 	if v.LT(sdk.OneInt()) {
-		return fmt.Errorf("MinimumFeeTransferToEth param should be bigger than 0.")
+		return fmt.Errorf("minimumFeeTransferToEth param should be bigger than 0")
 	}
 
 	return nil
