@@ -63,3 +63,45 @@ func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
 	}
 
 }
+func TestMsgSetMinFeeTransferToEth(t *testing.T) {
+	var (
+		adminAddress sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
+	)
+
+	specs := map[string]struct {
+		srcCosmosAddr sdk.AccAddress
+		fee           sdk.Int
+		expErr        bool
+	}{
+		"all good": {
+			srcCosmosAddr: adminAddress,
+			fee:           sdk.NewInt(10),
+			expErr:        false,
+		},
+		"invalid fee": {
+			srcCosmosAddr: adminAddress,
+			fee:           sdk.NewInt(-10),
+			expErr:        true,
+		},
+		"invalid address": {
+			srcCosmosAddr: []byte{0x1},
+			fee:           sdk.NewInt(10),
+			expErr:        true,
+		},
+	}
+
+	for msg, spec := range specs {
+		fmt.Println(msg)
+		t.Run(msg, func(t *testing.T) {
+			msg := NewMsgSetMinFeeTransferToEth(spec.srcCosmosAddr, spec.fee)
+			// when
+			err := msg.ValidateBasic()
+			if spec.expErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+
+}

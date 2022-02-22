@@ -76,6 +76,64 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 }
 
+func TestMsgSetMinFeeTransferToEth(t *testing.T) {
+	var (
+		adminAddress, _           = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		startingCoins   sdk.Coins = sdk.Coins{sdk.NewCoin("acudos", sdk.NewInt(100000000))}
+		adminCoin       sdk.Coin  = sdk.NewCoin("cudosAdmin", sdk.NewInt(1))
+		innitialMinFee  sdk.Int   = sdk.NewInt(1)
+		correctSetFee   sdk.Int   = sdk.NewInt(10)
+		invalidSetFee   sdk.Int   = sdk.NewInt(-10)
+	)
+
+	// we start by depositing some funds into the users balance to send
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	h := NewHandler(input.GravityKeeper)
+
+	//set an account without admin token
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, adminAddress, startingCoins)
+
+	//set innitial min fee
+	input.GravityKeeper.SetMinimumFeeTransferToEth(ctx, innitialMinFee)
+	assert.Equal(t, innitialMinFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	// try set from address without admin tokens
+	msg := &types.MsgSetMinFeeTransferToEth{
+		Sender: adminAddress.String(),
+		Fee:    correctSetFee,
+	}
+
+	_, err := h(ctx, msg)
+	require.Error(t, err)
+	assert.Equal(t, innitialMinFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//add admin coins to account
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.Coins{adminCoin})
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, adminAddress, sdk.Coins{adminCoin})
+	assert.Equal(t, startingCoins.Add(adminCoin), input.BankKeeper.GetAllBalances(ctx, adminAddress))
+
+	//should pass correctly
+	_, err1 := h(ctx, msg)
+	require.NoError(t, err1)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//now try with incorrect value
+	msg.Fee = invalidSetFee
+	_, err2 := h(ctx, msg)
+	require.Error(t, err2)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//now try with same value as it already is - should throw error
+	require.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+	msg.Fee = correctSetFee
+	_, err3 := h(ctx, msg)
+	require.Error(t, err3)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+}
+
 //nolint: exhaustivestruct
 func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	var (
