@@ -197,6 +197,11 @@ func (msg MsgSetMinFeeTransferToEth) Type() string { return "set_min_fee_transfe
 // ValidateBasic runs stateless checks on the message
 // Checks if the Eth address is valid
 func (msg MsgSetMinFeeTransferToEth) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil ||
+		len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes()).String()) != len(msg.Sender) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+
 	// fee and send must be of the same denom
 	if msg.Fee.LT(sdk.OneInt()) {
 		return fmt.Errorf("fee amount should be mroe than 1")

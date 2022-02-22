@@ -162,12 +162,15 @@ func (k msgServer) SetMinFeeTransferToEth(c context.Context, msg *types.MsgSetMi
 
 	ctx := sdk.UnwrapSDKContext(c)
 
+	if msg.Fee.Equal(k.GetMinimumFeeTransferToEth(ctx)) {
+		return nil, fmt.Errorf("fee min fee should be different from current value")
+	}
+
 	//get signer admin tokens
 	sAddr := msg.GetSigners()[0]
 	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
 
 	if sat.LT(sdk.OneInt()) {
-		fmt.Println("HERE1")
 		return nil, fmt.Errorf("only accounts with admin tokens can change the min bridge fee")
 	}
 
