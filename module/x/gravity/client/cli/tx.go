@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
-	
 )
 
 func GetTxCmd(storeKey string) *cobra.Command {
@@ -30,6 +29,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 
 	gravityTxCmd.AddCommand([]*cobra.Command{
 		CmdSendToEth(),
+		CmdSetMinFeeTransferToEth(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
@@ -116,13 +116,6 @@ func CmdSendToEth() *cobra.Command {
 				return sdkerrors.Wrap(err, "amount")
 			}
 
-			// ADDS CUSTOM LOGIC TO REJECT TRANSFERS UNDER THE MINIMUM REQUIRED AMOUNT
-			minAmount := types.DefaultParams().GetMinimumTransferToEth()
-			minimumTransferAmount, _ := sdk.ParseCoinsNormalized(minAmount)
-			if amount.IsAllLT(minimumTransferAmount) {
-				return fmt.Errorf("amount does not meet minimum sending amount requirement: %s", minimumTransferAmount)
-			}
-
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return sdkerrors.Wrap(err, "bridge fee")
@@ -144,6 +137,46 @@ func CmdSendToEth() *cobra.Command {
 				Amount:    amount[0],
 				BridgeFee: bridgeFee[0],
 			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdSetMinFeeTransferToEth() *cobra.Command {
+
+	//nolint: exhaustivestruct
+	cmd := &cobra.Command{
+		Use:   "set-min-bridge-fee [min-bridge-fee]",
+		Short: "Sets the minimum bridge fee for transfer to eth. Usable only by admin token holders.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			aAddr := cliCtx.GetFromAddress()
+
+			amount, ok := sdk.NewIntFromString(args[0])
+			if !ok {
+				return sdkerrors.Wrap(err, "min-bridge-fee")
+			}
+
+			if amount.LT(sdk.OneInt()) {
+				return fmt.Errorf("min bridge fee amount should be more than 1")
+			}
+
+			// Make the message
+			msg := types.MsgSetMinFeeTransferToEth{
+				Sender: aAddr.String(),
+				Fee:    amount,
+			}
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

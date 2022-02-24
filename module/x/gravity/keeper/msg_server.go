@@ -119,9 +119,14 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	minAmount, _ := sdk.NewIntFromString(k.GetMinimumTransferToEth(ctx))
-	if msg.Amount.Amount.LT(minAmount) {
-		return nil, fmt.Errorf("amount does not meet minimum sending amount requirement: %s", minAmount)
+	mte := k.GetMinimumTransferToEth(ctx)
+	if msg.Amount.Amount.LT(mte) {
+		return nil, fmt.Errorf("amount does not meet minimum sending amount requirement: %s", mte)
+	}
+
+	mft := k.GetMinimumFeeTransferToEth(ctx)
+	if msg.BridgeFee.Amount.LT(mft) {
+		return nil, fmt.Errorf("fee does not meet minimum fee requirement: %s", mft)
 	}
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
@@ -146,6 +151,34 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	)
 
 	return &types.MsgSendToEthResponse{}, nil
+}
+
+func (k msgServer) SetMinFeeTransferToEth(c context.Context, msg *types.MsgSetMinFeeTransferToEth) (*types.MsgSetMinFeeTransferToEthResponse, error) {
+	err := msg.ValidateBasic()
+
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MsgSetMinFeeTransferToEth")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if msg.Fee.Equal(k.GetMinimumFeeTransferToEth(ctx)) {
+		return nil, fmt.Errorf("fee min fee should be different from current value")
+	}
+
+	//get signer admin tokens
+	sAddr := msg.GetSigners()[0]
+	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
+
+	if sat.LT(sdk.OneInt()) {
+		return nil, fmt.Errorf("only accounts with admin tokens can change the min bridge fee")
+	}
+
+	k.SetMinimumFeeTransferToEth(ctx, msg.Fee)
+
+	ctx.EventManager().EmitTypedEvent(msg)
+
+	return &types.MsgSetMinFeeTransferToEthResponse{}, nil
 }
 
 // RequestBatch handles MsgRequestBatch
