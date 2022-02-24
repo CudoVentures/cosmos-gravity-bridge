@@ -4,7 +4,6 @@ use deep_space::address::Address;
 use deep_space::error::CosmosGrpcError;
 use deep_space::private_key::PrivateKey;
 use deep_space::Contact;
-use deep_space::Fee;
 use deep_space::Msg;
 use deep_space::{coin::Coin, utils::bytes_to_hex_str};
 use ethereum_gravity::message_signatures::{
@@ -28,6 +27,7 @@ use gravity_utils::types::*;
 use crate::utils::wait_for_tx_with_retry;
 use std::{collections::HashMap, time::Duration};
 
+use num256::Uint256;
 use crate::utils::BadSignatureEvidence;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
@@ -62,22 +62,18 @@ pub async fn set_gravity_delegate_addresses(
         eth_address: delegate_eth_address.to_string(),
     };
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000u64,
-        granter: None,
-        payer: None,
-    };
-
+    let mut messages = Vec::new();
     let msg = Msg::new(
         "/gravity.v1.MsgSetOrchestratorAddress",
         msg_set_orch_address,
     );
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
 
-    let args = contact.get_message_args(our_address, fee).await?;
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -100,13 +96,6 @@ pub async fn send_valset_confirms(
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
-
     let mut messages = Vec::new();
 
     for valset in valsets {
@@ -127,7 +116,10 @@ pub async fn send_valset_confirms(
         let msg = Msg::new("/gravity.v1.MsgValsetConfirm", confirm);
         messages.push(msg);
     }
-    let args = contact.get_message_args(our_address, fee).await?;
+
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
+
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
@@ -152,13 +144,6 @@ pub async fn send_batch_confirm(
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
-
     let mut messages = Vec::new();
 
     for batch in transaction_batches {
@@ -180,7 +165,10 @@ pub async fn send_batch_confirm(
         let msg = Msg::new("/gravity.v1.MsgConfirmBatch", confirm);
         messages.push(msg);
     }
-    let args = contact.get_message_args(our_address, fee).await?;
+
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
+
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
@@ -205,13 +193,6 @@ pub async fn send_logic_call_confirm(
     let our_address = private_key.to_address(&contact.get_prefix()).unwrap();
     let our_eth_address = eth_private_key.to_public_key().unwrap();
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
-
     let mut messages = Vec::new();
 
     for call in logic_calls {
@@ -233,7 +214,10 @@ pub async fn send_logic_call_confirm(
         let msg = Msg::new("/gravity.v1.MsgConfirmLogicCall", confirm);
         messages.push(msg);
     }
-    let args = contact.get_message_args(our_address, fee).await?;
+
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
+
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
@@ -339,22 +323,17 @@ pub async fn send_ethereum_claims(
     }
     keys.sort_unstable();
 
-    let mut msgs = Vec::new();
+    let mut messages = Vec::new();
     for i in keys {
-        msgs.push(unordered_msgs.remove_entry(&i).unwrap().1);
+        messages.push(unordered_msgs.remove_entry(&i).unwrap().1);
     }
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
 
-    let args = contact.get_message_args(our_address, fee).await?;
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&msgs, args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -411,19 +390,16 @@ pub async fn send_to_eth(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000u64,
-        granter: None,
-        payer: None,
-    };
-
+  
+    let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
 
-    let args = contact.get_message_args(our_address, fee).await?;
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -446,20 +422,15 @@ pub async fn send_request_batch(
         sender: our_address.to_string(),
         denom,
     };
-
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
-
+    let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgRequestBatch", msg_request_batch);
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
 
-    let args = contact.get_message_args(our_address, fee).await?;
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -489,23 +460,18 @@ pub async fn submit_bad_signature_evidence(
         signature: bytes_to_hex_str(&signature.to_bytes()),
         sender: our_address.to_string(),
     };
-
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000_000u64,
-        granter: None,
-        payer: None,
-    };
-
+    let mut messages = Vec::new();
     let msg = Msg::new(
         "/gravity.v1.MsgSubmitBadSignatureEvidence",
         msg_submit_bad_signature_evidence,
     );
-
-    let args = contact.get_message_args(our_address, fee).await?;
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
+  
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -529,20 +495,15 @@ pub async fn cancel_send_to_eth(
         transaction_id,
         sender: our_address.to_string(),
     };
-
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 600_000u64,
-        granter: None,
-        payer: None,
-    };
-
+    let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgCancelSendToEth", msg_cancel_send_to_eth);
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
 
-    let args = contact.get_message_args(our_address, fee).await?;
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
-    let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
+    let msg_bytes = private_key.sign_std_msg(&messages, args, MEMO)?;
 
     let response = contact
         .send_transaction(msg_bytes, BroadcastMode::Sync)
@@ -550,4 +511,16 @@ pub async fn cancel_send_to_eth(
 
     // contact.wait_for_tx(response, TIMEOUT).await
     wait_for_tx_with_retry(contact, &response).await
+}
+
+async fn calc_fee(
+    private_key: PrivateKey,
+    fee: Coin,
+    contact: &Contact,
+    messages: Vec<Msg>,
+) -> Result<deep_space::Fee, CosmosGrpcError> {
+    let mut fee_calc = contact.get_fee_info(&messages, &[fee.clone()], private_key).await?;
+    fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
+    info!("{:?}", fee_calc);
+    Ok(fee_calc)
 }
