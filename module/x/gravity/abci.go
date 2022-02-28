@@ -22,17 +22,15 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 
 	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
 	if err != nil {
-		ctx.Logger().Error("Cannot find denom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
+		ctx.Logger().Error("Cannot find RequestBatchdenom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
 		return
 	}
 
-	lastBatch := k.GetLastOutgoingBatchByTokenType(ctx, *tokenContract)
-	if lastBatch != nil {
-		nextBatchHeight := lastBatch.Block + 60
-		if uint64(ctx.BlockHeight()) < nextBatchHeight {
-			ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", nextBatchHeight), "module", types.ModuleName, "action", "auto creation of batches")
-			return
-		}
+	//create batches every 60 blocks
+	bh := uint64(ctx.BlockHeight())
+	if bh%60 != 0 {
+		ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+60-(bh%60)), "module", types.ModuleName, "action", "auto creation of batches")
+		return
 	}
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
