@@ -118,7 +118,7 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	ctx := sdk.UnwrapSDKContext(c)
 	mft := k.GetMinimumFeeTransferToEth(ctx)
 	if msg.BridgeFee.Amount.LT(mft) {
-		return nil, fmt.Errorf("fee does not meet minimum fee requirement: %s", mft)
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("fee does not meet minimum fee requirement: %sacudos", mft))
 	}
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
