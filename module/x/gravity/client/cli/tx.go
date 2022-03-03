@@ -111,16 +111,16 @@ func CmdSendToEth() *cobra.Command {
 
 			amount, err := sdk.ParseCoinsNormalized(args[1])
 			if err != nil {
-				return sdkerrors.Wrap(err, "amount")
+				return err
 			}
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
-				return sdkerrors.Wrap(err, "bridge fee")
+				return err
 			}
 
 			ethAddr, err := types.NewEthAddress(args[0])
 			if err != nil {
-				return sdkerrors.Wrap(err, "invalid eth address")
+				return err
 			}
 
 			if len(amount) > 1 || len(bridgeFee) > 1 {
