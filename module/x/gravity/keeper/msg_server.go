@@ -8,6 +8,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
@@ -23,7 +24,17 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{Keeper: keeper}
 }
 
-var _ types.MsgServer = msgServer{}
+var _ types.MsgServer = msgServer{
+	Keeper: Keeper{
+		StakingKeeper:      nil,
+		storeKey:           nil,
+		paramSpace:         paramstypes.Subspace{},
+		cdc:                nil,
+		bankKeeper:         nil,
+		SlashingKeeper:     nil,
+		AttestationHandler: nil,
+	},
+}
 
 func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOrchestratorAddress) (*types.MsgSetOrchestratorAddressResponse, error) {
 	// ensure that this passes validation, checks the key validity
@@ -35,6 +46,7 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 	ctx := sdk.UnwrapSDKContext(c)
 	val, _ := sdk.ValAddressFromBech32(msg.Validator)
 	orch, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
+	addr, _ := types.NewEthAddress(msg.EthAddress)
 
 	_, foundExistingOrchestratorKey := k.GetOrchestratorValidator(ctx, orch)
 	_, foundExistingEthAddress := k.GetEthAddressByValidator(ctx, val)
@@ -44,12 +56,14 @@ func (k msgServer) SetOrchestratorAddress(c context.Context, msg *types.MsgSetOr
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, val.String())
 	} else if foundExistingOrchestratorKey || foundExistingEthAddress {
 		return nil, sdkerrors.Wrap(types.ErrResetDelegateKeys, val.String())
+	} else if !k.IsStaticValByValAddress(ctx, val) {
+		return nil, sdkerrors.Wrap(types.NotStaticVal, val.String())
 	}
 
 	// set the orchestrator address
 	k.SetOrchestratorValidator(ctx, val, orch)
 	// set the ethereum address
-	k.SetEthAddressForValidator(ctx, val, msg.EthAddress)
+	k.SetEthAddressForValidator(ctx, val, *addr)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -98,12 +112,32 @@ func (k msgServer) ValsetConfirm(c context.Context, msg *types.MsgValsetConfirm)
 
 // SendToEth handles MsgSendToEth
 func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types.MsgSendToEthResponse, error) {
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MsgSendToEth")
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
+
+	mte := k.GetMinimumTransferToEth(ctx)
+	if msg.Amount.Amount.LT(mte) {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("amount does not meet minimum sending amount requirement: %sacudos", mte))
+	}
+
+	mft := k.GetMinimumFeeTransferToEth(ctx)
+	if msg.BridgeFee.Amount.LT(mft) {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("fee does not meet minimum fee requirement: %sacudos", mft))
+	}
+
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "invalid sender")
 	}
-	txID, err := k.AddToOutgoingPool(ctx, sender, msg.EthDest, msg.Amount, msg.BridgeFee)
+	dest, err := types.NewEthAddress(msg.EthDest)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid eth dest")
+	}
+	txID, err := k.AddToOutgoingPool(ctx, sender, *dest, msg.Amount, msg.BridgeFee)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +153,34 @@ func (k msgServer) SendToEth(c context.Context, msg *types.MsgSendToEth) (*types
 	return &types.MsgSendToEthResponse{}, nil
 }
 
+func (k msgServer) SetMinFeeTransferToEth(c context.Context, msg *types.MsgSetMinFeeTransferToEth) (*types.MsgSetMinFeeTransferToEthResponse, error) {
+	err := msg.ValidateBasic()
+
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MsgSetMinFeeTransferToEth")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if msg.Fee.Equal(k.GetMinimumFeeTransferToEth(ctx)) {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "fee min fee should be different from current value")
+	}
+
+	//get signer admin tokens
+	sAddr := msg.GetSigners()[0]
+	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
+
+	if sat.LT(sdk.OneInt()) {
+		return nil, sdkerrors.Wrap(types.ErrInvalid, "only accounts with admin tokens can change the min bridge fee")
+	}
+
+	k.SetMinimumFeeTransferToEth(ctx, msg.Fee)
+
+	ctx.EventManager().EmitTypedEvent(msg)
+
+	return &types.MsgSetMinFeeTransferToEthResponse{}, nil
+}
+
 // RequestBatch handles MsgRequestBatch
 func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (*types.MsgRequestBatchResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -130,7 +192,7 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 		return nil, err
 	}
 
-	batch, err := k.BuildOutgoingTXBatch(ctx, tokenContract, OutgoingTxBatchSize)
+	batch, err := k.BuildOutgoingTXBatch(ctx, *tokenContract, OutgoingTxBatchSize)
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +210,15 @@ func (k msgServer) RequestBatch(c context.Context, msg *types.MsgRequestBatch) (
 
 // ConfirmBatch handles MsgConfirmBatch
 func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (*types.MsgConfirmBatchResponse, error) {
+	err := msg.ValidateBasic()
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid MsgConfirmBatch")
+	}
+	contract, _ := types.NewEthAddress(msg.TokenContract)
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// fetch the outgoing batch given the nonce
-	batch := k.GetOutgoingTXBatch(ctx, msg.TokenContract, msg.Nonce)
+	batch := k.GetOutgoingTXBatch(ctx, *contract, msg.Nonce)
 	if batch == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "couldn't find batch")
 	}
@@ -159,13 +226,13 @@ func (k msgServer) ConfirmBatch(c context.Context, msg *types.MsgConfirmBatch) (
 	gravityID := k.GetGravityID(ctx)
 	checkpoint := batch.GetCheckpoint(gravityID)
 	orchaddr, _ := sdk.AccAddressFromBech32(msg.Orchestrator)
-	err := k.confirmHandlerCommon(ctx, msg.Orchestrator, msg.Signature, checkpoint)
+	err = k.confirmHandlerCommon(ctx, msg.Orchestrator, msg.Signature, checkpoint)
 	if err != nil {
 		return nil, err
 	}
 
 	// check if we already have this confirm
-	if k.GetBatchConfirm(ctx, msg.Nonce, msg.TokenContract, orchaddr) != nil {
+	if k.GetBatchConfirm(ctx, msg.Nonce, *contract, orchaddr) != nil {
 		return nil, sdkerrors.Wrap(types.ErrDuplicate, "duplicate signature")
 	}
 	key := k.SetBatchConfirm(ctx, msg)
@@ -246,6 +313,10 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 	if err != nil {
 		return sdkerrors.Wrap(err, "create attestation")
 	}
+	hash, err := msg.ClaimHash()
+	if err != nil {
+		return sdkerrors.Wrap(err, "unable to compute claim hash")
+	}
 
 	// Emit the handle message event
 	ctx.EventManager().EmitEvent(
@@ -253,7 +324,7 @@ func (k msgServer) claimHandlerCommon(ctx sdk.Context, msgAny *codectypes.Any, m
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, string(msg.GetType())),
 			// TODO: maybe return something better here? is this the right string representation?
-			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.GetEventNonce(), msg.ClaimHash()))),
+			sdk.NewAttribute(types.AttributeKeyAttestationID, string(types.GetAttestationKey(msg.GetEventNonce(), hash))),
 		),
 	)
 
@@ -278,7 +349,7 @@ func (k msgServer) confirmHandlerCommon(ctx sdk.Context, orchestrator string, si
 		return sdkerrors.Wrap(types.ErrEmpty, "eth address")
 	}
 
-	err = types.ValidateEthereumSignature(checkpoint, sigBytes, ethAddress)
+	err = types.ValidateEthereumSignature(checkpoint, sigBytes, *ethAddress)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrInvalid, fmt.Sprintf("signature verification failed expected sig by %s with checkpoint %s found %s", ethAddress, hex.EncodeToString(checkpoint), signature))
 	}

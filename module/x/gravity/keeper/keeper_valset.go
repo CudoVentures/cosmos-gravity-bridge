@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
@@ -30,11 +31,12 @@ func (k Keeper) SetValsetRequest(ctx sdk.Context) *types.Valset {
 	checkpoint := valset.GetCheckpoint(k.GetGravityID(ctx))
 	k.SetPastEthSignatureCheckpoint(ctx, checkpoint)
 
+	bridgeAddr := k.GetBridgeContractAddress(ctx)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeMultisigUpdateRequest,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyContract, k.GetBridgeContractAddress(ctx)),
+			sdk.NewAttribute(types.AttributeKeyContract, bridgeAddr.GetAddress()),
 			sdk.NewAttribute(types.AttributeKeyBridgeChainID, strconv.Itoa(int(k.GetBridgeChainID(ctx)))),
 			sdk.NewAttribute(types.AttributeKeyMultisigID, fmt.Sprint(valset.Nonce)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(valset.Nonce)),
@@ -228,21 +230,34 @@ func (k Keeper) IterateValsetBySlashedValsetNonce(ctx sdk.Context, lastSlashedVa
 // it or save
 func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+	staticValOperAddrsMap := k.GetStaticValOperAddrsAsMap(ctx)
 	// allocate enough space for all validators, but len zero, we then append
 	// so that we have an array with extra capacity but the correct length depending
 	// on how many validators have keys set.
-	bridgeValidators := make([]*types.BridgeValidator, 0, len(validators))
+	bridgeValidators := make([]*types.InternalBridgeValidator, 0, len(validators))
 	var totalPower uint64
 	// TODO someone with in depth info on Cosmos staking should determine
 	// if this is doing what I think it's doing
+
+	// ctx.Logger().Error("Debug Keeper_valset", "staticValOperAddrsMap", staticValOperAddrsMap)
 	for _, validator := range validators {
 		val := validator.GetOperator()
+
+		// ctx.Logger().Error("Debug Keeper_valset", "Check Validator", validator.OperatorAddress)
+		if _, found := staticValOperAddrsMap[validator.OperatorAddress]; !found {
+			continue
+		}
+		// ctx.Logger().Error("Debug Keeper_valset", "Static Validator", validator.OperatorAddress)
 
 		p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
 
 		if ethAddr, found := k.GetEthAddressByValidator(ctx, val); found {
-			bv := &types.BridgeValidator{Power: p, EthereumAddress: ethAddr}
-			bridgeValidators = append(bridgeValidators, bv)
+			bv := types.BridgeValidator{Power: p, EthereumAddress: ethAddr.GetAddress()}
+			ibv, err := types.NewInternalBridgeValidator(bv)
+			if err != nil {
+				panic(sdkerrors.Wrapf(err, "discovered invalid eth address stored for validator %v", val))
+			}
+			bridgeValidators = append(bridgeValidators, ibv)
 			totalPower += p
 		}
 	}
@@ -253,13 +268,13 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 
 	// get the reward from the params store
 	reward := k.GetParams(ctx).ValsetReward
-	var rewardToken string
+	var rewardToken *types.EthAddress
 	var rewardAmount sdk.Int
 	if !reward.IsValid() || reward.IsZero() {
 		// the case where a validator has 'no reward'. The 'no reward' value is interpreted as having a zero
 		// address for the ERC20 token and a zero value for the reward amount. Since we store a coin with the
 		// params, a coin with a blank denom and/or zero amount is interpreted in this way.
-		rewardToken = "0x0000000000000000000000000000000000000000"
+		rewardToken = types.ZeroAddress()
 		rewardAmount = sdk.NewIntFromUint64(0)
 
 	} else {
@@ -269,7 +284,12 @@ func (k Keeper) GetCurrentValset(ctx sdk.Context) *types.Valset {
 	// increment the nonce, since this potential future valset should be after the current valset
 	valsetNonce := k.GetLatestValsetNonce(ctx) + 1
 
-	return types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, rewardToken)
+	valset, err := types.NewValset(valsetNonce, uint64(ctx.BlockHeight()), bridgeValidators, rewardAmount, *rewardToken)
+	if err != nil {
+		panic(sdkerrors.Wrap(err, "generated invalid valset"))
+	}
+	// ctx.Logger().Error("Debug Valset", "valset", valset)
+	return valset
 }
 
 /////////////////////////////
@@ -283,7 +303,12 @@ func (k Keeper) GetValsetConfirm(ctx sdk.Context, nonce uint64, validator sdk.Ac
 	if entity == nil {
 		return nil
 	}
-	confirm := types.MsgValsetConfirm{}
+	confirm := types.MsgValsetConfirm{
+		Nonce:        nonce,
+		Orchestrator: "",
+		EthAddress:   "",
+		Signature:    "",
+	}
 	k.cdc.MustUnmarshal(entity, &confirm)
 	return &confirm
 }
@@ -309,7 +334,12 @@ func (k Keeper) GetValsetConfirms(ctx sdk.Context, nonce uint64) (confirms []*ty
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgValsetConfirm{
+			Nonce:        nonce,
+			Orchestrator: "",
+			EthAddress:   "",
+			Signature:    "",
+		}
 		k.cdc.MustUnmarshal(iterator.Value(), &confirm)
 		confirms = append(confirms, &confirm)
 	}
@@ -324,7 +354,12 @@ func (k Keeper) IterateValsetConfirmByNonce(ctx sdk.Context, nonce uint64, cb fu
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		confirm := types.MsgValsetConfirm{}
+		confirm := types.MsgValsetConfirm{
+			Nonce:        nonce,
+			Orchestrator: "",
+			EthAddress:   "",
+			Signature:    "",
+		}
 		k.cdc.MustUnmarshal(iter.Value(), &confirm)
 		// cb returns true to stop early
 		if cb(iter.Key(), confirm) {

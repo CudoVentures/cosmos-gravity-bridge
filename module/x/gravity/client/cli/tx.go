@@ -18,6 +18,7 @@ import (
 )
 
 func GetTxCmd(storeKey string) *cobra.Command {
+	//nolint: exhaustivestruct
 	gravityTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Gravity transaction subcommands",
@@ -28,6 +29,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 
 	gravityTxCmd.AddCommand([]*cobra.Command{
 		CmdSendToEth(),
+		CmdSetMinFeeTransferToEth(),
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
@@ -37,6 +39,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 }
 
 func GetUnsafeTestingCmd() *cobra.Command {
+	//nolint: exhaustivestruct
 	testingTxCmd := &cobra.Command{
 		Use:                        "unsafe_testing",
 		Short:                      "helpers for testing. not going into production",
@@ -53,6 +56,7 @@ func GetUnsafeTestingCmd() *cobra.Command {
 }
 
 func CmdUnsafeETHPrivKey() *cobra.Command {
+	//nolint: exhaustivestruct
 	return &cobra.Command{
 		Use:   "gen-eth-key",
 		Short: "Generate and print a new ecdsa key",
@@ -69,6 +73,7 @@ func CmdUnsafeETHPrivKey() *cobra.Command {
 }
 
 func CmdUnsafeETHAddr() *cobra.Command {
+	//nolint: exhaustivestruct
 	return &cobra.Command{
 		Use:   "eth-address",
 		Short: "Print address for an ECDSA eth key",
@@ -93,9 +98,11 @@ func CmdUnsafeETHAddr() *cobra.Command {
 }
 
 func CmdSendToEth() *cobra.Command {
+
+	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
-		Short: "Adds a new entry to the trankeepersaction pool to withdraw an amount from the Ethereum bridge contract",
+		Short: "Adds a new entry to the transaction pool to withdraw an amount from the Ethereum bridge contract",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
@@ -106,11 +113,17 @@ func CmdSendToEth() *cobra.Command {
 
 			amount, err := sdk.ParseCoinsNormalized(args[1])
 			if err != nil {
-				return sdkerrors.Wrap(err, "amount")
+				return err
 			}
+
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
-				return sdkerrors.Wrap(err, "bridge fee")
+				return err
+			}
+
+			ethAddr, err := types.NewEthAddress(args[0])
+			if err != nil {
+				return err
 			}
 
 			if len(amount) != 1 || len(bridgeFee) != 1 {
@@ -120,7 +133,7 @@ func CmdSendToEth() *cobra.Command {
 			// Make the message
 			msg := types.MsgSendToEth{
 				Sender:    cosmosAddr.String(),
-				EthDest:   args[0],
+				EthDest:   ethAddr.GetAddress(),
 				Amount:    amount[0],
 				BridgeFee: bridgeFee[0],
 			}
@@ -135,7 +148,48 @@ func CmdSendToEth() *cobra.Command {
 	return cmd
 }
 
+func CmdSetMinFeeTransferToEth() *cobra.Command {
+
+	//nolint: exhaustivestruct
+	cmd := &cobra.Command{
+		Use:   "set-min-bridge-fee [min-bridge-fee]",
+		Short: "Sets the minimum bridge fee for transfer to eth. Usable only by admin token holders.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			aAddr := cliCtx.GetFromAddress()
+
+			amount, ok := sdk.NewIntFromString(args[0])
+			if !ok {
+				return fmt.Errorf("wrong min-bridge-fee %s", args[0])
+			}
+
+			if amount.LT(sdk.OneInt()) {
+				return fmt.Errorf("min bridge fee amount should be more than 1")
+			}
+
+			// Make the message
+			msg := types.MsgSetMinFeeTransferToEth{
+				Sender: aAddr.String(),
+				Fee:    amount,
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
 func CmdRequestBatch() *cobra.Command {
+	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:   "build-batch [denom]",
 		Short: "Build a new batch on the cosmos side for pooled withdrawal transactions",
@@ -150,7 +204,7 @@ func CmdRequestBatch() *cobra.Command {
 			// TODO: better denom searching
 			msg := types.MsgRequestBatch{
 				Sender: cosmosAddr.String(),
-				Denom:  args[0], //fmt.Sprintf("gravity%s", args[0]),
+				Denom:  args[0], // fmt.Sprintf("gravity%s", args[0]),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -164,6 +218,7 @@ func CmdRequestBatch() *cobra.Command {
 }
 
 func CmdSetOrchestratorAddress() *cobra.Command {
+	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:   "set-orchestrator-address [validator-address] [orchestrator-address] [ethereum-address]",
 		Short: "Allows validators to delegate their voting responsibilities to a given key.",

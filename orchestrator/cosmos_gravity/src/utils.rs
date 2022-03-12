@@ -1,15 +1,23 @@
 use crate::query::get_last_event_nonce_for_validator;
 use deep_space::error::CosmosGrpcError;
+use deep_space::utils::encode_any;
 use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
+use gravity_proto::gravity::OutgoingLogicCall as ProtoLogicCall;
+use gravity_proto::gravity::OutgoingTxBatch as ProtoBatch;
+use gravity_proto::gravity::Valset as ProtoValset;
 use gravity_proto::cosmos_sdk_proto::cosmos::base::abci::v1beta1::TxResponse;
 use gravity_utils::get_with_retry::RETRY_TIME;
+use gravity_utils::types::LogicCall;
+use gravity_utils::types::TransactionBatch;
+use gravity_utils::types::Valset;
+use prost_types::Any;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
-pub const TIMEOUT: Duration = Duration::from_secs(60);
+pub const TIMEOUT: Duration = Duration::from_secs(5);
 
 pub async fn wait_for_cosmos_online(contact: &Contact, timeout: Duration) {
     let start = Instant::now();
@@ -25,6 +33,24 @@ pub async fn wait_for_cosmos_online(contact: &Contact, timeout: Duration) {
     contact.wait_for_next_block(timeout).await.unwrap();
     contact.wait_for_next_block(timeout).await.unwrap();
 }
+
+pub async fn wait_for_tx_with_retry(contact: &Contact, response: &TxResponse) -> Result<TxResponse, CosmosGrpcError> {
+    let mut res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
+
+    let mut counter: i32 = 0;
+    while res.is_err() {
+        info!("Wait for tx at iteration {} of 12", counter);
+        sleep(RETRY_TIME).await;
+        res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
+        counter += 1;
+
+        if counter == 12 { // wait for 1 minute (12 * 5 = 60 seconds)
+            break;
+        }
+    }
+
+    return res;
+} 
 
 /// gets the Cosmos last event nonce, no matter how long it takes.
 pub async fn get_last_event_nonce_with_retry(
@@ -45,20 +71,27 @@ pub async fn get_last_event_nonce_with_retry(
     res.unwrap()
 }
 
-pub async fn wait_for_tx_with_retry(contact: &Contact, response: &TxResponse) -> Result<TxResponse, CosmosGrpcError> {
-    let mut res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
+pub enum BadSignatureEvidence {
+    Valset(Valset),
+    Batch(TransactionBatch),
+    LogicCall(LogicCall),
+}
 
-    let mut counter: i32 = 0;
-    while res.is_err() {
-        info!("Wait for tx at iteration {} of 12", counter);
-        sleep(RETRY_TIME).await;
-        res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
-        counter += 1;
-
-        if counter == 12 { // wait for 1 minute (12 * 5 = 60 seconds)
-            break;
+impl BadSignatureEvidence {
+    pub fn to_any(&self) -> Any {
+        match self {
+            BadSignatureEvidence::Valset(v) => {
+                let v: ProtoValset = v.into();
+                encode_any(v, "/gravity.v1.Valset".to_string())
+            }
+            BadSignatureEvidence::Batch(b) => {
+                let b: ProtoBatch = b.into();
+                encode_any(b, "/gravity.v1.OutgoingTxBatch".to_string())
+            }
+            BadSignatureEvidence::LogicCall(l) => {
+                let l: ProtoLogicCall = l.into();
+                encode_any(l, "/gravity.v1.OutgoingLogicCall".to_string())
+            }
         }
     }
-    
-    return res;
 }

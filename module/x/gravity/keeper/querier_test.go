@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ import (
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
+//nolint: exhaustivestruct
 func TestQueryValsetConfirm(t *testing.T) {
 	var (
 		nonce                                       = uint64(1)
@@ -74,6 +76,7 @@ func TestQueryValsetConfirm(t *testing.T) {
 	}
 }
 
+//nolint: exhaustivestruct
 func TestAllValsetConfirmsBynonce(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -134,6 +137,7 @@ func TestAllValsetConfirmsBynonce(t *testing.T) {
 }
 
 // TODO: Check failure modes
+//nolint: exhaustivestruct
 func TestLastValsetRequests(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -142,8 +146,12 @@ func TestLastValsetRequests(t *testing.T) {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			cAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			valAddr := sdk.ValAddress(cAddr)
+			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			require.NoError(t, err)
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+			input.GravityKeeper.SetStaticValCosmosAddr(ctx, cAddr.String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -288,6 +296,7 @@ func TestLastValsetRequests(t *testing.T) {
 	}
 }
 
+//nolint: exhaustivestruct
 // TODO: check that it doesn't accidently return a valset that HAS been signed
 // Right now it is basically just testing that any valset comes back
 func TestPendingValsetRequests(t *testing.T) {
@@ -299,8 +308,12 @@ func TestPendingValsetRequests(t *testing.T) {
 		var validators []sdk.ValAddress
 		for j := 0; j <= i; j++ {
 			// add an validator each block
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			cAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			valAddr := sdk.ValAddress(cAddr)
+			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			require.NoError(t, err)
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+			input.GravityKeeper.SetStaticValCosmosAddr(ctx, cAddr.String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -450,7 +463,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+			valAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 			got, err := lastPendingValsetRequest(ctx, valAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
@@ -458,6 +471,7 @@ func TestPendingValsetRequests(t *testing.T) {
 	}
 }
 
+//nolint: exhaustivestruct
 // TODO: check that it actually returns a batch that has NOT been signed, not just any batch
 func TestLastPendingBatchRequest(t *testing.T) {
 	input := CreateTestEnv(t)
@@ -470,8 +484,12 @@ func TestLastPendingBatchRequest(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			var cAddr sdk.AccAddress = bytes.Repeat([]byte{byte(j)}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()))
+			valAddr := sdk.ValAddress(cAddr)
+			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			require.NoError(t, err)
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+			input.GravityKeeper.SetStaticValCosmosAddr(ctx, cAddr.String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -492,32 +510,32 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	"transactions": [
 		{
 		"id": "2",
-		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
+		"dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 		"erc20_token": {
 			"amount": "101",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		"erc20_fee": {
 			"amount": "3",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 		},
 		{
-		"id": "1",
-		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"id": "3",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
+		"dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 		"erc20_token": {
-			"amount": "100",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"amount": "102",
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		"erc20_fee": {
 			"amount": "2",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 		}
 	],
-	"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+	"token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 	}
 }
 			`,
@@ -525,52 +543,71 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-			got, err := lastPendingBatchRequest(ctx, valAddr.String(), input.GravityKeeper)
+			accAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+			got, err := lastPendingBatchRequest(ctx, accAddr.String(), input.GravityKeeper)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(spec.expResp), string(got), string(got))
 		})
 	}
 }
 
+//nolint: exhaustivestruct
 func createTestBatch(t *testing.T, input TestInput) {
 	var (
-		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		myReceiver          = "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934"
-		myTokenContractAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		mySender            = sdk.AccAddress(bytes.Repeat([]byte{1}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().String()))))
+		myReceiver          = "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934"
+		myTokenContractAddr = "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		now                 = time.Now().UTC()
 	)
+	receiver, err := types.NewEthAddress(myReceiver)
+	require.NoError(t, err)
+	tokenContract, err := types.NewEthAddress(myTokenContractAddr)
+	require.NoError(t, err)
 	// mint some voucher first
-	allVouchers := sdk.Coins{types.NewERC20Token(99999, myTokenContractAddr).GravityCoin()}
-	err := input.BankKeeper.MintCoins(input.Context, types.ModuleName, allVouchers)
+	token, err := types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+	require.NoError(t, err)
+	allVouchers := sdk.Coins{token.GravityCoin()}
+	err = input.BankKeeper.MintCoins(input.Context, types.ModuleName, allVouchers)
 	require.NoError(t, err)
 
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(input.Context, mySender)
-	err = input.BankKeeper.SetBalances(input.Context, mySender, allVouchers)
+	err = input.BankKeeper.SendCoinsFromModuleToAccount(input.Context, types.ModuleName, mySender, allVouchers)
 	require.NoError(t, err)
 
 	// add some TX to the pool
 	for i, v := range []uint64{2, 3, 2, 1} {
-		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
-		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err = input.GravityKeeper.AddToOutgoingPool(input.Context, mySender, myReceiver, amount, fee)
+		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
+		amount := amountToken.GravityCoin()
+		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		require.NoError(t, err)
+		fee := feeToken.GravityCoin()
+		_, err = input.GravityKeeper.AddToOutgoingPool(input.Context, mySender, *receiver, amount, fee)
+		require.NoError(t, err)
+		// Should create:
+		// 1: amount 100, fee 2
+		// 2: amount 101, fee 3
+		// 3: amount 102, fee 2
+		// 4: amount 103, fee 1
 	}
 	// when
 	input.Context = input.Context.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err = input.GravityKeeper.BuildOutgoingTXBatch(input.Context, myTokenContractAddr, 2)
+	_, err = input.GravityKeeper.BuildOutgoingTXBatch(input.Context, *tokenContract, 2)
 	require.NoError(t, err)
+	// Should have 2 and 3 from above
+	// 1 and 4 should be unbatched
 }
 
+//nolint: exhaustivestruct
 func TestQueryAllBatchConfirms(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 
 	var (
-		tokenContract    = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		tokenContract    = "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
@@ -585,67 +622,74 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, input.GravityKeeper)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xab5801a7d398351b8be11c439e05c5b3259aec9b", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
 
-func TestQueryLogicCalls(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	k := input.GravityKeeper
-	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
-	)
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//SetOutgoingLogicCall is not supported
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//nolint: exhaustivestruct
+// func TestQueryLogicCalls(t *testing.T) {
+// 	input := CreateTestEnv(t)
+// 	ctx := input.Context
+// 	k := input.GravityKeeper
+// 	var (
+// 		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+// 		payload                  = []byte("fake bytes")
+// 		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+// 		invalidationId           = []byte("GravityTesting")
+// 		invalidationNonce uint64 = 1
+// 	)
 
-	// seed with valset requests and eth addresses to make validators
-	// that we will later use to lookup calls to be signed
-	for i := 0; i < 6; i++ {
-		var validators []sdk.ValAddress
-		for j := 0; j <= i; j++ {
-			// add an validator each block
-			// TODO: replace with real SDK addresses
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
-			validators = append(validators, valAddr)
-		}
-		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
-	}
+// 	// seed with valset requests and eth addresses to make validators
+// 	// that we will later use to lookup calls to be signed
+// 	for i := 0; i < 6; i++ {
+// 		var validators []sdk.ValAddress
+// 		for j := 0; j <= i; j++ {
+// 			// add an validator each block
+// 			// TODO: replace with real SDK addresses
+// 			valAddr := bytes.Repeat([]byte{byte(j)}, len(secp256k1.GenPrivKey().PubKey().Address()))
+// 			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+// 			require.NoError(t, err)
+// 			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+// 			validators = append(validators, valAddr)
+// 		}
+// 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
+// 	}
 
-	token := []*types.ERC20Token{{
-		Contract: tokenContract,
-		Amount:   sdk.NewIntFromUint64(5000),
-	}}
+// 	token := []*types.ERC20Token{{
+// 		Contract: tokenContract,
+// 		Amount:   sdk.NewIntFromUint64(5000),
+// 	}}
 
-	call := types.OutgoingLogicCall{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: logicContract,
-		Payload:              payload,
-		Timeout:              10000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    uint64(invalidationNonce),
-	}
-	k.SetOutgoingLogicCall(ctx, &call)
+// 	call := types.OutgoingLogicCall{
+// 		Transfers:            token,
+// 		Fees:                 token,
+// 		LogicContractAddress: logicContract,
+// 		Payload:              payload,
+// 		Timeout:              10000,
+// 		InvalidationId:       invalidationId,
+// 		InvalidationNonce:    uint64(invalidationNonce),
+// 	}
+// 	k.SetOutgoingLogicCall(ctx, &call)
 
-	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+// 	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
 
-	require.Equal(t, call, *res)
+// 	require.Equal(t, call, *res)
 
-	_, err := lastLogicCallRequests(ctx, k)
-	require.NoError(t, err)
+// 	_, err := lastLogicCallRequests(ctx, k)
+// 	require.NoError(t, err)
 
-	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
-	require.NoError(t, err)
+// 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, len(secp256k1.GenPrivKey().PubKey().Address()))
+// 	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
+// 	require.NoError(t, err)
 
-	require.NoError(t, err)
-}
+// 	require.NoError(t, err)
+// }
 
+//nolint: exhaustivestruct
 func TestQueryLogicCallsConfirms(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -665,8 +709,12 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// add an validator each block
 			// TODO: replace with real SDK addresses
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			var accAddress sdk.AccAddress = bytes.Repeat([]byte{byte(j)}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()))
+			valAddr := sdk.ValAddress(accAddress)
+			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+			require.NoError(t, err)
+			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+			input.GravityKeeper.SetStaticValCosmosAddr(ctx, accAddress.String())
 			validators = append(validators, valAddr)
 		}
 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
@@ -688,7 +736,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	}
 	k.SetOutgoingLogicCall(ctx, &call)
 
-	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()))
 
 	confirm := types.MsgConfirmLogicCall{
 		InvalidationId:    hex.EncodeToString(invalidationId),
@@ -704,6 +752,7 @@ func TestQueryLogicCallsConfirms(t *testing.T) {
 	assert.Equal(t, len(res), 1)
 }
 
+//nolint: exhaustivestruct
 // TODO: test that it gets the correct batch, not just any batch.
 // Check with multiple nonces and tokenContracts
 func TestQueryBatch(t *testing.T) {
@@ -711,7 +760,7 @@ func TestQueryBatch(t *testing.T) {
 	ctx := input.Context
 
 	var (
-		tokenContract = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		tokenContract = "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 	)
 
 	createTestBatch(t, input)
@@ -726,33 +775,33 @@ func TestQueryBatch(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "2"
 			},
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
-				"amount": "100",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"amount": "102",
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "id": "1"
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
+			  "id": "3"
 			}
 		  ],
 		  "batch_nonce": "1",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 	  }
 	  `)
@@ -761,6 +810,7 @@ func TestQueryBatch(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), string(batch), string(batch))
 }
 
+//nolint: exhaustivestruct
 func TestLastBatchesRequest(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
@@ -777,66 +827,66 @@ func TestLastBatchesRequest(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "6"
 			},
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "102",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "id": "3"
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
+			  "id": "7"
 			}
 		  ],
 		  "batch_nonce": "2",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		{
 		  "transactions": [
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "2"
 			},
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
-				"amount": "100",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"amount": "102",
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
-			  "id": "1"
+			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
+			  "id": "3"
 			}
 		  ],
 		  "batch_nonce": "1",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 	  ]
 	  `)
@@ -844,38 +894,48 @@ func TestLastBatchesRequest(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), string(lastBatches), "json is equal")
 }
 
+//nolint: exhaustivestruct
 // tests setting and querying eth address and orchestrator addresses
 func TestQueryCurrentValset(t *testing.T) {
 	var (
-		ethAddress                = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		valAddress sdk.ValAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		ethAddress                = "0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255"
+		accAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()))
+		valAddress sdk.ValAddress = sdk.ValAddress(accAddress)
 	)
+	addr, err := types.NewEthAddress(ethAddress)
+	require.NoError(t, err)
 	input := CreateTestEnv(t)
 	input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(valAddress)
 	ctx := input.Context
-	input.GravityKeeper.SetEthAddressForValidator(ctx, valAddress, ethAddress)
-
+	input.GravityKeeper.SetEthAddressForValidator(ctx, valAddress, *addr)
+	input.GravityKeeper.SetStaticValCosmosAddr(ctx, accAddress.String())
 	currentValset := input.GravityKeeper.GetCurrentValset(ctx)
 
 	bridgeVal := types.BridgeValidator{EthereumAddress: ethAddress, Power: 4294967295}
-	expectedValset := types.NewValset(1, 1234567, []*types.BridgeValidator{&bridgeVal}, sdk.NewIntFromUint64(0), "0x0000000000000000000000000000000000000000")
+	internalBridgeVal, err := bridgeVal.ToInternal()
+	require.NoError(t, err)
+	internalBridgeVals := types.InternalBridgeValidators([]*types.InternalBridgeValidator{internalBridgeVal})
+	expectedValset, err := types.NewValset(1, 1234567, internalBridgeVals, sdk.NewIntFromUint64(0), *types.ZeroAddress())
+	require.NoError(t, err)
 	assert.Equal(t, expectedValset, currentValset)
 }
 
+//nolint: exhaustivestruct
 func TestQueryERC20ToDenom(t *testing.T) {
 	var (
-		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		denom = "uatom"
+		erc20, err = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
+		denom      = "uatom"
 	)
+	require.NoError(t, err)
 	response := types.QueryERC20ToDenomResponse{
 		Denom:            denom,
 		CosmosOriginated: true,
 	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
+	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, *erc20)
 
-	queriedDenom, err := queryERC20ToDenom(ctx, erc20, input.GravityKeeper)
+	queriedDenom, err := queryERC20ToDenom(ctx, erc20.GetAddress(), input.GravityKeeper)
 	require.NoError(t, err)
 	correctBytes, err := codec.MarshalJSONIndent(types.ModuleCdc, response)
 	require.NoError(t, err)
@@ -883,18 +943,20 @@ func TestQueryERC20ToDenom(t *testing.T) {
 	assert.Equal(t, correctBytes, queriedDenom)
 }
 
+//nolint: exhaustivestruct
 func TestQueryDenomToERC20(t *testing.T) {
 	var (
-		erc20 = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		denom = "uatom"
+		erc20, err = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
+		denom      = "uatom"
 	)
+	require.NoError(t, err)
 	response := types.QueryDenomToERC20Response{
-		Erc20:            erc20,
+		Erc20:            erc20.GetAddress(),
 		CosmosOriginated: true,
 	}
 	input := CreateTestEnv(t)
 	ctx := input.Context
-	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, erc20)
+	input.GravityKeeper.setCosmosOriginatedDenomToERC20(ctx, denom, *erc20)
 
 	queriedERC20, err := queryDenomToERC20(ctx, denom, input.GravityKeeper)
 	require.NoError(t, err)
@@ -905,43 +967,59 @@ func TestQueryDenomToERC20(t *testing.T) {
 	assert.Equal(t, correctBytes, queriedERC20)
 }
 
+//nolint: exhaustivestruct
 func TestQueryPendingSendToEth(t *testing.T) {
 	input := CreateTestEnv(t)
 	ctx := input.Context
 	var (
 		now                 = time.Now().UTC()
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
-		allVouchers         = sdk.NewCoins(
-			types.NewERC20Token(99999, myTokenContractAddr).GravityCoin(),
-		)
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cf9c73711b891ca5" // Pickle
+		token, err          = types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
+		allVouchers         = sdk.NewCoins(token.GravityCoin())
 	)
+	require.NoError(t, err)
+	receiver, err := types.NewEthAddress(myReceiver)
+	require.NoError(t, err)
+	tokenContract, err := types.NewEthAddress(myTokenContractAddr)
+	require.NoError(t, err)
 
 	// mint some voucher first
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE FIRST BATCH
 	// ==================
 
 	// add some TX to the pool
 	for i, v := range []uint64{2, 3, 2, 1} {
-		amount := types.NewERC20Token(uint64(i+100), myTokenContractAddr).GravityCoin()
-		fee := types.NewERC20Token(v, myTokenContractAddr).GravityCoin()
-		_, err := input.GravityKeeper.AddToOutgoingPool(ctx, mySender, myReceiver, amount, fee)
+		amountToken, err := types.NewInternalERC20Token(sdk.NewInt(int64(i+100)), myTokenContractAddr)
 		require.NoError(t, err)
+		amount := amountToken.GravityCoin()
+		feeToken, err := types.NewInternalERC20Token(sdk.NewIntFromUint64(v), myTokenContractAddr)
+		require.NoError(t, err)
+		fee := feeToken.GravityCoin()
+		_, err = input.GravityKeeper.AddToOutgoingPool(ctx, mySender, *receiver, amount, fee)
+		require.NoError(t, err)
+		// Should create:
+		// 1: amount 100, fee 2
+		// 2: amount 101, fee 3
+		// 3: amount 102, fee 2
+		// 4: amount 104, fee 1
 	}
 
 	// when
 	ctx = ctx.WithBlockTime(now)
 
 	// tx batch size is 2, so that some of them stay behind
-	_, err := input.GravityKeeper.BuildOutgoingTXBatch(ctx, myTokenContractAddr, 2)
+	// Should contain 2 and 3 from above
+	_, err = input.GravityKeeper.BuildOutgoingTXBatch(ctx, *tokenContract, 2)
 	require.NoError(t, err)
 
+	// Should receive 1 and 4 unbatched, 2 and 3 batched in response
 	response, err := queryPendingSendToEth(ctx, mySender.String(), input.GravityKeeper)
 	require.NoError(t, err)
 	expectedJSON := []byte(`{
@@ -949,54 +1027,54 @@ func TestQueryPendingSendToEth(t *testing.T) {
     {
       "id": "2",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "101"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "3"
       }
     },
     {
-      "id": "1",
+      "id": "3",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
-        "amount": "100"
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
+        "amount": "102"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "2"
       }
     }
   ],
   "unbatched_transfers": [
     {
-      "id": "3",
+      "id": "1",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
-        "amount": "102"
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
+        "amount": "100"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "2"
       }
     },
     {
       "id": "4",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "103"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "1"
       }
     }

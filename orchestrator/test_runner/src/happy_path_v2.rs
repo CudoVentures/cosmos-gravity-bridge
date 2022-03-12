@@ -1,5 +1,6 @@
 //! This is the happy path test for Cosmos to Ethereum asset transfers, meaning assets originated on Cosmos
 
+use crate::utils::create_default_test_config;
 use crate::utils::get_user_key;
 use crate::utils::send_one_eth;
 use crate::utils::start_orchestrators;
@@ -7,9 +8,11 @@ use crate::TOTAL_TIMEOUT;
 use crate::{get_fee, utils::ValidatorKeys};
 use clarity::Address as EthAddress;
 use clarity::Uint256;
+use cosmos_gravity::send::TIMEOUT;
 use cosmos_gravity::send::{send_request_batch, send_to_eth};
 use deep_space::coin::Coin;
 use deep_space::Contact;
+use ethereum_gravity::utils::get_valset_nonce;
 use ethereum_gravity::{deploy_erc20::deploy_erc20, utils::get_event_nonce};
 use gravity_proto::gravity::{
     query_client::QueryClient as GravityQueryClient, QueryDenomToErc20Request,
@@ -110,6 +113,7 @@ pub async fn happy_path_test_v2(
         token_to_send_to_eth.clone(),
         get_fee(),
         contact,
+        Some(TIMEOUT),
     )
     .await
     .unwrap();
@@ -154,6 +158,14 @@ pub async fn deploy_cosmos_representing_erc20_and_check_adoption(
     token_to_send_to_eth: String,
     token_to_send_to_eth_display_name: String,
 ) -> EthAddress {
+    get_valset_nonce(
+        gravity_address,
+        keys[0].eth_key.to_public_key().unwrap(),
+        web30,
+    )
+    .await
+    .expect("Incorrect Gravity Address or otherwise unable to contact Gravity");
+
     let starting_event_nonce = get_event_nonce(
         gravity_address,
         keys[0].eth_key.to_public_key().unwrap(),
@@ -189,7 +201,14 @@ pub async fn deploy_cosmos_representing_erc20_and_check_adoption(
         ending_event_nonce
     );
 
-    start_orchestrators(keys.clone(), gravity_address, validator_out).await;
+    let no_relay_market_config = create_default_test_config();
+    start_orchestrators(
+        keys.clone(),
+        gravity_address,
+        validator_out,
+        no_relay_market_config,
+    )
+    .await;
 
     let start = Instant::now();
     // the erc20 representing the cosmos asset on Ethereum

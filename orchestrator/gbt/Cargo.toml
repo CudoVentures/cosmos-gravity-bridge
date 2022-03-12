@@ -19,7 +19,7 @@ gravity_proto = {path = "../gravity_proto/"}
 relayer = {path = "../relayer/"}
 orchestrator = {path = "../orchestrator/"}
 
-deep_space = "2.4"
+deep_space = "2.5"
 serde_derive = "1.0"
 clarity = "0.4"
 clap = "3.0.0-beta.2"
@@ -27,8 +27,8 @@ serde = "1.0"
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.14"
-env_logger = "0.8"
+web30 = "0.15"
+env_logger = "0.9"
 log = "0.4"
 openssl-probe = "0.1"
 tokio = "1.4"

@@ -38,6 +38,7 @@ import (
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
+	//nolint: exhaustivestruct
 	initClientCtx := client.Context{}.
 		WithJSONCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -48,6 +49,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithBroadcastMode(flags.BroadcastBlock).
 		WithHomeDir(app.DefaultNodeHome)
 
+	//nolint: exhaustivestruct
 	rootCmd := &cobra.Command{
 		Use:   "gravity",
 		Short: "Stargate Gravity App",
@@ -75,6 +77,7 @@ func Execute(rootCmd *cobra.Command) error {
 	// https://github.com/spf13/cobra/pull/1118.
 	srvCtx := server.NewDefaultContext()
 	ctx := context.Background()
+	//nolint: exhaustivestruct
 	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
 	ctx = context.WithValue(ctx, server.ServerContextKey, srvCtx)
 
@@ -116,6 +119,7 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 }
 
 func queryCommand() *cobra.Command {
+	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
@@ -140,6 +144,7 @@ func queryCommand() *cobra.Command {
 }
 
 func txCommand() *cobra.Command {
+	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",

@@ -23,6 +23,12 @@ var (
 	// ParamsStoreKeyGravityID stores the gravity id
 	ParamsStoreKeyGravityID = []byte("GravityID")
 
+	// ParamsMinimumTransferToEth stores the minimum transfer to eth
+	ParamsStoreKeyMinimumTransferToEth = []byte("MinimumTransferToEth")
+
+	// ParamsStoreKeyMinimumFeeTransferToEth stores the minimum fee that goes to the validator to transfer to eth
+	ParamsStoreKeyMinimumFeeTransferToEth = []byte("MinimumFeeTransferToEth")
+
 	// ParamsStoreKeyContractHash stores the contract hash
 	ParamsStoreKeyContractHash = []byte("ContractHash")
 
@@ -67,7 +73,29 @@ var (
 	ParamStoreValsetRewardAmount = []byte("ValsetReward")
 
 	// Ensure that params implements the proper interface
-	_ paramtypes.ParamSet = &Params{}
+	_ paramtypes.ParamSet = &Params{
+		GravityId:                    "",
+		MinimumTransferToEth:         sdk.Int{},
+		MinimumFeeTransferToEth:      sdk.Int{},
+		ContractSourceHash:           "",
+		BridgeEthereumAddress:        "",
+		BridgeChainId:                0,
+		SignedValsetsWindow:          0,
+		SignedBatchesWindow:          0,
+		SignedLogicCallsWindow:       0,
+		TargetBatchTimeout:           0,
+		AverageBlockTime:             0,
+		AverageEthereumBlockTime:     0,
+		SlashFractionValset:          sdk.Dec{},
+		SlashFractionBatch:           sdk.Dec{},
+		SlashFractionLogicCall:       sdk.Dec{},
+		UnbondSlashingValsetsWindow:  0,
+		SlashFractionBadEthSignature: sdk.Dec{},
+		ValsetReward: sdk.Coin{
+			Denom:  "",
+			Amount: sdk.Int{},
+		},
+	}
 )
 
 // ValidateBasic validates genesis state by looping through the params and
@@ -83,7 +111,18 @@ func (s GenesisState) ValidateBasic() error {
 // TODO: set some better defaults here
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params: DefaultParams(),
+		Params:             DefaultParams(),
+		LastObservedNonce:  0,
+		Valsets:            []*Valset{},
+		ValsetConfirms:     []*MsgValsetConfirm{},
+		Batches:            []*OutgoingTxBatch{},
+		BatchConfirms:      []MsgConfirmBatch{},
+		LogicCalls:         []*OutgoingLogicCall{},
+		LogicCallConfirms:  []MsgConfirmLogicCall{},
+		Attestations:       []Attestation{},
+		DelegateKeys:       []*MsgSetOrchestratorAddress{},
+		Erc20ToDenoms:      []*ERC20ToDenom{},
+		UnbatchedTransfers: []*OutgoingTransferTx{},
 	}
 }
 
@@ -91,6 +130,11 @@ func DefaultGenesisState() *GenesisState {
 func DefaultParams() *Params {
 	return &Params{
 		GravityId:                    "defaultgravityid",
+		MinimumTransferToEth:         sdk.NewInt(5),
+		MinimumFeeTransferToEth:      sdk.NewInt(1),
+		ContractSourceHash:           "",
+		BridgeEthereumAddress:        ZeroAddressString,
+		BridgeChainId:                0,
 		SignedValsetsWindow:          10000,
 		SignedBatchesWindow:          10000,
 		SignedLogicCallsWindow:       10000,
@@ -100,13 +144,9 @@ func DefaultParams() *Params {
 		SlashFractionValset:          sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionBatch:           sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		SlashFractionLogicCall:       sdk.NewDec(1).Quo(sdk.NewDec(1000)),
-		SlashFractionBadEthSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		UnbondSlashingValsetsWindow:  10000,
-		// this coin is invalid, we use that as the 'no reward' state
-		ValsetReward: sdk.Coin{
-			Denom:  "",
-			Amount: sdk.ZeroInt(),
-		},
+		SlashFractionBadEthSignature: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
+		ValsetReward:                 sdk.Coin{Denom: "", Amount: sdk.ZeroInt()},
 	}
 }
 
@@ -114,6 +154,12 @@ func DefaultParams() *Params {
 func (p Params) ValidateBasic() error {
 	if err := validateGravityID(p.GravityId); err != nil {
 		return sdkerrors.Wrap(err, "gravity id")
+	}
+	if err := validateMinimumTransferToEth(p.MinimumTransferToEth); err != nil {
+		return sdkerrors.Wrap(err, "Minimum transfer to ETH")
+	}
+	if err := validateMinimumFeeTransferToEth(p.MinimumFeeTransferToEth); err != nil {
+		return sdkerrors.Wrap(err, "Minimum fee transfer to ETH")
 	}
 	if err := validateContractHash(p.ContractSourceHash); err != nil {
 		return sdkerrors.Wrap(err, "contract hash")
@@ -166,7 +212,29 @@ func (p Params) ValidateBasic() error {
 
 // ParamKeyTable for auth module
 func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
+	return paramtypes.NewKeyTable().RegisterParamSet(&Params{
+		GravityId:                    "",
+		MinimumTransferToEth:         sdk.Int{},
+		MinimumFeeTransferToEth:      sdk.Int{},
+		ContractSourceHash:           "",
+		BridgeEthereumAddress:        "",
+		BridgeChainId:                0,
+		SignedValsetsWindow:          0,
+		SignedBatchesWindow:          0,
+		SignedLogicCallsWindow:       0,
+		TargetBatchTimeout:           0,
+		AverageBlockTime:             0,
+		AverageEthereumBlockTime:     0,
+		SlashFractionValset:          sdk.Dec{},
+		SlashFractionBatch:           sdk.Dec{},
+		SlashFractionLogicCall:       sdk.Dec{},
+		UnbondSlashingValsetsWindow:  0,
+		SlashFractionBadEthSignature: sdk.Dec{},
+		ValsetReward: sdk.Coin{
+			Denom:  "",
+			Amount: sdk.Int{},
+		},
+	})
 }
 
 // ParamSetPairs implements the ParamSet interface and returns all the key/value pairs
@@ -174,6 +242,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyGravityID, &p.GravityId, validateGravityID),
+		paramtypes.NewParamSetPair(ParamsStoreKeyMinimumTransferToEth, &p.MinimumTransferToEth, validateMinimumTransferToEth),
+		paramtypes.NewParamSetPair(ParamsStoreKeyMinimumFeeTransferToEth, &p.MinimumFeeTransferToEth, validateMinimumFeeTransferToEth),
 		paramtypes.NewParamSetPair(ParamsStoreKeyContractHash, &p.ContractSourceHash, validateContractHash),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractAddress, &p.BridgeEthereumAddress, validateBridgeContractAddress),
 		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractChainID, &p.BridgeChainId, validateBridgeChainID),
@@ -206,6 +276,40 @@ func validateGravityID(i interface{}) error {
 	if _, err := strToFixByteArray(v); err != nil {
 		return err
 	}
+	return nil
+}
+
+func validateMinimumTransferToEth(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNil() {
+		return fmt.Errorf("minimumTransferToEth param should not be empty")
+	}
+
+	if v.LT(sdk.OneInt()) {
+		return fmt.Errorf("minimumTransferToEth param should be bigger than 0")
+	}
+
+	return nil
+}
+
+func validateMinimumFeeTransferToEth(i interface{}) error {
+	v, ok := i.(sdk.Int)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v.IsNil() {
+		return fmt.Errorf("minimumFeeTransferToEth param should not be empty")
+	}
+
+	if v.LT(sdk.OneInt()) {
+		return fmt.Errorf("minimumFeeTransferToEth param should be bigger than 0")
+	}
+
 	return nil
 }
 

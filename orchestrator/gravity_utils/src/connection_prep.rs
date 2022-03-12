@@ -77,7 +77,7 @@ pub async fn create_rpc_connections(
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Cosmos gRPC, are you sure it's running and on the specified port? {}", grpc_url)
+                        (Err(_), Err(_)) => error!("Could not connect to Cosmos gRPC, are you sure it's running and on the specified port? {}", grpc_url)
                     }
                 } else if url.port().is_none() || url.scheme() == "http" {
                     let body = url.host_str().unwrap_or_else(|| {
@@ -104,7 +104,7 @@ pub async fn create_rpc_connections(
                             grpc = Some(v)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Cosmos gRPC, are you sure it's running and on the specified port? {}", grpc_url)
+                        (Err(_), Err(_)) => error!("Could not connect to Cosmos gRPC, are you sure it's running and on the specified port? {}", grpc_url)
                     }
                 } else {
                     panic!("Could not connect to Cosmos gRPC! please check your grpc url {} for errors {:?}", grpc_url, e)
@@ -117,7 +117,7 @@ pub async fn create_rpc_connections(
             .unwrap_or_else(|_| panic!("Invalid Ethereum RPC url {}", eth_rpc_url));
         check_scheme(&url, &eth_rpc_url);
         let eth_url = eth_rpc_url.trim_end_matches('/');
-        let base_web30 = Web3::new(&eth_url, timeout);
+        let base_web30 = Web3::new(eth_url, timeout);
         let try_base = base_web30.eth_block_number().await;
         match try_base {
             // it worked, lets go!
@@ -149,7 +149,7 @@ pub async fn create_rpc_connections(
                             web3 = Some(ipv6_web3)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Ethereum rpc, are you sure it's running and on the specified port? {}", eth_rpc_url)
+                        (Err(_), Err(_)) => error!("Could not connect to Ethereum rpc, are you sure it's running and on the specified port? {}", eth_rpc_url)
                     }
                 } else if url.port().is_none() || url.scheme() == "http" {
                     let body = url.host_str().unwrap_or_else(|| {
@@ -176,7 +176,7 @@ pub async fn create_rpc_connections(
                             web3 = Some(https_on_443_web3)
                         },
                         (Ok(_), Ok(_)) => panic!("This should never happen? Why didn't things work the first time?"),
-                        (Err(_), Err(_)) => panic!("Could not connect to Ethereum rpc, are you sure it's running and on the specified port? {}", eth_rpc_url)
+                        (Err(_), Err(_)) => error!("Could not connect to Ethereum rpc, are you sure it's running and on the specified port? {}", eth_rpc_url)
                     }
                 } else {
                     panic!("Could not connect to Ethereum rpc! please check your grpc url {} for errors {:?}", eth_rpc_url, e)

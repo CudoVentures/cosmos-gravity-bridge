@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "gravity/v1/types.proto";
 import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types";
 
 // Msg defines the state transitions possible within gravity
@@ -14,6 +15,9 @@ service Msg {
   }
   rpc SendToEth(MsgSendToEth) returns (MsgSendToEthResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_eth";
+  }
+  rpc SetMinFeeTransferToEth(MsgSetMinFeeTransferToEth) returns (MsgSetMinFeeTransferToEthResponse) {
+    option (google.api.http).post = "/gravity/v1/set_min_fee_transfer_to_eth";
   }
   rpc RequestBatch(MsgRequestBatch) returns (MsgRequestBatchResponse) {
     option (google.api.http).post = "/gravity/v1/request_batch";
@@ -121,6 +125,23 @@ message MsgSendToEth {
 }
 
 message MsgSendToEthResponse {}
+
+// MsgSetMinFeeTransferToEth
+// This is the message that a user calls when they want to change the
+// paameterMinFeeTransferToEth used to send from cosmos to eth 
+// -------------
+// FEE:
+// the value of the parameter to be set
+// this is the min fee required
+message MsgSetMinFeeTransferToEth {
+  string sender  = 1;
+  string fee   = 2  [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message MsgSetMinFeeTransferToEthResponse {}
 
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to
@@ -263,9 +284,11 @@ message MsgCancelSendToEthResponse {}
 
 // This call allows anyone to submit evidence that a
 // validator has signed a valset, batch, or logic call that never
-// existed. Subject contains the batch, valset, or logic call.
+// existed on the Cosmos chain. 
+// Subject contains the batch, valset, or logic call.
 message MsgSubmitBadSignatureEvidence {
-  google.protobuf.Any subject   = 1;
+  google.protobuf.Any subject = 1
+      [ (cosmos_proto.accepts_interface) = "EthereumSigned" ];
   string              signature = 2;
   string              sender    = 3;
 }

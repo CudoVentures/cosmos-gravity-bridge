@@ -16,20 +16,23 @@ gravity_utils = {path = "../gravity_utils"}
 gravity_proto = {path = "../gravity_proto/"}
 orchestrator = {path = "../orchestrator/"}
 
-deep_space = "2.4"
+bytes = "1"
+prost = "0.7"
+prost-types = "0.7"
+deep_space = "2.5"
 serde_derive = "1.0"
 clarity = "0.4"
 docopt = "1"
 serde = "1.0"
-actix = "0.11"
+actix = "0.12"
 actix-web = {version = "3", features=["openssl"]}
 actix-rt = "2.2"
 lazy_static = "1"
 url = "2"
-web30 = "0.14"
+web30 = "0.15"
 num256 = "0.3"
 log = "0.4"
-env_logger = "0.8"
+env_logger = "0.9"
 tokio = "1.4.0"
 rand = "0.8"
 tonic = "0.4"

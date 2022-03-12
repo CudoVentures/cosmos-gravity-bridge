@@ -21,8 +21,17 @@ use gravity_utils::types::GravityBridgeToolsConfig;
 use orchestrator::main_loop::orchestrator_main_loop;
 use rand::Rng;
 use std::thread;
+use std::time::Instant;
 use web30::jsonrpc::error::Web3Error;
 use web30::{client::Web3, types::SendTxOption};
+
+pub fn create_default_test_config() -> GravityBridgeToolsConfig {
+    let mut no_relay_market_config = GravityBridgeToolsConfig::default();
+    no_relay_market_config.relayer.batch_market_enabled = false;
+    no_relay_market_config.relayer.valset_market_enabled = false;
+    no_relay_market_config.relayer.logic_call_market_enabled = false;
+    no_relay_market_config
+}
 
 pub async fn send_eth_to_orchestrators(keys: &[ValidatorKeys], web30: &Web3) {
     let balance = web30.eth_get_balance(*MINER_ADDRESS).await.unwrap();
@@ -57,6 +66,10 @@ pub async fn check_cosmos_balance(
     None
 }
 
+/// This is a hardcoded very high gas value used in transaction stress test to counteract rollercoaster
+/// gas prices due to the way that test fills blocks
+pub const HIGH_GAS_PRICE: u64 = 1_000_000_000u64;
+
 /// This function efficiently distributes ERC20 tokens to a large number of provided Ethereum addresses
 /// the real problem here is that you can't do more than one send operation at a time from a
 /// single address without your sequence getting out of whack. By manually setting the nonce
@@ -84,6 +97,7 @@ pub async fn send_erc20_bulk(
             vec![
                 SendTxOption::Nonce(nonce.clone()),
                 SendTxOption::GasLimit(100_000u32.into()),
+                SendTxOption::GasPriceMultiplier(5.0),
             ],
         );
         transactions.push(send);
@@ -114,7 +128,7 @@ pub async fn send_eth_bulk(amount: Uint256, destinations: &[EthAddress], web3: &
         let t = Transaction {
             to: *address,
             nonce: nonce.clone(),
-            gas_price: 1_000_000_000u64.into(),
+            gas_price: HIGH_GAS_PRICE.into(),
             gas_limit: 24000u64.into(),
             value: amount.clone(),
             data: Vec::new(),
@@ -145,7 +159,20 @@ async fn wait_for_txids(txids: Vec<Result<Uint256, Web3Error>>, web3: &Web3) {
 /// utility function for bulk checking erc20 balances, used to provide
 /// a single future that contains the assert as well s the request
 async fn check_erc20_balance(address: EthAddress, erc20: EthAddress, amount: Uint256, web3: &Web3) {
-    let new_balance = web3.get_erc20_balance(erc20, address).await.unwrap();
+    let start = Instant::now();
+    // overly complicated retry logic allows us to handle the possibility that gas prices change between blocks
+    // and cause any individual request to fail.
+    let mut new_balance = Err(Web3Error::BadInput("Intentional Error".to_string()));
+    while new_balance.is_err() && Instant::now() - start < TOTAL_TIMEOUT {
+        new_balance = web3.get_erc20_balance(erc20, address).await;
+        // only keep trying if our error is gas related
+        if let Err(ref e) = new_balance {
+            if !e.to_string().contains("maxFeePerGas") {
+                break;
+            }
+        }
+    }
+    let new_balance = new_balance.unwrap();
     assert!(new_balance >= amount.clone());
 }
 
@@ -172,7 +199,7 @@ pub fn get_user_key() -> BridgeUserKey {
         eth_dest_key,
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct BridgeUserKey {
     // the starting addresses that get Eth balances to send across the bridge
     pub eth_address: EthAddress,
@@ -204,6 +231,7 @@ pub async fn start_orchestrators(
     keys: Vec<ValidatorKeys>,
     gravity_address: EthAddress,
     validator_out: bool,
+    orchestrator_config: GravityBridgeToolsConfig,
 ) {
     // used to break out of the loop early to simulate one validator
     // not running an Orchestrator
@@ -212,6 +240,7 @@ pub async fn start_orchestrators(
 
     #[allow(clippy::explicit_counter_loop)]
     for k in keys {
+        let config = orchestrator_config.clone();
         info!(
             "Spawning Orchestrator with delegate keys {} {} and validator key {}",
             k.eth_key.to_public_key().unwrap(),
@@ -241,7 +270,7 @@ pub async fn start_orchestrators(
                 grpc_client,
                 gravity_address,
                 get_fee(),
-                GravityBridgeToolsConfig::default(),
+                config,
             );
             let system = System::new();
             system.block_on(fut);
@@ -301,4 +330,12 @@ pub async fn create_parameter_change_proposal(
     trace!("Gov proposal submitted with {:?}", res);
     let res = contact.wait_for_tx(res, TOTAL_TIMEOUT).await.unwrap();
     trace!("Gov proposal executed with {:?}", res);
+}
+
+/// Gets the operator address for a given validator private key
+pub fn get_operator_address(key: CosmosPrivateKey) -> CosmosAddress {
+    // this is not guaranteed to be correct, the chain may set the valoper prefix in a
+    // different way, but I haven't yet seen one that does not match this pattern
+    key.to_address(&format!("{}valoper", *ADDRESS_PREFIX))
+        .unwrap()
 }

@@ -9,39 +9,46 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValsetConfirmHash(t *testing.T) {
 	powers := []uint64{3333, 3333, 3333}
 	ethAddresses := []string{
-		"0xc783df8a850f42e7F7e57013759C285caa701eB6",
-		"0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4",
-		"0xE5904695748fe4A84b40b3fc79De2277660BD1D3",
+		"0xc783df8a850f42e7f7e57013759c285caa701eb6",
+		"0xead9c93b79ae7c1591b1fb5323bd777e86e150d4",
+		"0xe5904695748fe4a84b40b3fc79de2277660bd1d3",
 	}
-	members := make(BridgeValidators, len(powers))
+	members := make(InternalBridgeValidators, len(powers))
 	for i := range powers {
-		members[i] = &BridgeValidator{
+		bv := BridgeValidator{
 			Power:           powers[i],
 			EthereumAddress: ethAddresses[i],
 		}
+		ibv, err := NewInternalBridgeValidator(bv)
+		require.NoError(t, err)
+		members[i] = ibv
 	}
 
-	v := NewValset(0, 0, members, sdk.NewInt(0), "0x0000000000000000000000000000000000000000")
+	v, err := NewValset(0, 0, members, sdk.NewInt(0), *ZeroAddress())
+	require.NoError(t, err)
 
 	// normally we would load the GravityID from the store, but for this test we use
 	// the same hardcoded value in the solidity tests
 	hash := v.GetCheckpoint("foo")
 	hexHash := hex.EncodeToString(hash)
-	correctHash := "0xaca2f283f21a03ba182dc7d34a55c04771b25087401d680011df7dcba453f798"[2:]
+	correctHash := "0x28677918928946680f0b059f632ae3c0f61d7006b6ece017adfec722ef5ca8a7"[2:]
 	assert.Equal(t, correctHash, hexHash)
 }
 
 func TestValsetCheckpointGold1(t *testing.T) {
-
-	src := NewValset(0, 0, BridgeValidators{{
+	bridgeValidators, err := BridgeValidators{{
 		Power:           6667,
-		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
-	}}, sdk.NewInt(0), "0x0000000000000000000000000000000000000000")
+		EthereumAddress: "0xc783df8a850f42e7f7e57013759c285caa701eb6",
+	}}.ToInternal()
+	require.NoError(t, err)
+	src, err := NewValset(0, 0, *bridgeValidators, sdk.NewInt(0), *ZeroAddress())
+	require.NoError(t, err)
 
 	// normally we would load the GravityID from the store, but for this test we use
 	// the same hardcoded value in the solidity tests
@@ -110,7 +117,9 @@ func TestValsetPowerDiff(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			assert.Equal(t, spec.exp, spec.start.PowerDiff(spec.diff))
+			startInternal, _ := spec.start.ToInternal()
+			diffInternal, _ := spec.diff.ToInternal()
+			assert.Equal(t, spec.exp, startInternal.PowerDiff(*diffInternal))
 		})
 	}
 }
@@ -172,16 +181,18 @@ func TestValsetSort(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			spec.src.Sort()
-			assert.Equal(t, spec.src, spec.exp)
-			shuffled := shuffled(spec.src)
+			srcInternal, _ := spec.src.ToInternal()
+			expInternal, _ := spec.exp.ToInternal()
+			srcInternal.Sort()
+			assert.Equal(t, srcInternal, expInternal)
+			shuffled := shuffled(*srcInternal)
 			shuffled.Sort()
-			assert.Equal(t, shuffled, spec.exp)
+			assert.Equal(t, shuffled, *expInternal)
 		})
 	}
 }
 
-func shuffled(v BridgeValidators) BridgeValidators {
+func shuffled(v InternalBridgeValidators) InternalBridgeValidators {
 	mrand.Shuffle(len(v), func(i, j int) {
 		v[i], v[j] = v[j], v[i]
 	})

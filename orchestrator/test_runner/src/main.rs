@@ -7,6 +7,7 @@
 extern crate log;
 
 use crate::bootstrapping::*;
+use crate::tx_cancel::send_to_eth_and_cancel;
 use crate::utils::*;
 use crate::valset_rewards::valset_rewards_test;
 use arbitrary_logic::arbitrary_logic_test;
@@ -16,21 +17,26 @@ use cosmos_gravity::utils::wait_for_cosmos_online;
 use deep_space::coin::Coin;
 use deep_space::Address as CosmosAddress;
 use deep_space::Contact;
+use evidence_based_slashing::evidence_based_slashing;
 use gravity_proto::gravity::query_client::QueryClient as GravityQueryClient;
 use happy_path::happy_path_test;
 use happy_path_v2::happy_path_test_v2;
 use lazy_static::lazy_static;
 use orch_keys::orch_keys;
+use relay_market::relay_market_test;
 use std::{env, time::Duration};
 use transaction_stress_test::transaction_stress_test;
 use valset_stress::validator_set_stress_test;
 
 mod arbitrary_logic;
 mod bootstrapping;
+mod evidence_based_slashing;
 mod happy_path;
 mod happy_path_v2;
 mod orch_keys;
+mod relay_market;
 mod transaction_stress_test;
+mod tx_cancel;
 mod utils;
 mod valset_rewards;
 mod valset_stress;
@@ -109,7 +115,7 @@ pub fn should_deploy_contracts() -> bool {
 #[actix_rt::main]
 pub async fn main() {
     env_logger::init();
-    info!("Staring Gravity test-runner");
+    info!("Starting Gravity test-runner");
     let contact = Contact::new(
         COSMOS_NODE_GRPC.as_str(),
         OPERATION_TIMEOUT,
@@ -185,17 +191,25 @@ pub async fn main() {
                 ADDRESS_PREFIX.as_str(),
             )
             .unwrap();
-            transaction_stress_test(&web30, &contact, keys, gravity_address, erc20_addresses).await;
+            transaction_stress_test(
+                &web30,
+                &contact,
+                grpc_client,
+                keys,
+                gravity_address,
+                erc20_addresses,
+            )
+            .await;
             return;
         } else if test_type == "VALSET_STRESS" {
             info!("Starting Valset update stress test");
-            validator_set_stress_test(&web30, &contact, keys, gravity_address).await;
+            validator_set_stress_test(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
         } else if test_type == "VALSET_REWARDS" {
             info!("Starting Valset rewards test");
             valset_rewards_test(&web30, grpc_client, &contact, keys, gravity_address, false).await;
             return;
-        } else if test_type == "V2_HAPPY_PATH" {
+        } else if test_type == "V2_HAPPY_PATH" || test_type == "HAPPY_PATH_V2" {
             info!("Starting happy path for Gravity v2");
             happy_path_test_v2(&web30, grpc_client, &contact, keys, gravity_address, false).await;
             return;
@@ -203,20 +217,27 @@ pub async fn main() {
             info!("Starting arbitrary logic tests!");
             arbitrary_logic_test(&web30, grpc_client, &contact, keys, gravity_address).await;
             return;
+        } else if test_type == "RELAY_MARKET" {
+            info!("Starting relay market tests!");
+            relay_market_test(&web30, grpc_client, &contact, keys, gravity_address).await;
+            return;
         } else if test_type == "ORCHESTRATOR_KEYS" {
             info!("Starting orchestrator key update tests!");
             orch_keys(grpc_client, &contact, keys).await;
             return;
-        } else if test_type == "LONDON" {
-            info!("Starting London hardfork tests");
-            happy_path_test(
-                &web30,
-                grpc_client,
+        } else if test_type == "EVIDENCE" {
+            info!("Starting evidence based slashing tests!");
+            evidence_based_slashing(&web30, &contact, keys, gravity_address).await;
+            return;
+        } else if test_type == "TXCANCEL" {
+            info!("SendToEth cancellation test!");
+            send_to_eth_and_cancel(
                 &contact,
+                grpc_client,
+                &web30,
                 keys,
                 gravity_address,
                 erc20_addresses[0],
-                true,
             )
             .await;
             return;

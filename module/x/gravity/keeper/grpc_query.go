@@ -2,14 +2,26 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
-var _ types.QueryServer = Keeper{}
+var _ types.QueryServer = Keeper{
+	StakingKeeper:      nil,
+	storeKey:           nil,
+	paramSpace:         paramstypes.Subspace{},
+	cdc:                nil,
+	bankKeeper:         nil,
+	SlashingKeeper:     nil,
+	AttestationHandler: nil,
+}
+
+const QUERY_ATTESTATIONS_LIMIT uint64 = 1000
 
 // Params queries the params of the gravity module
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
@@ -116,8 +128,8 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
 	}
 
-	var pendingBatchReq *types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
+	var pendingBatchReq *types.InternalOutgoingTxBatch
+	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.InternalOutgoingTxBatch) bool {
 		foundConfirm := k.GetBatchConfirm(sdk.UnwrapSDKContext(c), batch.BatchNonce, batch.TokenContract, addr) != nil
 		if !foundConfirm {
 			pendingBatchReq = batch
@@ -126,7 +138,7 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 		return false
 	})
 
-	return &types.QueryLastPendingBatchRequestByAddrResponse{Batch: pendingBatchReq}, nil
+	return &types.QueryLastPendingBatchRequestByAddrResponse{Batch: pendingBatchReq.ToExternal()}, nil
 }
 
 func (k Keeper) LastPendingLogicCallByAddr(
@@ -155,8 +167,8 @@ func (k Keeper) OutgoingTxBatches(
 	c context.Context,
 	req *types.QueryOutgoingTxBatchesRequest) (*types.QueryOutgoingTxBatchesResponse, error) {
 	var batches []*types.OutgoingTxBatch
-	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.OutgoingTxBatch) bool {
-		batches = append(batches, batch)
+	k.IterateOutgoingTXBatches(sdk.UnwrapSDKContext(c), func(_ []byte, batch *types.InternalOutgoingTxBatch) bool {
+		batches = append(batches, batch.ToExternal())
 		return len(batches) == MaxResults
 	})
 	return &types.QueryOutgoingTxBatchesResponse{Batches: batches}, nil
@@ -178,14 +190,15 @@ func (k Keeper) OutgoingLogicCalls(
 func (k Keeper) BatchRequestByNonce(
 	c context.Context,
 	req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
-	if err := types.ValidateEthAddress(req.ContractAddress); err != nil {
+	addr, err := types.NewEthAddress(req.ContractAddress)
+	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
-	foundBatch := k.GetOutgoingTXBatch(sdk.UnwrapSDKContext(c), req.ContractAddress, req.Nonce)
+	foundBatch := k.GetOutgoingTXBatch(sdk.UnwrapSDKContext(c), *addr, req.Nonce)
 	if foundBatch == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "Can not find tx batch")
 	}
-	return &types.QueryBatchRequestByNonceResponse{Batch: foundBatch}, nil
+	return &types.QueryBatchRequestByNonceResponse{Batch: foundBatch.ToExternal()}, nil
 }
 
 // BatchConfirms returns the batch confirmations by nonce and token contract
@@ -193,8 +206,12 @@ func (k Keeper) BatchConfirms(
 	c context.Context,
 	req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmBatch
+	contract, err := types.NewEthAddress(req.ContractAddress)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "invalid contract address in request")
+	}
 	k.IterateBatchConfirmByNonceAndTokenContract(sdk.UnwrapSDKContext(c),
-		req.Nonce, req.ContractAddress, func(_ []byte, c types.MsgConfirmBatch) bool {
+		req.Nonce, *contract, func(_ []byte, c types.MsgConfirmBatch) bool {
 			confirms = append(confirms, &c)
 			return false
 		})
@@ -242,7 +259,7 @@ func (k Keeper) DenomToERC20(
 	ctx := sdk.UnwrapSDKContext(c)
 	cosmosOriginated, erc20, err := k.DenomToERC20Lookup(ctx, req.Denom)
 	var ret types.QueryDenomToERC20Response
-	ret.Erc20 = erc20
+	ret.Erc20 = erc20.GetAddress()
 	ret.CosmosOriginated = cosmosOriginated
 
 	return &ret, err
@@ -253,12 +270,30 @@ func (k Keeper) ERC20ToDenom(
 	c context.Context,
 	req *types.QueryERC20ToDenomRequest) (*types.QueryERC20ToDenomResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	cosmosOriginated, name := k.ERC20ToDenomLookup(ctx, req.Erc20)
+	ethAddr, err := types.NewEthAddress(req.Erc20)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "invalid Erc20 in request: %s", req.Erc20)
+	}
+	cosmosOriginated, name := k.ERC20ToDenomLookup(ctx, *ethAddr)
 	var ret types.QueryERC20ToDenomResponse
 	ret.Denom = name
 	ret.CosmosOriginated = cosmosOriginated
 
 	return &ret, nil
+}
+
+// GetAttestations queries the attestation map
+func (k Keeper) GetAttestations(
+	c context.Context,
+	req *types.QueryAttestationsRequest) (*types.QueryAttestationsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	limit := req.Limit
+	if limit > QUERY_ATTESTATIONS_LIMIT {
+		limit = QUERY_ATTESTATIONS_LIMIT
+	}
+	attestations := k.GetMostRecentAttestations(ctx, limit)
+
+	return &types.QueryAttestationsResponse{Attestations: attestations}, nil
 }
 
 func (k Keeper) GetDelegateKeyByValidator(
@@ -316,7 +351,7 @@ func (k Keeper) GetDelegateKeyByEth(
 		return nil, sdkerrors.Wrap(err, "invalid eth address")
 	}
 	for _, key := range keys {
-		if req.EthAddress == key.EthAddress {
+		if strings.EqualFold(req.EthAddress, key.EthAddress) {
 			return &types.QueryDelegateKeysByEthAddressResponse{
 				ValidatorAddress:    key.Validator,
 				OrchestratorAddress: key.Orchestrator,
@@ -332,23 +367,24 @@ func (k Keeper) GetPendingSendToEth(
 	req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	batches := k.GetOutgoingTxBatches(ctx)
-	unbatchedTx := k.GetPoolTransactions(ctx)
-	senderAddress := req.SenderAddress
-	var res *types.QueryPendingSendToEthResponse
-
+	unbatched_tx := k.GetUnbatchedTransactions(ctx)
+	sender_address := req.GetSenderAddress()
+	res := types.QueryPendingSendToEthResponse{
+		TransfersInBatches: []*types.OutgoingTransferTx{},
+		UnbatchedTransfers: []*types.OutgoingTransferTx{},
+	}
 	for _, batch := range batches {
 		for _, tx := range batch.Transactions {
-			if tx.Sender == senderAddress {
-				res.TransfersInBatches = append(res.TransfersInBatches, tx)
+			if tx.Sender.String() == sender_address {
+				res.TransfersInBatches = append(res.TransfersInBatches, tx.ToExternal())
 			}
 		}
 	}
-
-	for _, tx := range unbatchedTx {
-		if tx.Sender == senderAddress {
-			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx)
+	for _, tx := range unbatched_tx {
+		if tx.Sender.String() == sender_address {
+			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx.ToExternal())
 		}
 	}
 
-	return res, nil
+	return &res, nil
 }
