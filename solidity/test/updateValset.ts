@@ -28,6 +28,9 @@ async function runTest(opts: {
   badReward?: boolean;
   notEnoughReward?: boolean;
   withReward?: boolean;
+  notWhiteListed?: boolean;
+  isWHitelisted?: boolean;
+  removedWhitelist:? boolean;
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -154,8 +157,52 @@ async function runTest(opts: {
     powers.pop();
   }
 
+  if (opts.notWhiteListed) {
+    await gravity.connect(signers[3]).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+  }
 
-  let valsetUpdateTx = await gravity.updateValset(
+  let valsetUpdateTx
+  if (opts.isWHitelisted) {
+    await gravity.manageWhitelist([signers[3].address], true)
+    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+
+    return { gravity, checkpoint };
+  }
+
+  if(opts.removedWhitelist) {
+    await gravity.manageWhitelist([signers[3].address], true)
+    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+
+    await gravity.manageWhitelist([signers[3].address], false)
+    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+  }
+
+
+   valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
@@ -233,6 +280,16 @@ describe("updateValset tests", function () {
       "transfer amount exceeds balance"
     );
   });
+  it("throws on not whitelisted signer ", async function () {
+    await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
+      "The caller is not whitelisted for this operation"
+    );
+  });
+  it("throws on not already removed singer from whitelist ", async function () {
+    await expect(runTest({ removedWhitelist: true })).to.be.revertedWith(
+      "The caller is not whitelisted for this operation"
+    );
+  });
 
   it("pays reward correctly", async function () {
     let {gravity, checkpoint} = await runTest({ withReward: true });
@@ -241,6 +298,11 @@ describe("updateValset tests", function () {
 
   it("happy path", async function () {
     let { gravity, checkpoint } = await runTest({});
+    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
+  });
+
+  it("happy path with whitelisted signer", async function () {
+    let { gravity, checkpoint } = await runTest({ isWHitelisted:true});
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });

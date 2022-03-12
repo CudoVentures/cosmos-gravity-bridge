@@ -59,6 +59,10 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
+	BridgeAccessControl public bridgeAccessControl;
+
+	mapping(address => bool) public whitelisted;
+
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -100,6 +104,35 @@ contract Gravity is ReentrancyGuard {
 		bytes _returnData,
 		uint256 _eventNonce
 	);
+
+	event WhitelistedStatusModified(
+		address _sender,
+		address[] _users,
+		bool _isWhitelisted
+	);
+
+
+	modifier onlyWhitelisted() {
+		 require(
+            whitelisted[msg.sender] || bridgeAccessControl.hasAdminRole(msg.sender) ,
+            "The caller is not whitelisted for this operation"
+        );
+		_;
+	}
+
+	function manageWhitelist(
+		address[] memory _users,
+		bool _isWhitelisted
+		) public onlyWhitelisted {
+		 for (uint256 i = 0; i < _users.length; i++) {
+            require(
+                _users[i] != address(0),
+                "User is the zero address"
+            );
+            whitelisted[_users[i]] = _isWhitelisted;
+        }
+        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
+	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -238,7 +271,7 @@ contract Gravity is ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public nonReentrant {
+	) public onlyWhitelisted {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -312,7 +345,7 @@ contract Gravity is ReentrancyGuard {
 	// to the destination addresses. It is approved by the current Cosmos validator set.
 	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
 	// the batch.
-	function submitBatch(
+	function submitBatch (
 		// The validators that approve the batch
 		ValsetArgs memory _currentValset,
 		// These are arrays of the parts of the validators signatures
@@ -328,7 +361,7 @@ contract Gravity is ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public nonReentrant {
+	) public nonReentrant onlyWhitelisted{
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -430,7 +463,7 @@ contract Gravity is ReentrancyGuard {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		LogicCallArgs memory _args
-	) public nonReentrant {
+	) public nonReentrant onlyWhitelisted {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -538,7 +571,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant {
+	) public nonReentrant  {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
