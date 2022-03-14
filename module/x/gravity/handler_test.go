@@ -77,7 +77,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 
 	// send transaction not meeting the minimum transaction requirement
 	sendingCoin.Amount = sdk.NewInt(4)
-	expectedErrMsg := "amount does not meet minimum sending amount requirement: 5"
+	expectedErrMsg := "amount does not meet minimum sending amount requirement: 5acudos: invalid"
 	msg3 := &types.MsgSendToEth{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
@@ -91,7 +91,7 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	// send transaction not meeting the minimum transaction FEE requirement
 	sendingCoin.Amount = sdk.NewInt(40)
 	feeCoin.Amount = sdk.NewInt(4)
-	expectedErrMsg = "fee does not meet minimum fee requirement: 5"
+	expectedErrMsg = "fee does not meet minimum fee requirement: 5acudos: invalid"
 	msg4 := &types.MsgSendToEth{
 		Sender:    userCosmosAddr.String(),
 		EthDest:   ethDestination,
