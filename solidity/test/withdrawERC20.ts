@@ -1,7 +1,7 @@
 import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { Gravity } from "../typechain/Gravity";
 import { TestERC20A } from "../typechain/TestERC20A";
 
@@ -17,15 +17,15 @@ const { expect } = chai;
 describe("Withdraw ERC20 Bridge Tests", function() {
 
 
-  let bridgeAccessControl:any
+  let cudosAccessControl:any
   let gravityInstance: Gravity
   let testERC20Instance: TestERC20A
   let amountToTrasnfer:any
   
 
   beforeEach(async () => {
-    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-    bridgeAccessControl = (await BridgeAccessControl.deploy());
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
 
 	const signers = await ethers.getSigners();
 	const gravityId = ethers.utils.formatBytes32String("foo");
@@ -37,7 +37,7 @@ describe("Withdraw ERC20 Bridge Tests", function() {
 		gravity,
 		testERC20,
 		checkpoint: deployCheckpoint
-	  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+	  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
 	  gravityInstance = gravity
 	  testERC20Instance = testERC20
@@ -50,14 +50,14 @@ describe("Withdraw ERC20 Bridge Tests", function() {
   it("deployer should have admin role", async function() {
 
 	const signers = await ethers.getSigners();
-	const hasRole = await bridgeAccessControl.hasAdminRole(signers[0].address)
+	const hasRole = await cudosAccessControl.hasAdminRole(signers[0].address)
 	expect(hasRole).to.be.true;
   });
 
-  it("the bridgeAccessControl address would be set properly", async function() {
-	const accessControlAddress = await gravityInstance.bridgeAccessControl();
+  it("the cudosAccessControl address would be set properly", async function() {
+	const accessControlAddress = await gravityInstance.cudosAccessControls();
 
-	expect(bridgeAccessControl.address).to.be.equal(accessControlAddress)
+	expect(cudosAccessControl.address).to.be.equal(accessControlAddress)
   })
 
   it("should be able to withdraw ERC20 tokens from the bridge", async function() {

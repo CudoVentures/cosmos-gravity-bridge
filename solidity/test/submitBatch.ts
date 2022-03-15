@@ -2,7 +2,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -16,7 +16,7 @@ import { connect } from "node:http2";
 
 chai.use(solidity);
 const { expect } = chai;
-let bridgeAccessControl:any
+let cudosAccessControl:any
 
 async function runTest(opts: {
   // Issues with the tx batch
@@ -36,8 +36,8 @@ async function runTest(opts: {
 
   
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy());
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = (await CudosAccessControls.deploy());
 
   // Prep and deploy contract
   // ========================
@@ -51,7 +51,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -280,7 +280,7 @@ describe("submitBatch Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint,
-    } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
     // Prepare batch
     // ===============================
@@ -379,7 +379,7 @@ it("produces good hash with newly whitelisted address", async function () {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
   // Prepare batch
   // ===============================
@@ -479,7 +479,7 @@ it("throws when an address is removed from the whitelist", async function () {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
   // Prepare batch
   // ===============================

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
-import "./BridgeAccessControl.sol";
+import "./CudosAccessControls.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -60,7 +60,7 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
-	BridgeAccessControl public bridgeAccessControl;
+	CudosAccessControls public cudosAccessControls;
 
 	mapping(address => bool) public whitelisted;
 
@@ -115,7 +115,7 @@ contract Gravity is ReentrancyGuard {
 
 	modifier onlyWhitelisted() {
 		 require(
-            whitelisted[msg.sender] || bridgeAccessControl.hasAdminRole(msg.sender) ,
+            whitelisted[msg.sender] || cudosAccessControls.hasAdminRole(msg.sender) ,
             "The caller is not whitelisted for this operation"
         );
 		_;
@@ -608,7 +608,7 @@ contract Gravity is ReentrancyGuard {
 	function withdrawERC20(
 		address _tokenAddress) 
 		external {
-		require(bridgeAccessControl.hasAdminRole(msg.sender), "Recipient is not an admin");
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		uint256 totalBalance = IERC20(_tokenAddress).balanceOf(address(this));
 		IERC20(_tokenAddress).safeTransfer(msg.sender , totalBalance);
 	}
@@ -622,13 +622,13 @@ contract Gravity is ReentrancyGuard {
 		// arguments would never be used in this case
 		address[] memory _validators,
     uint256[] memory _powers,
-		BridgeAccessControl _bridgeAccessControl
+		CudosAccessControls _cudosAccessControls
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
-		require(address(_bridgeAccessControl) != address(0), "Access control contract address is incorrect");
+		require(address(_cudosAccessControls) != address(0), "Access control contract address is incorrect");
 
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
@@ -655,7 +655,7 @@ contract Gravity is ReentrancyGuard {
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
 
-		bridgeAccessControl = _bridgeAccessControl;
+		cudosAccessControls = _cudosAccessControls;
 
 		// LOGS
 

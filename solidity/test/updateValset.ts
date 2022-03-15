@@ -3,7 +3,7 @@ import chai from "chai";
 import { ethers} from "hardhat";
 import { solidity } from "ethereum-waffle";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -35,10 +35,10 @@ async function runTest(opts: {
   removedWhitelist:? boolean;
 }) {
 
-  let bridgeAccessControl:any
+  let cudosAccessControl:any
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy());
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = (await CudosAccessControls.deploy());
   const signers = await ethers.getSigners();
 
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -53,7 +53,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;

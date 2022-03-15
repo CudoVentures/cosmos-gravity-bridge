@@ -3,7 +3,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -16,13 +16,13 @@ import {
 chai.use(solidity);
 const { expect } = chai;
 
-let bridgeAccessControl:any
+let cudosAccessControl:any
 
 async function runTest(opts: {}) {
 
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy());
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = (await CudosAccessControls.deploy());
   // Prep and deploy contract
   // ========================
   const signers = await ethers.getSigners();
@@ -35,7 +35,7 @@ async function runTest(opts: {}) {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
 
   // Transfer out to Cosmos, locking coins
