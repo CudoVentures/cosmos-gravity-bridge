@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { TestTokenBatchMiddleware } from "../typechain/TestTokenBatchMiddleware";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -21,7 +21,7 @@ import { ReentrantERC20 } from "../typechain/ReentrantERC20";
 chai.use(solidity);
 const { expect } = chai;
 
-let bridgeAccessControl:any
+let cudosAccessControl:any
 
 async function prepareTxBatch(batchSize: number, signers: Signer[]) {
   const numTxs = batchSize;
@@ -61,8 +61,8 @@ async function prep() {
   // Deploy contracts
   // ================
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy());
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = (await CudosAccessControls.deploy());
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
 
@@ -76,7 +76,7 @@ async function prep() {
     powerThreshold,
     validators,
     powers,
-    bridgeAccessControl.address
+    cudosAccessControl.address
   );
 
   const ReentrantERC20Contract = await ethers.getContractFactory(

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
-import "./BridgeAccessControl.sol";
+import "./CudosAccessControls.sol";
 
 pragma experimental ABIEncoderV2;
 
@@ -60,7 +60,7 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
-	BridgeAccessControl public bridgeAccessControl;
+	CudosAccessControls public cudosAccessControls;
 
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
@@ -103,6 +103,35 @@ contract Gravity is ReentrancyGuard {
 		bytes _returnData,
 		uint256 _eventNonce
 	);
+
+	event WhitelistedStatusModified(
+		address _sender,
+		address[] _users,
+		bool _isWhitelisted
+	);
+
+
+	modifier onlyWhitelisted() {
+		 require(
+            whitelisted[msg.sender] || cudosAccessControls.hasAdminRole(msg.sender) ,
+            "The caller is not whitelisted for this operation"
+        );
+		_;
+	}
+
+	function manageWhitelist(
+		address[] memory _users,
+		bool _isWhitelisted
+		) public onlyWhitelisted {
+		 for (uint256 i = 0; i < _users.length; i++) {
+            require(
+                _users[i] != address(0),
+                "User is the zero address"
+            );
+            whitelisted[_users[i]] = _isWhitelisted;
+        }
+        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
+	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -577,7 +606,7 @@ contract Gravity is ReentrancyGuard {
 	function withdrawERC20(
 		address _tokenAddress) 
 		external {
-		require(bridgeAccessControl.hasAdminRole(msg.sender), "Recipient is not an admin");
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		uint256 totalBalance = IERC20(_tokenAddress).balanceOf(address(this));
 		IERC20(_tokenAddress).safeTransfer(msg.sender , totalBalance);
 	}
@@ -590,14 +619,14 @@ contract Gravity is ReentrancyGuard {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-        uint256[] memory _powers,
-		BridgeAccessControl _bridgeAccessControl
+    uint256[] memory _powers,
+		CudosAccessControls _cudosAccessControls
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
-		require(address(_bridgeAccessControl) != address(0), "Access control contract address is incorrect");
+		require(address(_cudosAccessControls) != address(0), "Access control contract address is incorrect");
 
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
@@ -624,7 +653,7 @@ contract Gravity is ReentrancyGuard {
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
 
-		bridgeAccessControl = _bridgeAccessControl;
+		cudosAccessControls = _cudosAccessControls;
 
 		// LOGS
 

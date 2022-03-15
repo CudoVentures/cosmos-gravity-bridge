@@ -2,7 +2,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -18,11 +18,11 @@ const { expect } = chai;
 
 describe("Gravity happy path valset update + batch submit", function () {
 
-  let bridgeAccessControl:any
+  let cudosAccessControl:any
 
   beforeEach(async () => {
-    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-    bridgeAccessControl = (await BridgeAccessControl.deploy());
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
   });
 
 
@@ -50,7 +50,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, bridgeAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, cudosAccessControl.address);
 
 
 
