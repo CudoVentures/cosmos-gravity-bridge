@@ -1,7 +1,7 @@
 import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -18,11 +18,11 @@ const { expect } = chai;
 describe("constructor tests", function() {
 
 
-  let bridgeAccessControl:any
+  let cudosAccessControl:any
 
   beforeEach(async () => {
-    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-    bridgeAccessControl = (await BridgeAccessControl.deploy());
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
   });
 
 
@@ -38,7 +38,7 @@ describe("constructor tests", function() {
     const powerThreshold = 6666;
 
     await expect(
-      deployContracts(gravityId, powerThreshold, validators, powers,bridgeAccessControl.address,)
+      deployContracts(gravityId, powerThreshold, validators, powers,cudosAccessControl.address,)
     ).to.be.revertedWith("Malformed current validator set");
   });
 
@@ -53,7 +53,7 @@ describe("constructor tests", function() {
     const powerThreshold = 666666666;
 
     await expect(
-      deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address)
+      deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address)
     ).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );

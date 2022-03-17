@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { TestLogicContract } from "../typechain/TestLogicContract";
 import { SimpleLogicBatchMiddleware } from "../typechain/SimpleLogicBatchMiddleware";
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -36,10 +36,10 @@ async function runTest(opts: {
 
   // Prep and deploy contract
   // ========================
-  let bridgeAccessControl: any
+  let cudosAccessControl: any
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = await BridgeAccessControl.deploy();
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = await CudosAccessControls.deploy();
 
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -51,7 +51,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId,  powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId,  powerThreshold, validators, powers, cudosAccessControl.address);
 
   // First we deploy the logic batch middleware contract. This makes it easy to call a logic 
   // contract a bunch of times in a batch.
@@ -302,11 +302,11 @@ describe("submitLogicCall tests", function () {
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
 describe("logicCall Go test hash", async function () {
-  let bridgeAccessControl:any
+  let cudosAccessControl:any
 
   beforeEach(async () => {
-    const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-    bridgeAccessControl = (await BridgeAccessControl.deploy()) as BridgeAccessControl;
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy()) as CudosAccessControls;
   });
 
   it("produces good hash", async function () {
@@ -323,7 +323,7 @@ describe("logicCall Go test hash", async function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
 
 

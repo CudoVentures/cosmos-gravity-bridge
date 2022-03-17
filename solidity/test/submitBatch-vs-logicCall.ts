@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { TestTokenBatchMiddleware } from "../typechain/TestTokenBatchMiddleware";
 
-import { BridgeAccessControl } from "../typechain/BridgeAccessControl";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -21,7 +21,7 @@ import { ReentrantERC20 } from "../typechain/ReentrantERC20";
 chai.use(solidity);
 const { expect } = chai;
 
-let bridgeAccessControl:any
+let cudosAccessControl:any
 
 async function prepareTxBatch(batchSize: number, signers: Signer[]) {
   const numTxs = batchSize;
@@ -61,8 +61,8 @@ async function prep() {
   // Deploy contracts
   // ================
 
-  const BridgeAccessControl = await ethers.getContractFactory("BridgeAccessControl");
-  bridgeAccessControl = (await BridgeAccessControl.deploy());
+  const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+  cudosAccessControl = (await CudosAccessControls.deploy());
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
 
@@ -76,7 +76,7 @@ async function prep() {
     powerThreshold,
     validators,
     powers,
-    bridgeAccessControl.address
+    cudosAccessControl.address
   );
 
   const ReentrantERC20Contract = await ethers.getContractFactory(
@@ -373,3 +373,356 @@ describe("Compare gas usage of old submitBatch method vs new logicCall method su
     ).to.be.revertedWith("ReentrancyGuard: reentrant call");
   });
 });
+
+describe("Testing whitelisting on logic call", function() {
+  it("Should not throw if the signer is whitelisted", async function() {
+
+    let batchSize = 1
+    let reentrant = false
+   
+    const {
+      signers,
+      gravityId,
+      powers,
+      validators,
+      gravity,
+      testERC20,
+      reentrantERC20,
+    } = await prep();
+  
+    const TestTokenBatchMiddleware = await ethers.getContractFactory(
+      "TestTokenBatchMiddleware"
+    );
+    const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
+    await tokenBatchMiddleware.transferOwnership(gravity.address);
+  
+    // Lock tokens in gravity
+    // ====================
+    await sendToCosmos(gravity, testERC20, 1000);
+  
+    expect(
+      (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+      "gravity does not have correct balance after sendToCosmos"
+    ).to.equal(1000);
+  
+    expect(
+      (
+        await testERC20.functions.balanceOf(await signers[0].getAddress())
+      )[0].toNumber(),
+      "msg.sender does not have correct balance after sendToCosmos"
+    ).to.equal(9000);
+  
+    // Preparing tx batch
+    // ===================================
+    const txBatch = await prepareTxBatch(batchSize, signers);
+    const batchNonce = 1;
+  
+    // Using logicCall method
+    // ========================
+    const methodName = ethers.utils.formatBytes32String("logicCall");
+  
+    let logicCallArgs = {
+      transferAmounts: [txBatch.numTxs], // transferAmounts
+      transferTokenContracts: [testERC20.address], // transferTokenContracts
+      feeAmounts: [txBatch.numTxs], // feeAmounts
+      feeTokenContracts: [testERC20.address], // feeTokenContracts
+      logicContractAddress: tokenBatchMiddleware.address, // logicContractAddress
+      payload: tokenBatchMiddleware.interface.encodeFunctionData("submitBatch", [
+        txBatch.amounts,
+        txBatch.destinations,
+        reentrant ? reentrantERC20.address : testERC20.address,
+      ]), // payload
+      timeOut: 4766922941000, // timeOut, Far in the future
+      invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
+      invalidationNonce: 1, // invalidationNonce
+    };
+  
+    const digest = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        [
+          "bytes32", // gravityId
+          "bytes32", // methodName
+          "uint256[]", // transferAmounts
+          "address[]", // transferTokenContracts
+          "uint256[]", // feeAmounts
+          "address[]", // feeTokenContracts
+          "address", // logicContractAddress
+          "bytes", // payload
+          "uint256", // timeOut
+          "bytes32", // invalidationId
+          "uint256", // invalidationNonce
+        ],
+        [
+          gravityId,
+          methodName,
+          logicCallArgs.transferAmounts,
+          logicCallArgs.transferTokenContracts,
+          logicCallArgs.feeAmounts,
+          logicCallArgs.feeTokenContracts,
+          logicCallArgs.logicContractAddress,
+          logicCallArgs.payload,
+          logicCallArgs.timeOut,
+          logicCallArgs.invalidationId,
+          logicCallArgs.invalidationNonce,
+        ]
+      )
+    );
+  
+    const sigs = await signHash(validators, digest);
+  
+    let valset = {
+      validators: await getSignerAddresses(validators),
+      powers,
+      valsetNonce: 0,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
+    }
+    await gravity.manageWhitelist([signers[3].address], true)
+  
+    await gravity.connect(signers[3]).submitLogicCall(
+      valset,
+  
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      logicCallArgs
+    );
+  })
+
+  it("Should throw if the signer is not whitelisted", async function() {
+
+    let batchSize = 1
+    let reentrant = false
+   
+    const {
+      signers,
+      gravityId,
+      powers,
+      validators,
+      gravity,
+      testERC20,
+      reentrantERC20,
+    } = await prep();
+  
+    const TestTokenBatchMiddleware = await ethers.getContractFactory(
+      "TestTokenBatchMiddleware"
+    );
+    const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
+    await tokenBatchMiddleware.transferOwnership(gravity.address);
+  
+    // Lock tokens in gravity
+    // ====================
+    await sendToCosmos(gravity, testERC20, 1000);
+  
+    expect(
+      (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+      "gravity does not have correct balance after sendToCosmos"
+    ).to.equal(1000);
+  
+    expect(
+      (
+        await testERC20.functions.balanceOf(await signers[0].getAddress())
+      )[0].toNumber(),
+      "msg.sender does not have correct balance after sendToCosmos"
+    ).to.equal(9000);
+  
+    // Preparing tx batch
+    // ===================================
+    const txBatch = await prepareTxBatch(batchSize, signers);
+    const batchNonce = 1;
+  
+    // Using logicCall method
+    // ========================
+    const methodName = ethers.utils.formatBytes32String("logicCall");
+  
+    let logicCallArgs = {
+      transferAmounts: [txBatch.numTxs], // transferAmounts
+      transferTokenContracts: [testERC20.address], // transferTokenContracts
+      feeAmounts: [txBatch.numTxs], // feeAmounts
+      feeTokenContracts: [testERC20.address], // feeTokenContracts
+      logicContractAddress: tokenBatchMiddleware.address, // logicContractAddress
+      payload: tokenBatchMiddleware.interface.encodeFunctionData("submitBatch", [
+        txBatch.amounts,
+        txBatch.destinations,
+        reentrant ? reentrantERC20.address : testERC20.address,
+      ]), // payload
+      timeOut: 4766922941000, // timeOut, Far in the future
+      invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
+      invalidationNonce: 1, // invalidationNonce
+    };
+  
+    const digest = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        [
+          "bytes32", // gravityId
+          "bytes32", // methodName
+          "uint256[]", // transferAmounts
+          "address[]", // transferTokenContracts
+          "uint256[]", // feeAmounts
+          "address[]", // feeTokenContracts
+          "address", // logicContractAddress
+          "bytes", // payload
+          "uint256", // timeOut
+          "bytes32", // invalidationId
+          "uint256", // invalidationNonce
+        ],
+        [
+          gravityId,
+          methodName,
+          logicCallArgs.transferAmounts,
+          logicCallArgs.transferTokenContracts,
+          logicCallArgs.feeAmounts,
+          logicCallArgs.feeTokenContracts,
+          logicCallArgs.logicContractAddress,
+          logicCallArgs.payload,
+          logicCallArgs.timeOut,
+          logicCallArgs.invalidationId,
+          logicCallArgs.invalidationNonce,
+        ]
+      )
+    );
+  
+    const sigs = await signHash(validators, digest);
+  
+    let valset = {
+      validators: await getSignerAddresses(validators),
+      powers,
+      valsetNonce: 0,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
+    }
+  
+    await expect( gravity.connect(signers[3]).submitLogicCall(
+      valset,
+  
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      logicCallArgs
+    )).to.be.revertedWith("The caller is not whitelisted for this operation");
+  })
+
+  it("Should throw if the signer is removed from the whitelist", async function() {
+
+    let batchSize = 1
+    let reentrant = false
+   
+    const {
+      signers,
+      gravityId,
+      powers,
+      validators,
+      gravity,
+      testERC20,
+      reentrantERC20,
+    } = await prep();
+  
+    const TestTokenBatchMiddleware = await ethers.getContractFactory(
+      "TestTokenBatchMiddleware"
+    );
+    const tokenBatchMiddleware = (await TestTokenBatchMiddleware.deploy()) as TestTokenBatchMiddleware;
+    await tokenBatchMiddleware.transferOwnership(gravity.address);
+  
+    // Lock tokens in gravity
+    // ====================
+    await sendToCosmos(gravity, testERC20, 1000);
+  
+    expect(
+      (await testERC20.functions.balanceOf(gravity.address))[0].toNumber(),
+      "gravity does not have correct balance after sendToCosmos"
+    ).to.equal(1000);
+  
+    expect(
+      (
+        await testERC20.functions.balanceOf(await signers[0].getAddress())
+      )[0].toNumber(),
+      "msg.sender does not have correct balance after sendToCosmos"
+    ).to.equal(9000);
+  
+    // Preparing tx batch
+    // ===================================
+    const txBatch = await prepareTxBatch(batchSize, signers);
+    const batchNonce = 1;
+  
+    // Using logicCall method
+    // ========================
+    const methodName = ethers.utils.formatBytes32String("logicCall");
+  
+    let logicCallArgs = {
+      transferAmounts: [txBatch.numTxs], // transferAmounts
+      transferTokenContracts: [testERC20.address], // transferTokenContracts
+      feeAmounts: [txBatch.numTxs], // feeAmounts
+      feeTokenContracts: [testERC20.address], // feeTokenContracts
+      logicContractAddress: tokenBatchMiddleware.address, // logicContractAddress
+      payload: tokenBatchMiddleware.interface.encodeFunctionData("submitBatch", [
+        txBatch.amounts,
+        txBatch.destinations,
+        reentrant ? reentrantERC20.address : testERC20.address,
+      ]), // payload
+      timeOut: 4766922941000, // timeOut, Far in the future
+      invalidationId: ethers.utils.hexZeroPad(testERC20.address, 32), // invalidationId
+      invalidationNonce: 1, // invalidationNonce
+    };
+  
+    const digest = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        [
+          "bytes32", // gravityId
+          "bytes32", // methodName
+          "uint256[]", // transferAmounts
+          "address[]", // transferTokenContracts
+          "uint256[]", // feeAmounts
+          "address[]", // feeTokenContracts
+          "address", // logicContractAddress
+          "bytes", // payload
+          "uint256", // timeOut
+          "bytes32", // invalidationId
+          "uint256", // invalidationNonce
+        ],
+        [
+          gravityId,
+          methodName,
+          logicCallArgs.transferAmounts,
+          logicCallArgs.transferTokenContracts,
+          logicCallArgs.feeAmounts,
+          logicCallArgs.feeTokenContracts,
+          logicCallArgs.logicContractAddress,
+          logicCallArgs.payload,
+          logicCallArgs.timeOut,
+          logicCallArgs.invalidationId,
+          logicCallArgs.invalidationNonce,
+        ]
+      )
+    );
+  
+    const sigs = await signHash(validators, digest);
+  
+    let valset = {
+      validators: await getSignerAddresses(validators),
+      powers,
+      valsetNonce: 0,
+      rewardAmount: 0,
+      rewardToken: ZeroAddress
+    }
+
+    await gravity.manageWhitelist([signers[3].address], true)
+  
+    await gravity.connect(signers[3]).submitLogicCall(
+      valset,
+  
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      logicCallArgs
+    );
+    await gravity.manageWhitelist([signers[3].address], false)
+    await expect( gravity.connect(signers[3]).submitLogicCall(
+      valset,
+  
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      logicCallArgs
+    )).to.be.revertedWith("The caller is not whitelisted for this operation");
+  })
+})
