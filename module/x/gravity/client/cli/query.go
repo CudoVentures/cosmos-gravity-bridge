@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdGetValsetConfirm(),
 		CmdGetPendingValsetRequest(),
 		CmdGetPendingOutgoingTXBatchRequest(),
+		CmdGetPendingSendToEth(),
 		// CmdGetAllOutgoingTXBatchRequest(),
 		// CmdGetOutgoingTXBatchByNonceRequest(),
 		// CmdGetAllAttestationsRequest(),
@@ -174,6 +175,32 @@ func CmdGetPendingValsetRequest() *cobra.Command {
 			}
 
 			res, err := queryClient.LastPendingValsetRequestByAddr(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdGetPendingSendToEth() *cobra.Command {
+	//nolint: exhaustivestruct
+	cmd := &cobra.Command{
+		Use:   "pending-send-to-eth [address]",
+		Short: "Query transactions waiting to go to Ethereum",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryPendingSendToEth{
+				SenderAddress: args[0],
+			}
+
+			res, err := queryClient.GetPendingSendToEth(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
