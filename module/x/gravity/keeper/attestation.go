@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strconv"
@@ -300,7 +301,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 	height := types.LastObservedEthereumBlockHeight{
 		CosmosBlockHeight:   0,
 		EthereumBlockHeight: 0,
-		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
+		CosmosBlockTimeMs:   0,
 	}
 	k.cdc.MustUnmarshalBinaryBare(bytes, &height)
 	return height
@@ -312,6 +313,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
 	}
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshalBinaryBare(&height))
 }
