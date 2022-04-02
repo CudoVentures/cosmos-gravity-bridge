@@ -152,8 +152,8 @@ func CmdSetMinFeeTransferToEth() *cobra.Command {
 
 	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
-		Use:   "set-min-bridge-fee [min-bridge-fee]",
-		Short: "Sets the minimum bridge fee for transfer to eth. Usable only by admin token holders.",
+		Use:   "set-min-bridge-fee [fee-amount-in-acudos]",
+		Short: "Sets the minimum bridge fee for transfer to eth. Usable only by admin token holders. Fee amount must be given in acudos, where 1 CUDO = 1000000000000000000 acudos",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
