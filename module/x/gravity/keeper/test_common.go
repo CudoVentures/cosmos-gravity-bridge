@@ -806,6 +806,8 @@ func (s AlwaysPanicStakingMock) Jail(sdk.Context, sdk.ConsAddress) {
 
 func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, amt sdk.Int) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	var minSelfDeleg, _ = sdk.NewIntFromString("2000000000000000000000000")
+
 	out, err := stakingtypes.NewMsgCreateValidator(
 		address, pubKey, sdk.NewCoin("stake", amt),
 		stakingtypes.Description{
@@ -814,7 +816,7 @@ func NewTestMsgCreateValidator(address sdk.ValAddress, pubKey ccrypto.PubKey, am
 			Website:         "",
 			SecurityContact: "",
 			Details:         "",
-		}, commission, sdk.OneInt(),
+		}, commission, minSelfDeleg,
 	)
 	if err != nil {
 		panic(err)
