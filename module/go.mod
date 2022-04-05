@@ -2,7 +2,7 @@ module github.com/althea-net/cosmos-gravity-bridge/module
 
 go 1.15
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220405081548-3d8b3a6ececd
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220405142659-31ad22d7f5e7
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -19,15 +19,15 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.4.1
-	github.com/spf13/cobra v1.4.0
-	github.com/spf13/viper v1.10.1
+	github.com/spf13/cobra v1.2.1
+	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.3.0 // indirect
-	github.com/stretchr/testify v1.7.1
-	github.com/tendermint/tendermint v0.34.17
-	github.com/tendermint/tm-db v0.6.6
+	github.com/stretchr/testify v1.7.0
+	github.com/tendermint/tendermint v0.34.14
+	github.com/tendermint/tm-db v0.6.4
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
-	google.golang.org/grpc v1.45.0
+	google.golang.org/genproto v0.0.0-20210828152312-66f60bf46e71
+	google.golang.org/grpc v1.42.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
