@@ -257,6 +257,16 @@ contract Gravity is ReentrancyGuard {
 		// Success
 	}
 
+	function isOrchestrator(ValsetArgs memory _newValset, address _sender) private pure returns(bool) {
+
+		for (uint256 i = 0; i < _newValset.validators.length; i++) {
+			if(_newValset.validators[i] == _sender) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
@@ -271,7 +281,7 @@ contract Gravity is ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public onlyWhitelisted {
+	) public nonReentrant {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -299,6 +309,11 @@ contract Gravity is ReentrancyGuard {
 		require(
 			makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
+		);
+
+		require(
+			isOrchestrator(_newValset, msg.sender),
+			"The sender of the transaction is not validated orchestrator"
 		);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -361,7 +376,7 @@ contract Gravity is ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public nonReentrant onlyWhitelisted{
+	) public nonReentrant {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -395,6 +410,11 @@ contract Gravity is ReentrancyGuard {
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
 				"Malformed batch of transactions"
+			);
+
+			require(
+				isOrchestrator(_currentValset, msg.sender),
+				"The sender of the transaction is not validated orchestrator"
 			);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -463,7 +483,7 @@ contract Gravity is ReentrancyGuard {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		LogicCallArgs memory _args
-	) public nonReentrant onlyWhitelisted {
+	) public nonReentrant {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the call has not timed out
@@ -500,6 +520,10 @@ contract Gravity is ReentrancyGuard {
 			require(
 				_args.feeAmounts.length == _args.feeTokenContracts.length,
 				"Malformed list of fees"
+			);
+			require(
+				isOrchestrator(_currentValset, msg.sender),
+				"The sender of the transaction is not validated orchestrator"
 			);
 		}
 

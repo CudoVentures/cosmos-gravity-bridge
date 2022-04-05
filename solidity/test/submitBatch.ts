@@ -164,8 +164,8 @@ async function runTest(opts: {
   }
 
   if (opts.notWhiteListed) {
-
-  await gravity.connect(signers[3]).submitBatch(
+  let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+  await gravity.connect(testAcc).submitBatch(
     valset,
 
     sigs.v,
@@ -180,8 +180,8 @@ async function runTest(opts: {
     batchTimeout
   );
   }
-
-  let batchSubmitTx = await gravity.submitBatch(
+  
+  let batchSubmitTx = await gravity.connect(signers[2]).submitBatch(
     valset,
 
     sigs.v,
@@ -236,9 +236,9 @@ describe("submitBatch tests", function () {
     );
   });
 
-  it("throws if the sender is not whitelisted", async function () {
+  it("throws if the sender is not whitelisted (trusted orchestrator)", async function () {
     await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
-      "The caller is not whitelisted for this operation"
+      "The sender of the transaction is not validated orchestrator"
     );
   });
 
@@ -260,9 +260,14 @@ describe("submitBatch tests", function () {
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
 describe("submitBatch Go test hash", function () {
+
   it("produces good hash", async function () {
     // Prep and deploy contract
     // ========================
+
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
+
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
     const powers = [6667];
@@ -442,9 +447,6 @@ it("produces good hash with newly whitelisted address", async function () {
     rewardAmount: 0,
     rewardToken: ZeroAddress
   }
-  await gravity.manageWhitelist([signers[3].address], true)
-  await gravity.connect(signers[3]).submitBatch(
-    valset,
 
     sigs.v,
     sigs.r,
@@ -471,7 +473,7 @@ it("throws when an address is removed from the whitelist", async function () {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
   // Prepare batch
   // ===============================
@@ -557,23 +559,6 @@ it("throws when an address is removed from the whitelist", async function () {
     testERC20.address,
     batchTimeout
   );
-
-  await gravity.manageWhitelist([signers[3].address], false)
-
-  await expect(gravity.connect(signers[3]).submitBatch(
-    valset,
-
-    sigs.v,
-    sigs.r,
-    sigs.s,
-
-    txAmounts,
-    txDestinations,
-    txFees,
-    batchNonce,
-    testERC20.address,
-    batchTimeout
-  )).to.be.revertedWith("The caller is not whitelisted for this operation")
 });
 
 });

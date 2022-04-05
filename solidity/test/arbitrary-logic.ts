@@ -11,6 +11,7 @@ import {
   examplePowers,
   ZeroAddress
 } from "../test-utils/pure";
+import { FunctionFragment } from "ethers/lib/utils";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -29,6 +30,7 @@ async function runTest(opts: {
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
   timedOut?: boolean;
+  notWhitelisted?:boolean;
 }) {
 
 
@@ -99,7 +101,6 @@ async function runTest(opts: {
   if (opts.timedOut) {
     timeOut = 0
   }
-
 
   // Call method
   // ===========
@@ -209,6 +210,18 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
+  if (opts.notWhitelisted) {
+    let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+    await gravity.connect(testAcc).submitLogicCall(
+      valset,
+  
+      sigs.v,
+      sigs.r,
+      sigs.s,
+      logicCallArgs
+    );
+  }
+
   let logicCallSubmitResult = await gravity.submitLogicCall(
     valset,
 
@@ -290,6 +303,12 @@ describe("submitLogicCall tests", function () {
       "Timed out"
     );
   });
+
+  it("throws on not whitelisted signer (trusted orchestrator)", async function() {
+    await expect(runTest({ notWhitelisted: true })).to.be.revertedWith(
+      "The sender of the transaction is not validated orchestrator"
+    );
+  })
 
 });
 
