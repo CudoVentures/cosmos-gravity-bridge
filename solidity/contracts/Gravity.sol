@@ -268,6 +268,11 @@ contract Gravity is ReentrancyGuard {
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
+		require(
+			isOrchestrator(_currentValset, msg.sender),
+			"The sender of the transaction is not validated orchestrator"
+		);
+
 		// Check that enough current validators have signed off on the new validator set
 		bytes32 newCheckpoint = makeCheckpoint(_newValset, state_gravityId);
 
