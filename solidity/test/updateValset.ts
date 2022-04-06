@@ -31,7 +31,6 @@ async function runTest(opts: {
   notEnoughReward?: boolean;
   withReward?: boolean;
   notWhiteListed?: boolean;
-  isWHitelisted?: boolean;
   removedWhitelist:? boolean;
 }) {
 
@@ -166,7 +165,10 @@ async function runTest(opts: {
   }
 
   if (opts.notWhiteListed) {
-    await gravity.connect(signers[3]).updateValset(
+
+    let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+
+    await gravity.connect(testAcc).updateValset(
       newValset,
       currentValset,
       sigs.v,
@@ -174,41 +176,7 @@ async function runTest(opts: {
       sigs.s
     )
   }
-
-  let valsetUpdateTx
-  if (opts.isWHitelisted) {
-    await gravity.manageWhitelist([signers[3].address], true)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
-
-    return { gravity, checkpoint };
-  }
-
-  if(opts.removedWhitelist) {
-    await gravity.manageWhitelist([signers[3].address], true)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
-
-    await gravity.manageWhitelist([signers[3].address], false)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
-  }
-
+  let valsetUpdateTx;
 
    valsetUpdateTx = await gravity.updateValset(
     newValset,
@@ -288,14 +256,9 @@ describe("updateValset tests", function () {
       "transfer amount exceeds balance"
     );
   });
-  it("throws on not whitelisted signer ", async function () {
+  it("throws on not whitelisted signer (trusted validator) ", async function () {
     await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
-      "The caller is not whitelisted for this operation"
-    );
-  });
-  it("throws on not already removed singer from whitelist ", async function () {
-    await expect(runTest({ removedWhitelist: true })).to.be.revertedWith(
-      "The caller is not whitelisted for this operation"
+      "The sender of the transaction is not validated orchestrator"
     );
   });
 
@@ -310,7 +273,7 @@ describe("updateValset tests", function () {
   });
 
   it("happy path with whitelisted signer", async function () {
-    let { gravity, checkpoint } = await runTest({ isWHitelisted:true});
+    let { gravity, checkpoint } = await runTest({});
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });
