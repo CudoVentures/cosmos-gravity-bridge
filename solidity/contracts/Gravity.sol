@@ -313,7 +313,7 @@ contract Gravity is ReentrancyGuard {
 		);
 
 		require(
-			isOrchestrator(_newValset, msg.sender),
+			isOrchestrator(_currentValset, msg.sender),
 			"The sender of the transaction is not validated orchestrator"
 		);
 
