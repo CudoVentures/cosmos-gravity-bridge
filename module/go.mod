@@ -3,7 +3,9 @@ module github.com/althea-net/cosmos-gravity-bridge/module
 go 1.15
 
 require (
-	github.com/cosmos/cosmos-sdk v0.42.9
+	github.com/StackExchange/wmi v1.2.1 // indirect
+	github.com/cosmos/cosmos-sdk v0.45.3
+	github.com/cosmos/ibc-go/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
