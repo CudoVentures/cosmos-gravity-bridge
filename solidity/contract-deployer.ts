@@ -10,7 +10,7 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
 import { start } from "node:repl";
 import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
-import  hre from "hardhat";
+import hre from "hardhat";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -188,10 +188,6 @@ async function deploy() {
 
   
   let cudosAccessControl:any
-  // const AcArts = getContractArtifacts("artifacts/contracts/CudosAccessControls.sol/CudosAccessControls.json");
-  // const AcFactory = new ethers.ContractFactory(AcArts.abi, AcArts.bytecode, wallet);
-
-  // console.log("Deploying AccessControl contract...")
   cudosAccessControl = args["cudos-access-control"];
 
   console.log("Starting Gravity contract deploy");
