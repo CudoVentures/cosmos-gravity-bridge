@@ -185,11 +185,7 @@ async function deploy() {
 
   
   let cudosAccessControl:any
-  const AcArts = getContractArtifacts("artifacts/contracts/CudosAccessControls.sol/CudosAccessControls.json");
-  const AcFactory = new ethers.ContractFactory(AcArts.abi, AcArts.bytecode, wallet);
-
-  console.log("Deploying AccessControl contract...")
-  cudosAccessControl = (await AcFactory.deploy());
+  cudosAccessControl = args["cudos-access-control"];
 
   console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
@@ -237,6 +233,21 @@ async function deploy() {
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
+
+  
+  await gravity.deployTransaction.wait(10)
+  console.log("Verifying contract on Etherscan...");
+
+  await hre.run("verify:verify", {
+    address: gravity.address,
+    constructorArguments: [
+      gravityId,
+      vote_power,
+      eth_addresses,
+      powers,
+      cudosAccessControl
+    ],
+  });
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {

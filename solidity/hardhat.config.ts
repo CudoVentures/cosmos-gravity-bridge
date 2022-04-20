@@ -849,5 +849,5 @@ module.exports = {
   },
   mocha: {
     timeout: 2000000
-  }
+  },
 };
