@@ -246,23 +246,6 @@ async function deploy() {
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
 
-  fs.writeFileSync(
-    "./bridge_params.json",
-    JSON.stringify(
-      {
-        bridge_address:gravity.address,
-        gravity_id: gravityId,
-        vote_power: vote_power,
-        eth_addresses: eth_addresses,
-        powers: powers,
-        cudos_access_control: cudosAccessControl,
-      },
-      null,
-      2
-    )
-  );
-
-  
   await gravity.deployTransaction.wait(10)
   console.log("Verifying contract on Etherscan...");
 
