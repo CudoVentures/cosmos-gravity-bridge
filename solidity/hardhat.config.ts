@@ -2,6 +2,8 @@ import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
 import "hardhat-typechain";
 import { task } from "hardhat/config";
+import "@nomiclabs/hardhat-etherscan"
+
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -857,4 +859,7 @@ module.exports = {
   mocha: {
     timeout: 2000000
   },
+  etherscan:{
+    apiKey: `${process.env.ETHERSCAN_API_KEY}`
+  }
 };
