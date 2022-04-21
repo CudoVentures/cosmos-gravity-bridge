@@ -4,7 +4,7 @@ go 1.15
 
 // replace github.com/cosmos/cosmos-sdk => ../../cosmos-sdk
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220413115949-5f86bd3c94e9
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220421090641-3a0d43edd09b
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
