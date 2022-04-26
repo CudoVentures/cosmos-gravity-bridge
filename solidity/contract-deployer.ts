@@ -245,16 +245,23 @@ async function deploy() {
   await gravity.deployTransaction.wait(10)
   console.log("Verifying contract on Etherscan...");
 
-  await hre.run("verify:verify", {
-    address: gravity.address,
-    constructorArguments: [
-      gravityId,
-      vote_power,
-      eth_addresses,
-      powers,
-      cudosAccessControl
-    ],
-  });
+  try {
+    await hre.run("verify:verify", {
+      address: gravity.address,
+      constructorArguments: [
+        gravityId,
+        vote_power,
+        eth_addresses,
+        powers,
+        cudosAccessControl
+      ],
+    });
+    console.log("Contract is verified")
+  } catch (err) {
+    if (err.message.includes("Reason: Already Verified")) {
+      console.log("Contract is already verified!");
+    }
+  }
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
