@@ -261,8 +261,7 @@ async function deploy() {
     if (err.message.includes("Reason: Already Verified")) {
       console.log("Contract is already verified!");
     } else {
-      throw new Error("Verification Failed");
-      
+      throw err
     }
   }
 }
