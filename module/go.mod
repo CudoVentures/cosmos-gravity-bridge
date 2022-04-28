@@ -4,12 +4,12 @@ go 1.15
 
 // replace github.com/cosmos/cosmos-sdk => ../../cosmos-sdk
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220421090641-3a0d43edd09b
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220428091713-7509d08ecf5c
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/cosmos/cosmos-sdk v0.44.5
-	github.com/cosmos/ibc-go v1.2.3
+	github.com/cosmos/cosmos-sdk v0.45.3
+	github.com/cosmos/ibc-go/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/gogo/protobuf v1.3.3
@@ -28,7 +28,7 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.6
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
+	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb
 	google.golang.org/grpc v1.45.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

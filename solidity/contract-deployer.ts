@@ -10,6 +10,7 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
 import { start } from "node:repl";
 import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
+import hre from "hardhat";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -241,6 +242,28 @@ async function deploy() {
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
 
+  await gravity.deployTransaction.wait(10)
+  console.log("Verifying contract on Etherscan...");
+
+  try {
+    await hre.run("verify:verify", {
+      address: gravity.address,
+      constructorArguments: [
+        gravityId,
+        vote_power,
+        eth_addresses,
+        powers,
+        cudosAccessControl
+      ],
+    });
+    console.log("Contract is verified")
+  } catch (err) {
+    if (err.message.includes("Reason: Already Verified")) {
+      console.log("Contract is already verified!");
+    } else {
+      throw err
+    }
+  }
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
