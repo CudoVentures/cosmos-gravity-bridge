@@ -74,7 +74,7 @@ func SimulationOperations(app Gravity, cdc codec.JSONCodec, config simtypes.Conf
 		Rand:         &rand.Rand{},
 		GenState:     map[string]json.RawMessage{},
 		Accounts:     []simtypes.Account{},
-		InitialStake: 0,
+		InitialStake: sdk.TokensFromConsensusPower(2000000, sdk.DefaultPowerReduction),
 		NumBonded:    0,
 		GenTimestamp: time.Time{},
 		UnbondTime:   0,
