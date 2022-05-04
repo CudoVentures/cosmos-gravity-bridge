@@ -12,6 +12,7 @@ import (
 )
 
 const OutgoingTxBatchSize = 100
+const BatchCreationPeriod = uint64(120)
 
 // BuildOutgoingTXBatch starts the following process chain:
 // - find bridged denominator for given voucher type
