@@ -32,6 +32,7 @@ async function runTest(opts: {
   withReward?: boolean;
   notWhiteListed?: boolean;
   removedWhitelist:? boolean;
+  contractLocked:? boolean;
 }) {
 
   let cudosAccessControl:any
@@ -176,6 +177,11 @@ async function runTest(opts: {
       sigs.s
     )
   }
+
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
   let valsetUpdateTx;
 
    valsetUpdateTx = await gravity.updateValset(
@@ -261,6 +267,12 @@ describe("updateValset tests", function () {
       "The sender of the transaction is not validated orchestrator"
     );
   });
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
 
   it("pays reward correctly", async function () {
     let {gravity, checkpoint} = await runTest({ withReward: true });

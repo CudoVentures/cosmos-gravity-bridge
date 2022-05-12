@@ -1,11 +1,12 @@
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./CosmosToken.sol";
 import "./CudosAccessControls.sol";
 
@@ -44,7 +45,7 @@ struct ValsetArgs {
 	address rewardToken;
 }
 
-contract Gravity is ReentrancyGuard {
+contract Gravity is ReentrancyGuard, Pausable {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
@@ -113,27 +114,9 @@ contract Gravity is ReentrancyGuard {
 		bool _isWhitelisted
 	);
 
-
-	modifier onlyWhitelisted() {
-		 require(
-            whitelisted[msg.sender] || cudosAccessControls.hasAdminRole(msg.sender) ,
-            "The caller is not whitelisted for this operation"
-        );
+	modifier onlyAdmin() {
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		_;
-	}
-
-	function manageWhitelist(
-		address[] memory _users,
-		bool _isWhitelisted
-		) public onlyWhitelisted {
-		 for (uint256 i = 0; i < _users.length; i++) {
-            require(
-                _users[i] != address(0),
-                "User is the zero address"
-            );
-            whitelisted[_users[i]] = _isWhitelisted;
-        }
-        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
 	}
 
 	// TEST FIXTURES
@@ -171,6 +154,15 @@ contract Gravity is ReentrancyGuard {
 	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
 		return state_invalidationMapping[_invalidation_id];
 	}
+	
+	//pause functions
+	function pause() external onlyAdmin {
+		_pause();
+	}
+
+	function unpause() external onlyAdmin {
+		_unpause();
+	}
 
 	// Utility function to verify geth style signatures
 	function verifySig(
@@ -179,14 +171,12 @@ contract Gravity is ReentrancyGuard {
 		uint8 _v,
 		bytes32 _r,
 		bytes32 _s
-	) private pure returns (bool ) {
+	) private pure returns (bool) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
-		(address recAddr, ) = ECDSA.tryRecover(messageDigest, _v, _r, _s);
-		require(recAddr != address(0), "zero ecrec address");
-		return _signer == recAddr;
-	}
+		return _signer == ecrecover(messageDigest, _v, _r, _s);
+	}	
 
 	// Make a new checkpoint from the supplied validator set
 	// A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
@@ -261,14 +251,15 @@ contract Gravity is ReentrancyGuard {
 		// Success
 	}
 
-	function isOrchestrator(ValsetArgs memory _newValset, address _sender) private pure returns(bool) {
+	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure returns(bool) {
 
-		for (uint256 i = 0; i < _newValset.validators.length; i++) {
-			if(_newValset.validators[i] == _sender) {
+		for (uint256 i = 0; i < _valset.validators.length; i++) {
+			if(_valset.validators[i] == _sender) {
 				return true;
 			}
 		}
-		return false;
+		
+		revert("The sender of the transaction is not validated orchestrator");
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
@@ -285,7 +276,7 @@ contract Gravity is ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public nonReentrant {
+	) public nonReentrant whenNotPaused {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -315,10 +306,7 @@ contract Gravity is ReentrancyGuard {
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
-		require(
-			isOrchestrator(_currentValset, msg.sender),
-			"The sender of the transaction is not validated orchestrator"
-		);
+		isOrchestrator(_currentValset, msg.sender);
 
 		// Check that enough current validators have signed off on the new validator set
 		bytes32 newCheckpoint = makeCheckpoint(_newValset, state_gravityId);
@@ -380,7 +368,7 @@ contract Gravity is ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public nonReentrant {
+	) public nonReentrant whenNotPaused {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -416,10 +404,7 @@ contract Gravity is ReentrancyGuard {
 				"Malformed batch of transactions"
 			);
 
-			require(
-				isOrchestrator(_currentValset, msg.sender),
-				"The sender of the transaction is not validated orchestrator"
-			);
+			isOrchestrator(_currentValset, msg.sender);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
 			checkValidatorSignatures(
@@ -525,10 +510,8 @@ contract Gravity is ReentrancyGuard {
 				_args.feeAmounts.length == _args.feeTokenContracts.length,
 				"Malformed list of fees"
 			);
-			require(
-				isOrchestrator(_currentValset, msg.sender),
-				"The sender of the transaction is not validated orchestrator"
-			);
+			
+			isOrchestrator(_currentValset, msg.sender);
 		}
 
 		bytes32 argsHash = keccak256(
@@ -599,7 +582,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant  {
+	) public nonReentrant whenNotPaused{
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
@@ -616,7 +599,7 @@ contract Gravity is ReentrancyGuard {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public {
+	) public whenNotPaused {
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
@@ -633,9 +616,11 @@ contract Gravity is ReentrancyGuard {
 	}
 
 	function withdrawERC20(
-		address _tokenAddress) 
-		external {
-		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
+		address _tokenAddress
+	) 
+		external 
+		onlyAdmin
+	{
 		uint256 totalBalance = IERC20(_tokenAddress).balanceOf(address(this));
 		IERC20(_tokenAddress).safeTransfer(msg.sender , totalBalance);
 	}
