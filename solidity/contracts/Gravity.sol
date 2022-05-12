@@ -61,8 +61,6 @@ contract Gravity is ReentrancyGuard {
 
 	BridgeAccessControl public bridgeAccessControl;
 
-	mapping(address => bool) public whitelisted;
-
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -104,35 +102,6 @@ contract Gravity is ReentrancyGuard {
 		bytes _returnData,
 		uint256 _eventNonce
 	);
-
-	event WhitelistedStatusModified(
-		address _sender,
-		address[] _users,
-		bool _isWhitelisted
-	);
-
-
-	modifier onlyWhitelisted() {
-		 require(
-            whitelisted[msg.sender] || bridgeAccessControl.hasAdminRole(msg.sender) ,
-            "The caller is not whitelisted for this operation"
-        );
-		_;
-	}
-
-	function manageWhitelist(
-		address[] memory _users,
-		bool _isWhitelisted
-		) public onlyWhitelisted {
-		 for (uint256 i = 0; i < _users.length; i++) {
-            require(
-                _users[i] != address(0),
-                "User is the zero address"
-            );
-            whitelisted[_users[i]] = _isWhitelisted;
-        }
-        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
-	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
