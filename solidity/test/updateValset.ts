@@ -28,6 +28,8 @@ async function runTest(opts: {
   badReward?: boolean;
   notEnoughReward?: boolean;
   withReward?: boolean;
+  notWhiteListed?: boolean;
+  removedWhitelist:? boolean;
 }) {
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
@@ -154,8 +156,26 @@ async function runTest(opts: {
     powers.pop();
   }
 
+  if (opts.notWhiteListed) {
 
-  let valsetUpdateTx = await gravity.updateValset(
+    let testAcc = signers[powers.length+1];
+
+    await gravity.connect(testAcc).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+  }
+
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
+  let valsetUpdateTx;
+
+   valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
@@ -231,6 +251,11 @@ describe("updateValset tests", function () {
   it("throws on not enough reward ", async function () {
     await expect(runTest({ notEnoughReward: true })).to.be.revertedWith(
       "transfer amount exceeds balance"
+    );
+  });
+  it("throws on not whitelisted signer (trusted validator) ", async function () {
+    await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
+      "The sender of the transaction is not validated orchestrator"
     );
   });
 

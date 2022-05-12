@@ -28,6 +28,8 @@ async function runTest(opts: {
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
+  notWhiteListed?: boolean;
+  contractLocked?: boolean;
 }) {
   // Prep and deploy contract
   // ========================
@@ -41,8 +43,8 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers);
-
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+  
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
@@ -161,7 +163,29 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
-  let batchSubmitTx = await gravity.submitBatch(
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
+  if (opts.notWhiteListed) {
+  let testAcc = signers[powers.length+1];
+  await gravity.connect(testAcc).submitBatch(
+    valset,
+
+    sigs.v,
+    sigs.r,
+    sigs.s,
+
+    txAmounts,
+    txDestinations,
+    txFees,
+    batchNonce,
+    testERC20.address,
+    batchTimeout
+  );
+  }
+  
+  let batchSubmitTx = await gravity.connect(signers[2]).submitBatch(
     valset,
 
     sigs.v,
@@ -215,6 +239,18 @@ describe("submitBatch tests", function () {
       "Validator signature does not match"
     );
   });
+
+  it("throws if the sender is not whitelisted (trusted orchestrator)", async function () {
+    await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
+      "The sender of the transaction is not validated orchestrator"
+    );
+  });
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
 
   it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });

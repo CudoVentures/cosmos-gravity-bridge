@@ -15,7 +15,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 
-async function runTest(opts: {}) {
+async function runTest(opts: {contractLocked:? boolean}) {
 
 
   // Prep and deploy contract
@@ -32,6 +32,9 @@ async function runTest(opts: {}) {
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, powerThreshold, validators, powers);
 
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -73,6 +76,13 @@ async function runTest(opts: {}) {
 }
 
 describe("sendToCosmos tests", function () {
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
+
   it("works right", async function () {
     await runTest({})
   });
