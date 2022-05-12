@@ -211,7 +211,7 @@ async function runTest(opts: {
   }
 
   if (opts.notWhitelisted) {
-    let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+    let testAcc = signers[powers.length+1];
     await gravity.connect(testAcc).submitLogicCall(
       valset,
   

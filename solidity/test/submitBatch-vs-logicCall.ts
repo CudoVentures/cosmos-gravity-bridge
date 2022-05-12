@@ -583,7 +583,8 @@ describe("Testing whitelisting on logic call", function() {
       rewardAmount: 0,
       rewardToken: ZeroAddress
     }
-    let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+    
+    let testAcc = signers[powers.length+1];
     await expect( gravity.connect(testAcc).submitLogicCall(
       valset,
   
