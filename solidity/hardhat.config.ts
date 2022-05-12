@@ -33,7 +33,27 @@ module.exports = {
       optimizer: {
         enabled: true
       }
-    }  },
+    }  
+  },
+  {
+    version: "0.6.12",
+    settings: {
+      optimizer: {
+        enabled: true
+      }
+    }  
+  },
+  {
+    version: "0.8.1",
+    settings: {
+      optimizer: {
+        enabled: true
+      }
+    }  
+  }
+]
+  },
+  defaultNetwork: process.env.DEFAULT_NETWORK,
   networks: {
     hardhat: {
       timeout: 2000000,
