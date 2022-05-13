@@ -35,7 +35,7 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
 	if !hasUnbatchedTransactions {
-		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
+		ctx.Logger().Info("There are not any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
