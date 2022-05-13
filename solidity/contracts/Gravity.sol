@@ -587,6 +587,13 @@ contract Gravity is ReentrancyGuard, Pausable {
 		nonReentrant 
 		whenNotPaused
 	{
+		uint32 size;
+		assembly {
+			size := extcodesize(_tokenContract)
+		}
+		require(size != 0, "empty bytecode token");
+
+
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
