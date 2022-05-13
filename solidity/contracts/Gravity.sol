@@ -582,7 +582,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant whenNotPaused{
+	)
+		public 
+		nonReentrant 
+		whenNotPaused
+	{
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
@@ -599,7 +603,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public whenNotPaused {
+	) 	
+		public 
+		whenNotPaused 
+		onlyAdmin
+	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
