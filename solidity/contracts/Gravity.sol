@@ -136,6 +136,15 @@ contract Gravity is ReentrancyGuard {
 	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
 		return state_invalidationMapping[_invalidation_id];
 	}
+	
+	//pause functions
+	function pause() external onlyAdmin {
+		_pause();
+	}
+
+	function unpause() external onlyAdmin {
+		_unpause();
+	}
 
 	// Utility function to verify geth style signatures
 	function verifySig(
@@ -538,7 +547,11 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant {
+	)
+		public 
+		nonReentrant 
+		whenNotPaused
+	{
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
@@ -555,7 +568,11 @@ contract Gravity is ReentrancyGuard {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public {
+	) 	
+		public 
+		whenNotPaused 
+		onlyAdmin
+	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
