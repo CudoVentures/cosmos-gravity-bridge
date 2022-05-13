@@ -571,7 +571,6 @@ contract Gravity is ReentrancyGuard {
 	) 	
 		public 
 		whenNotPaused 
-		onlyAdmin
 	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
