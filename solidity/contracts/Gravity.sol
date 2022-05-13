@@ -587,7 +587,10 @@ contract Gravity is ReentrancyGuard {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public {
+	) 	
+		public 
+		onlyAdmin
+	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
