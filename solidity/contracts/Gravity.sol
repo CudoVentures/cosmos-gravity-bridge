@@ -55,12 +55,15 @@ contract Gravity is ReentrancyGuard {
 	// event nonce zero is reserved by the Cosmos module as a special
 	// value indicating that no events have yet been submitted
 	uint256 public state_lastEventNonce = 1;
+	string public state_chainId;
+
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
 	CudosAccessControls public cudosAccessControls;
+
 
 	mapping(address => bool) public whitelisted;
 
@@ -133,6 +136,15 @@ contract Gravity is ReentrancyGuard {
             whitelisted[_users[i]] = _isWhitelisted;
         }
         emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
+	}
+
+	function setChainId(string memory _chainId ) public {
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Sender is not an admin and cannot set chainId");
+		state_chainId = _chainId;
+	}
+
+	function getChainId() public view returns (string){
+		return state_chainId;
 	}
 
 	// TEST FIXTURES
@@ -209,7 +221,9 @@ contract Gravity is ReentrancyGuard {
 				_valsetArgs.validators,
 				_valsetArgs.powers,
 				_valsetArgs.rewardAmount,
-				_valsetArgs.rewardToken
+				_valsetArgs.rewardToken,
+				state_chainId
+
 			)
 		);
 
@@ -436,7 +450,9 @@ contract Gravity is ReentrancyGuard {
 						_fees,
 						_batchNonce,
 						_tokenContract,
-						_batchTimeout
+						_batchTimeout,
+						state_chainId
+
 					)
 				),
 				state_powerThreshold
@@ -541,7 +557,8 @@ contract Gravity is ReentrancyGuard {
 				_args.payload,
 				_args.timeOut,
 				_args.invalidationId,
-				_args.invalidationNonce
+				_args.invalidationNonce,
+				state_chainId
 			)
 		);
 
@@ -645,14 +662,18 @@ contract Gravity is ReentrancyGuard {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-    uint256[] memory _powers,
-		CudosAccessControls _cudosAccessControls
+    	uint256[] memory _powers,
+		CudosAccessControls _cudosAccessControls,
+		string _chainId
+
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
 		require(address(_cudosAccessControls) != address(0), "Access control contract address is incorrect");
+		require(bytes(_chainId).length > 0, "ChainId cannot be empty");
+
 
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
@@ -671,6 +692,7 @@ contract Gravity is ReentrancyGuard {
 		ValsetArgs memory _valset;
 		_valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
 
+		state_chainId = _chainId;
 		bytes32 newCheckpoint = makeCheckpoint(_valset, _gravityId);
 
 		// ACTIONS
