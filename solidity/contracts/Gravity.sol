@@ -273,13 +273,10 @@ contract Gravity is ReentrancyGuard, Pausable {
 		);
 
 		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-		require(
-			_currentValset.validators.length == _currentValset.powers.length &&
-				_currentValset.validators.length == _v.length &&
-				_currentValset.validators.length == _r.length &&
-				_currentValset.validators.length == _s.length,
-			"Malformed current validator set"
-		);
+		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 
 		// Check that the supplied current validator set matches the saved checkpoint
 		bytes32 gravityId = state_gravityId;
@@ -366,13 +363,10 @@ contract Gravity is ReentrancyGuard, Pausable {
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			require(
-				_currentValset.validators.length == _currentValset.powers.length &&
-					_currentValset.validators.length == _v.length &&
-					_currentValset.validators.length == _r.length &&
-					_currentValset.validators.length == _s.length,
-				"Malformed current validator set"
-			);
+			require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 
 			// Check that the supplied current validator set matches the saved checkpoint
 			bytes32 gravityId = state_gravityId;
@@ -470,13 +464,10 @@ contract Gravity is ReentrancyGuard, Pausable {
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			require(
-				_currentValset.validators.length == _currentValset.powers.length &&
-					_currentValset.validators.length == _v.length &&
-					_currentValset.validators.length == _r.length &&
-					_currentValset.validators.length == _s.length,
-				"Malformed current validator set"
-			);
+			require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+			require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 
 			// Check that the supplied current validator set matches the saved checkpoint
 			require(
