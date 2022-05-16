@@ -143,13 +143,13 @@ contract Gravity is ReentrancyGuard {
 		state_chainId = _chainId;
 	}
 
-	function getChainId() public view returns (string){
+	function getChainId() public view returns (string memory){
 		return state_chainId;
 	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
-	function testMakeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId) public pure {
+	function testMakeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId) public view {
 		makeCheckpoint(_valsetArgs, _gravityId);
 	}
 
@@ -207,7 +207,7 @@ contract Gravity is ReentrancyGuard {
 	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
 	function makeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId)
 		private
-		pure
+		view
 		returns (bytes32)
 	{
 		// bytes32 encoding of the string "checkpoint"
@@ -223,7 +223,6 @@ contract Gravity is ReentrancyGuard {
 				_valsetArgs.rewardAmount,
 				_valsetArgs.rewardToken,
 				state_chainId
-
 			)
 		);
 
@@ -664,7 +663,7 @@ contract Gravity is ReentrancyGuard {
 		address[] memory _validators,
     	uint256[] memory _powers,
 		CudosAccessControls _cudosAccessControls,
-		string _chainId
+		string memory _chainId
 
 	) public {
 		// CHECKS
