@@ -599,7 +599,7 @@ describe("Testing whitelisting on logic call", function() {
       sigs.r,
       sigs.s,
       logicCallArgs
-    )).to.be.revertedWith("The sender of the transaction is not validated orchestrator");
+    )).to.be.revertedWith("revert not validated orchestrator");
   })
 
 })
