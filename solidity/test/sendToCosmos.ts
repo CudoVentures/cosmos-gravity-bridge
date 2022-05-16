@@ -89,9 +89,9 @@ async function runTest(opts: {
 
 describe("sendToCosmos tests", function () {
 
-  it("throws token empty bytecode", async function () {
+  it("throws token not supported", async function () {
     await expect(runTest({ tokenNotContract: true })).to.be.revertedWith(
-      "empty bytecode token"
+      "token not supported"
     );
   })
 
