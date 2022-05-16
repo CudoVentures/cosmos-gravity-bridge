@@ -251,11 +251,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// Success
 	}
 
-	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure returns(bool) {
+	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
 
 		for (uint256 i = 0; i < _valset.validators.length; i++) {
 			if(_valset.validators[i] == _sender) {
-				return true;
+				return;
 			}
 		}
 		
