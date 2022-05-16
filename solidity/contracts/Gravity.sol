@@ -184,7 +184,6 @@ contract Gravity is ReentrancyGuard {
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
 		(address recAddr, ) = ECDSA.tryRecover(messageDigest, _v, _r, _s);
-		require(recAddr != address(0), "zero ecrec address");
 		return _signer == recAddr;
 	}
 
