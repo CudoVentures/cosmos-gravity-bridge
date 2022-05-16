@@ -118,11 +118,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 	// END TEST FIXTURES
 
-	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
+	function lastBatchNonce(address _erc20Address) external view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
 	}
 
-	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
+	function lastLogicCallNonce(bytes32 _invalidation_id) external view returns (uint256) {
 		return state_invalidationMapping[_invalidation_id];
 	}
 	
@@ -189,11 +189,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 		bytes32[] memory _r,
 		bytes32[] memory _s,
 		// This is what we are checking they have signed
-		bytes32 _theHash,
-		uint256 _powerThreshold
-	) private pure {
-		uint256 cumulativePower;
+		bytes32 _theHash
+	) private view {
 
+		uint256 _powerThreshold = state_powerThreshold;
+		uint256 cumulativePower;
 		uint256 valLength = _currentValidators.length;
 		for (uint256 i; i < valLength; ++i) {
 			// If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
@@ -216,11 +216,35 @@ contract Gravity is ReentrancyGuard, Pausable {
 		}
 
 		// Check that there was enough power
-		require(
-			cumulativePower > _powerThreshold,
-			"Submitted validator set signatures do not have enough power."
-		);
+		checkComulatedPower(cumulativePower, _powerThreshold);
 		// Success
+	}
+
+	function checkComulatedPower(uint256 _cumulativePower, uint256 _powerThreshold) internal pure {
+		require(
+			_cumulativePower > _powerThreshold,
+			"given valset power < threshold"
+		);
+	}
+
+	function checkValsetData(
+		ValsetArgs memory _currentValset,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s
+	) internal pure {
+		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
+	}
+
+	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
+		require(
+			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
+			"given valset != checkpoint"
+		);
 	}
 
 	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
@@ -257,7 +281,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public nonReentrant whenNotPaused {
+	) external nonReentrant whenNotPaused {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -273,17 +297,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 		);
 
 		// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
+		checkValsetData(_currentValset, _v, _r, _s);
 
 		// Check that the supplied current validator set matches the saved checkpoint
 		bytes32 gravityId = state_gravityId;
-		require(
-			makeCheckpoint(_currentValset, gravityId) == state_lastValsetCheckpoint,
-			"given valset != checkpoint"
-		);
+		checkCheckpoint(_currentValset, gravityId);
 
 		isOrchestrator(_currentValset, msg.sender);
 
@@ -296,8 +314,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 			_v,
 			_r,
 			_s,
-			newCheckpoint,
-			state_powerThreshold
+			newCheckpoint
 		);
 
 		// ACTIONS
@@ -347,9 +364,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) public nonReentrant whenNotPaused {
+	) external nonReentrant whenNotPaused {
 		// CHECKS scoped to reduce stack depth
 		{
+
+			// Check that the transaction batch is well-formed
+			require(_amounts.length == _destinations.length, "Malformed batch of transactions");
+			require(_amounts.length == _fees.length, "Malformed batch of transactions");
+			
 			// Check that the batch nonce is higher than the last nonce for this token
 			require(
 				state_lastBatchNonces[_tokenContract] < _batchNonce,
@@ -363,23 +385,11 @@ contract Gravity is ReentrancyGuard, Pausable {
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _v.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _r.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _s.length, "Malformed current validator set");
+			checkValsetData(_currentValset, _v, _r, _s);
 
 			// Check that the supplied current validator set matches the saved checkpoint
 			bytes32 gravityId = state_gravityId;
-			require(
-				makeCheckpoint(_currentValset, gravityId) == state_lastValsetCheckpoint,
-				"given valset != checkpoint"
-			);
-
-			// Check that the transaction batch is well-formed
-			require(
-				_amounts.length == _destinations.length && _amounts.length == _fees.length,
-				"Malformed batch of transactions"
-			);
+			checkCheckpoint(_currentValset, gravityId);
 
 			isOrchestrator(_currentValset, msg.sender);
 
@@ -403,8 +413,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 						_tokenContract,
 						_batchTimeout
 					)
-				),
-				state_powerThreshold
+				)
 			);
 
 			// ACTIONS
@@ -454,27 +463,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 	) public nonReentrant {
 		// CHECKS scoped to reduce stack depth
 		{
-			// Check that the call has not timed out
-			require(block.number < _args.timeOut, "Timed out");
-
-			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
-			require(
-				state_invalidationMapping[_args.invalidationId] < _args.invalidationNonce,
-				"invalidation nonce <= current"
-			);
-
-			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _v.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _r.length, "Malformed current validator set");
-			require(_currentValset.validators.length == _s.length, "Malformed current validator set");
-
-			// Check that the supplied current validator set matches the saved checkpoint
-			require(
-				makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
-				"given valset != checkpoint"
-			);
-
 			// Check that the token transfer list is well-formed
 			require(
 				_args.transferAmounts.length == _args.transferTokenContracts.length,
@@ -486,6 +474,21 @@ contract Gravity is ReentrancyGuard, Pausable {
 				_args.feeAmounts.length == _args.feeTokenContracts.length,
 				"Malformed list of fees"
 			);
+
+			// Check that the call has not timed out
+			require(block.number < _args.timeOut, "Timed out");
+
+			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
+			require(
+				state_invalidationMapping[_args.invalidationId] < _args.invalidationNonce,
+				"invalidation nonce <= current"
+			);
+
+			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+			checkValsetData(_currentValset, _v, _r, _s);
+
+			// Check that the supplied current validator set matches the saved checkpoint
+			checkCheckpoint(_currentValset, state_gravityId);
 			
 			isOrchestrator(_currentValset, msg.sender);
 		}
@@ -516,8 +519,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 				_r,
 				_s,
 				// Get hash of the transaction batch and checkpoint
-				argsHash,
-				state_powerThreshold
+				argsHash
 			);
 		}
 
@@ -562,7 +564,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		bytes32 _destination,
 		uint256 _amount
 	)
-		public 
+		external 
 		nonReentrant 
 		whenNotPaused
 	{
@@ -594,7 +596,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		string memory _symbol,
 		uint8 _decimals
 	) 	
-		public 
+		external 
 		whenNotPaused 
 	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
@@ -634,7 +636,7 @@ contract Gravity is ReentrancyGuard, Pausable {
     	uint256[] memory _powers,
 		CudosAccessControls _cudosAccessControls,
 		address _mainToken
-	) public {
+	) {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
@@ -652,10 +654,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 				break;
 			}
 		}
-		require(
-			cumulativePower > _powerThreshold,
-			"given valset power < threshold"
-		);
+
+		checkComulatedPower(cumulativePower, _powerThreshold);
 
 		ValsetArgs memory _valset;
 		_valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
