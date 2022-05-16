@@ -59,6 +59,10 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
+	CudosAccessControls public cudosAccessControls;
+
+	mapping(address => bool) public whitelisted;
+	mapping(address => bool) public supportedToCosmosTokens;
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -70,6 +74,7 @@ contract Gravity is ReentrancyGuard {
 		address indexed _token,
 		uint256 _eventNonce
 	);
+
 	event SendToCosmosEvent(
 		address indexed _tokenContract,
 		address indexed _sender,
@@ -77,6 +82,7 @@ contract Gravity is ReentrancyGuard {
 		uint256 _amount,
 		uint256 _eventNonce
 	);
+
 	event ERC20DeployedEvent(
 		// FYI: Can't index on a string without doing a bunch of weird stuff
 		string _cosmosDenom,
@@ -86,6 +92,7 @@ contract Gravity is ReentrancyGuard {
 		uint8 _decimals,
 		uint256 _eventNonce
 	);
+
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
 		uint256 _eventNonce,
@@ -94,6 +101,7 @@ contract Gravity is ReentrancyGuard {
 		address[] _validators,
 		uint256[] _powers
 	);
+
 	event LogicCallEvent(
 		bytes32 _invalidationId,
 		uint256 _invalidationNonce,
@@ -222,6 +230,25 @@ contract Gravity is ReentrancyGuard {
 			"Submitted validator set signatures do not have enough power."
 		);
 		// Success
+	}
+
+	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure returns(bool) {
+
+		for (uint256 i = 0; i < _valset.validators.length; i++) {
+			if(_valset.validators[i] == _sender) {
+				return true;
+			}
+		}
+		
+		revert("The sender of the transaction is not validated orchestrator");
+	}
+
+	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = true;
+	}
+
+	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = false;
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
@@ -538,7 +565,20 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant {
+	)
+		public 
+		nonReentrant 
+		whenNotPaused
+	{
+		require(supportedToCosmosTokens[_tokenContract], "token not supported");
+
+		uint32 size;
+		assembly {
+			size := extcodesize(_tokenContract)
+		}
+		require(size != 0, "empty bytecode token");
+
+
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
@@ -579,7 +619,9 @@ contract Gravity is ReentrancyGuard {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-		uint256[] memory _powers
+    	uint256[] memory _powers,
+		CudosAccessControls _cudosAccessControls,
+		address _mainToken
 	) public {
 		// CHECKS
 
@@ -611,6 +653,9 @@ contract Gravity is ReentrancyGuard {
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
 
+		cudosAccessControls = _cudosAccessControls;
+
+		supportedToCosmosTokens[_mainToken] = true;
 		// LOGS
 
 		emit ValsetUpdatedEvent(

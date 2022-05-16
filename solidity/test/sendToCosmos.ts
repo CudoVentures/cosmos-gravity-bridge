@@ -73,6 +73,19 @@ async function runTest(opts: {}) {
 }
 
 describe("sendToCosmos tests", function () {
+
+  it("throws token not supported", async function () {
+    await expect(runTest({ tokenNotContract: true })).to.be.revertedWith(
+      "token not supported"
+    );
+  })
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
+
   it("works right", async function () {
     await runTest({})
   });
