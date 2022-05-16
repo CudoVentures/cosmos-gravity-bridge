@@ -26,6 +26,7 @@ async function runTest(opts: {
   nonceNotIncremented?: boolean;
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
+  zeroedEcrecoverAddress?: boolean;
   notEnoughPower?: boolean;
   badReward?: boolean;
   notEnoughReward?: boolean;
@@ -146,6 +147,14 @@ async function runTest(opts: {
     sigs.v[1] = 0;
   }
 
+  //in certain conditions ecrecover might return empty address
+  //this is to test this case
+  //when setting "v" to any positive number, other than 27 or 28 results in this
+  if(opts.zeroedEcrecoverAddress) {
+    sigs.v[0] = 17;
+    sigs.v[1] = 17;
+  }
+
   if (opts.notEnoughPower) {
     // zero out enough signatures that we dip below the threshold
     sigs.v[1] = 0;
@@ -165,7 +174,6 @@ async function runTest(opts: {
   }
 
   if (opts.notWhiteListed) {
-
     let testAcc = signers[powers.length+1];
 
     await gravity.connect(testAcc).updateValset(
@@ -176,9 +184,10 @@ async function runTest(opts: {
       sigs.s
     )
   }
+
   let valsetUpdateTx;
 
-   valsetUpdateTx = await gravity.updateValset(
+  valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
@@ -238,6 +247,12 @@ describe("updateValset tests", function () {
   it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });
   });
+
+  it("throws on sig returning empty ecrecover address", async function () {
+    await expect(runTest({zeroedEcrecoverAddress: true})).to.be.revertedWith(
+      "ecrecover empty address"
+    );
+  })
 
   it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
