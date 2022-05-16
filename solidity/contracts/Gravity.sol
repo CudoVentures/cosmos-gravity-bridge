@@ -183,10 +183,7 @@ contract Gravity is ReentrancyGuard {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
-		(address recAddr, ) = ECDSA.tryRecover(messageDigest, _v, _r, _s);
-
-		//in some cases ecrecover returns empty address.
-		require(recAddr != address(0), "ecrecover empty address");
+		address recAddr = ECDSA.recover(messageDigest, _v, _r, _s);
 		return _signer == recAddr;
 	}
 

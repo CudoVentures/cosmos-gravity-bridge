@@ -121,6 +121,11 @@ async function runTest(opts: {
     newValset.rewardAmount = 5000000
   }
 
+
+  if(opts.zeroedEcrecoverAddress) {
+    newValset.validators[0] = ZeroAddress;
+  }
+
   const checkpoint = makeCheckpoint(
     newValset.validators,
     newValset.powers,
@@ -152,7 +157,6 @@ async function runTest(opts: {
   //when setting "v" to any positive number, other than 27 or 28 results in this
   if(opts.zeroedEcrecoverAddress) {
     sigs.v[0] = 17;
-    sigs.v[1] = 17;
   }
 
   if (opts.notEnoughPower) {
@@ -250,7 +254,7 @@ describe("updateValset tests", function () {
 
   it("throws on sig returning empty ecrecover address", async function () {
     await expect(runTest({zeroedEcrecoverAddress: true})).to.be.revertedWith(
-      "ecrecover empty address"
+      "ECDSA: invalid signature 'v' value"
     );
   })
 

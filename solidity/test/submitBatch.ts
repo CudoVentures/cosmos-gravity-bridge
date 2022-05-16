@@ -263,7 +263,7 @@ describe("submitBatch tests", function () {
 
   it("throws on sig returning empty ecrecover address", async function () {
     await expect(runTest({zeroedEcrecoverAddress: true})).to.be.revertedWith(
-      "ecrecover empty address"
+      "ECDSA: invalid signature 'v' value"
     );
   })
 
