@@ -57,8 +57,11 @@ contract Gravity is ReentrancyGuard {
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
-	uint256 public state_powerThreshold;
+	uint256 public immutable state_powerThreshold;
 
+	CudosAccessControls public immutable cudosAccessControls;
+
+	mapping(address => bool) public supportedToCosmosTokens;
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -100,6 +103,17 @@ contract Gravity is ReentrancyGuard {
 		bytes _returnData,
 		uint256 _eventNonce
 	);
+
+	event WhitelistedStatusModified(
+		address _sender,
+		address[] _users,
+		bool _isWhitelisted
+	);
+
+	modifier onlyAdmin() {
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
+		_;
+	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -263,13 +277,14 @@ contract Gravity is ReentrancyGuard {
 		);
 
 		// Check that the supplied current validator set matches the saved checkpoint
+		bytes32 gravityId = state_gravityId;
 		require(
-			makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
+			makeCheckpoint(_currentValset, gravityId) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
 		);
 
 		// Check that enough current validators have signed off on the new validator set
-		bytes32 newCheckpoint = makeCheckpoint(_newValset, state_gravityId);
+		bytes32 newCheckpoint = makeCheckpoint(_newValset, gravityId);
 
 		checkValidatorSignatures(
 			_currentValset.validators,
@@ -296,11 +311,11 @@ contract Gravity is ReentrancyGuard {
 		}
 
 		// LOGS
-
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
 		emit ValsetUpdatedEvent(
 			_newValset.valsetNonce,
-			state_lastEventNonce,
+			lastEventNonce,
 			_newValset.rewardAmount,
 			_newValset.rewardToken,
 			_newValset.validators,
@@ -353,8 +368,9 @@ contract Gravity is ReentrancyGuard {
 			);
 
 			// Check that the supplied current validator set matches the saved checkpoint
+			bytes32 gravityId = state_gravityId;
 			require(
-				makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
+				makeCheckpoint(_currentValset, gravityId) == state_lastValsetCheckpoint,
 				"Supplied current validators and powers do not match checkpoint."
 			);
 
@@ -374,7 +390,7 @@ contract Gravity is ReentrancyGuard {
 				// Get hash of the transaction batch and checkpoint
 				keccak256(
 					abi.encode(
-						state_gravityId,
+						gravityId,
 						// bytes32 encoding of "transactionBatch"
 						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
 						_amounts,
@@ -408,8 +424,9 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS scoped to reduce stack depth
 		{
-			state_lastEventNonce = state_lastEventNonce.add(1);
-			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
+			uint256 lastEventNonce = state_lastEventNonce.add(1);
+			state_lastEventNonce = lastEventNonce;
+			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, lastEventNonce);
 		}
 	}
 
@@ -524,12 +541,13 @@ contract Gravity is ReentrancyGuard {
 
 		// LOGS scoped to reduce stack depth
 		{
-			state_lastEventNonce = state_lastEventNonce.add(1);
+			uint256 lastEventNonce = state_lastEventNonce.add(1);
+			state_lastEventNonce = lastEventNonce;
 			emit LogicCallEvent(
 				_args.invalidationId,
 				_args.invalidationNonce,
 				returnData,
-				state_lastEventNonce
+				lastEventNonce
 			);
 		}
 	}
@@ -540,13 +558,15 @@ contract Gravity is ReentrancyGuard {
 		uint256 _amount
 	) public nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
 		emit SendToCosmosEvent(
 			_tokenContract,
 			msg.sender,
 			_destination,
 			_amount,
-			state_lastEventNonce
+			lastEventNonce
 		);
 	}
 
@@ -560,14 +580,15 @@ contract Gravity is ReentrancyGuard {
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
 			_name,
 			_symbol,
 			_decimals,
-			state_lastEventNonce
+			lastEventNonce
 		);
 	}
 
