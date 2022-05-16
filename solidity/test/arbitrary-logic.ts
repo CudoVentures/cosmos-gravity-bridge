@@ -252,7 +252,7 @@ describe("submitLogicCall tests", function () {
 
   it("throws on invalidation nonce not incremented", async function () {
     await expect(runTest({ invalidationNonceNotHigher: true })).to.be.revertedWith(
-      "New invalidation nonce must be greater than the current nonce"
+      "invalidation nonce <= current"
     );
   });
 
@@ -260,7 +260,7 @@ describe("submitLogicCall tests", function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
-      "Supplied current validators and powers do not match checkpoint"
+      "given valset != checkpoint"
     );
   });
 

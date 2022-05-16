@@ -366,3 +366,5 @@ describe("Compare gas usage of old submitBatch method vs new logicCall method su
     ).to.be.revertedWith("ReentrancyGuard: reentrant call");
   });
 });
+<<<<<<< HEAD
+=======

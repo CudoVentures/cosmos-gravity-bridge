@@ -196,13 +196,13 @@ describe("updateValset tests", function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
-      "Supplied current validators and powers do not match checkpoint"
+      "given valset != checkpoint"
     );
   });
 
   it("throws on new valset nonce not incremented", async function () {
     await expect(runTest({ nonceNotIncremented: true })).to.be.revertedWith(
-      "New valset nonce must be greater than the current nonce"
+      "newValset nonce <= current"
     );
   });
 

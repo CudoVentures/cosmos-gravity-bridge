@@ -43,7 +43,7 @@ describe("constructor tests", function() {
     await expect(
       deployContracts(gravityId, powerThreshold, validators, powers)
     ).to.be.revertedWith(
-      "Submitted validator set signatures do not have enough power"
+      "given valset power < threshold"
     );
   });
 });
