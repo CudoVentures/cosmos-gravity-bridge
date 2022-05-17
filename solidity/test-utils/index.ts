@@ -25,7 +25,7 @@ export async function deployContracts(
 
   const valAddresses = await getSignerAddresses(validators);
 
-  const checkpoint = makeCheckpoint(valAddresses, powers, 0, 0, ZeroAddress, gravityId);
+  const checkpoint = makeCheckpoint(valAddresses, powers, 0, 0, ZeroAddress, gravityId, chainId);
 
   const gravity = (await Gravity.deploy(
     gravityId,

@@ -97,7 +97,8 @@ describe("Gravity happy path valset update + batch submit", function () {
       valset1_str.valsetNonce,
       valset1_str.rewardAmount,
       valset1_str.rewardToken,
-      gravityId
+      gravityId,
+      chainId
     );
 
     let sigs1 = await signHash(valset0.validators, checkpoint1);

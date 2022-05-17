@@ -128,7 +128,8 @@ async function runTest(opts: {
     newValset.valsetNonce,
     newValset.rewardAmount,
     newValset.rewardToken,
-    gravityId
+    gravityId,
+    chainId
   );
 
   let sigs = await signHash(validators, checkpoint);
@@ -315,7 +316,8 @@ describe("updateValset Go test hash", function () {
       newValset.valsetNonce,
       newValset.rewardAmount,
       newValset.rewardToken,
-      gravityId
+      gravityId,
+      chainId
     );
 
 
