@@ -46,6 +46,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 	CudosAccessControls public cudosAccessControls;
 
+	mapping(address => bool) public supportedToCosmosTokens;
+
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -57,6 +59,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		address indexed _token,
 		uint256 _eventNonce
 	);
+
 	event SendToCosmosEvent(
 		address indexed _tokenContract,
 		address indexed _sender,
@@ -64,6 +67,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		uint256 _amount,
 		uint256 _eventNonce
 	);
+
 	event ERC20DeployedEvent(
 		// FYI: Can't index on a string without doing a bunch of weird stuff
 		string _cosmosDenom,
@@ -73,6 +77,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		uint8 _decimals,
 		uint256 _eventNonce
 	);
+
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
 		uint256 _eventNonce,
@@ -225,6 +230,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 		}
 		
 		revert("The sender of the transaction is not validated orchestrator");
+	}
+
+	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = true;
+	}
+
+	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = false;
 	}
 
 	// This updates the valset by checking that the validators in the current valset have signed off on the
@@ -424,7 +437,20 @@ contract Gravity is ReentrancyGuard, Pausable {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant whenNotPaused{
+	)
+		public 
+		nonReentrant 
+		whenNotPaused
+	{
+		require(supportedToCosmosTokens[_tokenContract], "token not supported");
+
+		uint32 size;
+		assembly {
+			size := extcodesize(_tokenContract)
+		}
+		require(size != 0, "empty bytecode token");
+
+
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
@@ -441,7 +467,10 @@ contract Gravity is ReentrancyGuard, Pausable {
 		string memory _name,
 		string memory _symbol,
 		uint8 _decimals
-	) public whenNotPaused {
+	) 	
+		public 
+		whenNotPaused 
+	{
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
@@ -475,8 +504,9 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-    uint256[] memory _powers,
-		CudosAccessControls _cudosAccessControls
+    	uint256[] memory _powers,
+		CudosAccessControls _cudosAccessControls,
+		address _mainToken
 	) public {
 		// CHECKS
 
@@ -511,6 +541,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 		cudosAccessControls = _cudosAccessControls;
 
+		supportedToCosmosTokens[_mainToken] = true;
 		// LOGS
 
 		emit ValsetUpdatedEvent(
