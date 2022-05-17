@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CosmosERC20 is ERC20 {
-	uint256 MAX_UINT = 2**256 - 1;
+	uint256 MAX_UINT = type(uint256).max;
 
     uint8 private _decimals;
 
