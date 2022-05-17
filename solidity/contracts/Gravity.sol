@@ -65,6 +65,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 	CudosAccessControls public immutable cudosAccessControls;
 
 	mapping(address => bool) public supportedToCosmosTokens;
+	
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -115,8 +116,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		_;
 	}
-
-	// END TEST FIXTURES
 
 	function lastBatchNonce(address _erc20Address) external view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
@@ -180,6 +179,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 		return checkpoint;
 	}
 
+	// checks if the provided signatures are correct and also
+	// checks if the gathered validator power is over threshold
 	function checkValidatorSignatures(
 		// The current validator set and their powers
 		address[] memory _currentValidators,
@@ -191,7 +192,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// This is what we are checking they have signed
 		bytes32 _theHash
 	) private view {
-
 		uint256 _powerThreshold = state_powerThreshold;
 		uint256 cumulativePower;
 		uint256 valLength = _currentValidators.length;
@@ -220,6 +220,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// Success
 	}
 
+	// checks if the comulated power surpasses power threshold
+	// not using state value ot power threshold so this can be used in constructor as well
 	function checkComulatedPower(uint256 _cumulativePower, uint256 _powerThreshold) internal pure {
 		require(
 			_cumulativePower > _powerThreshold,
@@ -227,6 +229,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		);
 	}
 
+	// checks if the arrays that hold the valset and theyr signatures are the same length
 	function checkValsetData(
 		ValsetArgs memory _currentValset,
 		// These are arrays of the parts of the validators signatures
@@ -240,6 +243,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 	}
 
+	// checks if generated checkpoint matches the state one
 	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
 		require(
 			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
@@ -247,6 +251,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		);
 	}
 
+	// checks if the address is in the validator / orchestrator set
 	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
 
 		uint256 valLength = _valset.validators.length;
@@ -259,10 +264,12 @@ contract Gravity is ReentrancyGuard, Pausable {
 		revert("not validated orchestrator");
 	}
 
+	// adds supported token to the mapping
 	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = true;
 	}
 
+	// removes a supported token from the mapping
 	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = false;
 	}
@@ -270,7 +277,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
-	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+	// Only an orchestrator can call this function and they must supply valid signatures of state_powerThreshold of the current valset over
 	// the new valset.
 	function updateValset(
 		// The new version of the validator set
@@ -303,6 +310,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		bytes32 gravityId = state_gravityId;
 		checkCheckpoint(_currentValset, gravityId);
 
+		// check that the msg.sender is one of the orchestrators
 		isOrchestrator(_currentValset, msg.sender);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -346,7 +354,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
 	// to the destination addresses. It is approved by the current Cosmos validator set.
-	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+	// Only an orchestrator can call this function and they must supply valid signatures of state_powerThreshold of the current valset over
 	// the batch.
 	function submitBatch (
 		// The validators that approve the batch
@@ -391,6 +399,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 			bytes32 gravityId = state_gravityId;
 			checkCheckpoint(_currentValset, gravityId);
 
+			// check that the msg.sender is one of the orchestrators
 			isOrchestrator(_currentValset, msg.sender);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -442,6 +451,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, lastEventNonce);
 		}
 	}
+
 
 	// This makes calls to contracts that execute arbitrary logic
 	// First, it gives the logic contract some tokens
@@ -599,12 +609,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 		external 
 		whenNotPaused 
 	{
+
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
+		
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		uint256 lastEventNonce = state_lastEventNonce.add(1);
-		state_lastEventNonce = lastEventNonce;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
