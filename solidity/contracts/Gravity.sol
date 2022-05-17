@@ -10,23 +10,6 @@ import "./CudosAccessControls.sol";
 
 pragma experimental ABIEncoderV2;
 
-// This is being used purely to avoid stack too deep errors
-struct LogicCallArgs {
-	// Transfers out to the logic contract
-	uint256[] transferAmounts;
-	address[] transferTokenContracts;
-	// The fees (transferred to msg.sender)
-	uint256[] feeAmounts;
-	address[] feeTokenContracts;
-	// The arbitrary logic call
-	address logicContractAddress;
-	bytes payload;
-	// Invalidation metadata
-	uint256 timeOut;
-	bytes32 invalidationId;
-	uint256 invalidationNonce;
-}
-
 // This is used purely to avoid stack too deep errors
 // represents everything about a given validator set
 struct ValsetArgs {
@@ -50,23 +33,16 @@ contract Gravity is ReentrancyGuard {
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
-	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
 	// event nonce zero is reserved by the Cosmos module as a special
 	// value indicating that no events have yet been submitted
 	uint256 public state_lastEventNonce = 1;
 
-
 	// These are set once at initialization
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
-	
-	// This is set at initilization and can be changed later on with via a setter
-	bytes32 public state_chainId;
-
 
 	CudosAccessControls public cudosAccessControls;
-
 
 	mapping(address => bool) public whitelisted;
 
@@ -105,12 +81,6 @@ contract Gravity is ReentrancyGuard {
 		address[] _validators,
 		uint256[] _powers
 	);
-	event LogicCallEvent(
-		bytes32 _invalidationId,
-		uint256 _invalidationNonce,
-		bytes _returnData,
-		uint256 _eventNonce
-	);
 
 	event WhitelistedStatusModified(
 		address _sender,
@@ -141,18 +111,9 @@ contract Gravity is ReentrancyGuard {
         emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
 	}
 
-	function setChainId(bytes32 _chainId ) public {
-		require(cudosAccessControls.hasAdminRole(msg.sender), "Sender is not an admin and cannot set chainId");
-		state_chainId = _chainId;
-	}
-
-	function getChainId() public view returns (bytes32){
-		return state_chainId;
-	}
-
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
-	function testMakeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId) public view {
+	function testMakeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId) public pure {
 		makeCheckpoint(_valsetArgs, _gravityId);
 	}
 
@@ -182,10 +143,6 @@ contract Gravity is ReentrancyGuard {
 		return state_lastBatchNonces[_erc20Address];
 	}
 
-	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
-		return state_invalidationMapping[_invalidation_id];
-	}
-
 	// Utility function to verify geth style signatures
 	function verifySig(
 		address _signer,
@@ -210,7 +167,7 @@ contract Gravity is ReentrancyGuard {
 	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
 	function makeCheckpoint(ValsetArgs memory _valsetArgs, bytes32 _gravityId)
 		private
-		view
+		pure
 		returns (bytes32)
 	{
 		// bytes32 encoding of the string "checkpoint"
@@ -224,8 +181,7 @@ contract Gravity is ReentrancyGuard {
 				_valsetArgs.validators,
 				_valsetArgs.powers,
 				_valsetArgs.rewardAmount,
-				_valsetArgs.rewardToken,
-				state_chainId
+				_valsetArgs.rewardToken
 			)
 		);
 
@@ -452,9 +408,7 @@ contract Gravity is ReentrancyGuard {
 						_fees,
 						_batchNonce,
 						_tokenContract,
-						_batchTimeout,
-						state_chainId
-
+						_batchTimeout
 					)
 				),
 				state_powerThreshold
@@ -482,132 +436,6 @@ contract Gravity is ReentrancyGuard {
 		{
 			state_lastEventNonce = state_lastEventNonce.add(1);
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
-		}
-	}
-
-	// This makes calls to contracts that execute arbitrary logic
-	// First, it gives the logic contract some tokens
-	// Then, it gives msg.senders tokens for fees
-	// Then, it calls an arbitrary function on the logic contract
-	// invalidationId and invalidationNonce are used for replay prevention.
-	// They can be used to implement a per-token nonce by setting the token
-	// address as the invalidationId and incrementing the nonce each call.
-	// They can be used for nonce-free replay prevention by using a different invalidationId
-	// for each call.
-	function submitLogicCall(
-		// The validators that approve the call
-		ValsetArgs memory _currentValset,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s,
-		LogicCallArgs memory _args
-	) public nonReentrant {
-		// CHECKS scoped to reduce stack depth
-		{
-			// Check that the call has not timed out
-			require(block.number < _args.timeOut, "Timed out");
-
-			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
-			require(
-				state_invalidationMapping[_args.invalidationId] < _args.invalidationNonce,
-				"New invalidation nonce must be greater than the current nonce"
-			);
-
-			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			require(
-				_currentValset.validators.length == _currentValset.powers.length &&
-					_currentValset.validators.length == _v.length &&
-					_currentValset.validators.length == _r.length &&
-					_currentValset.validators.length == _s.length,
-				"Malformed current validator set"
-			);
-
-			// Check that the supplied current validator set matches the saved checkpoint
-			require(
-				makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
-				"Supplied current validators and powers do not match checkpoint."
-			);
-
-			// Check that the token transfer list is well-formed
-			require(
-				_args.transferAmounts.length == _args.transferTokenContracts.length,
-				"Malformed list of token transfers"
-			);
-
-			// Check that the fee list is well-formed
-			require(
-				_args.feeAmounts.length == _args.feeTokenContracts.length,
-				"Malformed list of fees"
-			);
-			require(
-				isOrchestrator(_currentValset, msg.sender),
-				"The sender of the transaction is not validated orchestrator"
-			);
-		}
-
-		bytes32 argsHash = keccak256(
-			abi.encode(
-				state_gravityId,
-				// bytes32 encoding of "logicCall"
-				0x6c6f67696343616c6c0000000000000000000000000000000000000000000000,
-				_args.transferAmounts,
-				_args.transferTokenContracts,
-				_args.feeAmounts,
-				_args.feeTokenContracts,
-				_args.logicContractAddress,
-				_args.payload,
-				_args.timeOut,
-				_args.invalidationId,
-				_args.invalidationNonce,
-				state_chainId
-			)
-		);
-
-		{
-			// Check that enough current validators have signed off on the transaction batch and valset
-			checkValidatorSignatures(
-				_currentValset.validators,
-				_currentValset.powers,
-				_v,
-				_r,
-				_s,
-				// Get hash of the transaction batch and checkpoint
-				argsHash,
-				state_powerThreshold
-			);
-		}
-
-		// ACTIONS
-
-		// Update invaldiation nonce
-		state_invalidationMapping[_args.invalidationId] = _args.invalidationNonce;
-
-		// Send tokens to the logic contract
-		for (uint256 i = 0; i < _args.transferAmounts.length; i++) {
-			IERC20(_args.transferTokenContracts[i]).safeTransfer(
-				_args.logicContractAddress,
-				_args.transferAmounts[i]
-			);
-		}
-
-		// Make call to logic contract
-		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
-
-		// Send fees to msg.sender
-		for (uint256 i = 0; i < _args.feeAmounts.length; i++) {
-			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
-		}
-
-		// LOGS scoped to reduce stack depth
-		{
-			state_lastEventNonce = state_lastEventNonce.add(1);
-			emit LogicCallEvent(
-				_args.invalidationId,
-				_args.invalidationNonce,
-				returnData,
-				state_lastEventNonce
-			);
 		}
 	}
 
@@ -664,18 +492,14 @@ contract Gravity is ReentrancyGuard {
 		// The validator set, not in valset args format since many of it's
 		// arguments would never be used in this case
 		address[] memory _validators,
-    	uint256[] memory _powers,
-		CudosAccessControls _cudosAccessControls,
-		bytes32  _chainId
-
+    uint256[] memory _powers,
+		CudosAccessControls _cudosAccessControls
 	) public {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
 		require(address(_cudosAccessControls) != address(0), "Access control contract address is incorrect");
-		// require(bytes(_chainId).length > 0, "ChainId cannot be empty");
-
 
 		// Check cumulative power to ensure the contract has sufficient power to actually
 		// pass a vote
@@ -694,7 +518,6 @@ contract Gravity is ReentrancyGuard {
 		ValsetArgs memory _valset;
 		_valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
 
-		state_chainId = _chainId;
 		bytes32 newCheckpoint = makeCheckpoint(_valset, _gravityId);
 
 		// ACTIONS
