@@ -205,6 +205,9 @@ contract Gravity is ReentrancyGuard {
 		return checkpoint;
 	}
 
+
+	// checks if the provided signatures are correct and also
+	// checks if the gathered validator power is over threshold
 	function checkValidatorSignatures(
 		// The current validator set and their powers
 		address[] memory _currentValidators,
@@ -245,6 +248,9 @@ contract Gravity is ReentrancyGuard {
 		// Success
 	}
 
+
+	// checks if the comulated power surpasses power threshold
+	// not using state value ot power threshold so this can be used in constructor as well
 	function checkComulatedPower(uint256 _cumulativePower, uint256 _powerThreshold) internal pure {
 		require(
 			_cumulativePower > _powerThreshold,
@@ -252,6 +258,7 @@ contract Gravity is ReentrancyGuard {
 		);
 	}
 
+	// checks if the arrays that hold the valset and theyr signatures are the same length
 	function checkValsetData(
 		ValsetArgs memory _currentValset,
 		// These are arrays of the parts of the validators signatures
@@ -265,6 +272,7 @@ contract Gravity is ReentrancyGuard {
 		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 	}
 
+	// checks if generated checkpoint matches the state one
 	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
 		require(
 			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
@@ -272,8 +280,8 @@ contract Gravity is ReentrancyGuard {
 		);
 	}
 
+	// checks if the address is in the validator / orchestrator set
 	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
-
 		uint256 valLength = _valset.validators.length;
 		for (uint256 i; i < valLength; ++i) {
 			if(_valset.validators[i] == _sender) {
@@ -284,10 +292,12 @@ contract Gravity is ReentrancyGuard {
 		revert("not validated orchestrator");
 	}
 
+	// adds supported token to the mapping
 	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = true;
 	}
 
+	// removes a supported token from the mapping
 	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = false;
 	}
@@ -328,6 +338,7 @@ contract Gravity is ReentrancyGuard {
 		bytes32 gravityId = state_gravityId;
 		checkCheckpoint(_currentValset, gravityId);
 
+		// check that the msg.sender is one of the orchestrators
 		isOrchestrator(_currentValset, msg.sender);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -416,6 +427,7 @@ contract Gravity is ReentrancyGuard {
 			bytes32 gravityId = state_gravityId;
 			checkCheckpoint(_currentValset, gravityId);
 
+			// check that the msg.sender is one of the orchestrators
 			isOrchestrator(_currentValset, msg.sender);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -584,6 +596,7 @@ contract Gravity is ReentrancyGuard {
 		}
 	}
 
+	
 	function sendToCosmos(
 		address _tokenContract,
 		bytes32 _destination,
@@ -624,12 +637,13 @@ contract Gravity is ReentrancyGuard {
 		external 
 		whenNotPaused 
 	{
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
+
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		uint256 lastEventNonce = state_lastEventNonce.add(1);
-		state_lastEventNonce = lastEventNonce;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
