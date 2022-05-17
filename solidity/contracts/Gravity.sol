@@ -55,12 +55,15 @@ contract Gravity is ReentrancyGuard {
 	// event nonce zero is reserved by the Cosmos module as a special
 	// value indicating that no events have yet been submitted
 	uint256 public state_lastEventNonce = 1;
-	string public state_chainId;
 
 
 	// These are set once at initialization
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
+	
+	// This is set at initilization and can be changed later on with via a setter
+	bytes32 public state_chainId;
+
 
 	CudosAccessControls public cudosAccessControls;
 
@@ -138,12 +141,12 @@ contract Gravity is ReentrancyGuard {
         emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
 	}
 
-	function setChainId(string memory _chainId ) public {
+	function setChainId(bytes32 _chainId ) public {
 		require(cudosAccessControls.hasAdminRole(msg.sender), "Sender is not an admin and cannot set chainId");
 		state_chainId = _chainId;
 	}
 
-	function getChainId() public view returns (string memory){
+	function getChainId() public view returns (bytes32){
 		return state_chainId;
 	}
 
@@ -663,7 +666,7 @@ contract Gravity is ReentrancyGuard {
 		address[] memory _validators,
     	uint256[] memory _powers,
 		CudosAccessControls _cudosAccessControls,
-		string memory _chainId
+		bytes32  _chainId
 
 	) public {
 		// CHECKS
@@ -671,7 +674,7 @@ contract Gravity is ReentrancyGuard {
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
 		require(_validators.length == _powers.length, "Malformed current validator set");
 		require(address(_cudosAccessControls) != address(0), "Access control contract address is incorrect");
-		require(bytes(_chainId).length > 0, "ChainId cannot be empty");
+		// require(bytes(_chainId).length > 0, "ChainId cannot be empty");
 
 
 		// Check cumulative power to ensure the contract has sufficient power to actually

@@ -26,6 +26,7 @@ describe("Gas tests", function () {
     it("makeCheckpoint in isolation", async function () {
         const signers = await ethers.getSigners();
         const gravityId = ethers.utils.formatBytes32String("foo");
+        const chainId = ethers.utils.formatBytes32String("test-chain");
 
         // This is the power distribution on the Cosmos hub as of 7/14/2020
         let powers = examplePowers();
@@ -37,7 +38,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
         let valset = {
             validators: await getSignerAddresses(validators),
@@ -56,6 +57,8 @@ describe("Gas tests", function () {
     it("checkValidatorSignatures in isolation", async function () {
         const signers = await ethers.getSigners();
         const gravityId = ethers.utils.formatBytes32String("foo");
+        const chainId = ethers.utils.formatBytes32String("test-chain");
+
 
         // This is the power distribution on the Cosmos hub as of 7/14/2020
         let powers = examplePowers();
@@ -67,7 +70,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
         let sigs = await signHash(
             validators,

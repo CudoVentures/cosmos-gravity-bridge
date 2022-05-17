@@ -30,6 +30,7 @@ describe("constructor tests", function() {
 
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
 
     // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = examplePowers();
@@ -38,13 +39,15 @@ describe("constructor tests", function() {
     const powerThreshold = 6666;
 
     await expect(
-      deployContracts(gravityId, powerThreshold, validators, powers,cudosAccessControl.address,)
+      deployContracts(gravityId, powerThreshold, validators, powers,cudosAccessControl.address, chainId)
     ).to.be.revertedWith("Malformed current validator set");
   });
 
   it("throws on insufficient power", async function() {
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
+
 
     // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = examplePowers();
@@ -53,7 +56,7 @@ describe("constructor tests", function() {
     const powerThreshold = 666666666;
 
     await expect(
-      deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address)
+      deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId)
     ).to.be.revertedWith(
       "Submitted validator set signatures do not have enough power"
     );
@@ -62,13 +65,14 @@ describe("constructor tests", function() {
   it("throws on zero address for access control", async function() {
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
     let zeroAddress = ethers.constants.AddressZero;
     // This is the power distribution on the Cosmos hub as of 7/14/2020
     let powers = examplePowers();
     let validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
     await expect(
-      deployContracts(gravityId, powerThreshold, validators, powers, zeroAddress)
+      deployContracts(gravityId, powerThreshold, validators, powers, zeroAddress, chainId)
     ).to.be.revertedWith(
       "Access control contract address is incorrect"
     );

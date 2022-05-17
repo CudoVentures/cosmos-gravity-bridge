@@ -65,6 +65,8 @@ async function prep() {
   cudosAccessControl = (await CudosAccessControls.deploy());
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
+  const chainId = ethers.utils.formatBytes32String("test-chain");
+
 
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -76,7 +78,8 @@ async function prep() {
     powerThreshold,
     validators,
     powers,
-    cudosAccessControl.address
+    cudosAccessControl.address,
+    chainId
   );
 
   const ReentrantERC20Contract = await ethers.getContractFactory(
@@ -94,6 +97,7 @@ async function prep() {
     gravity,
     testERC20,
     reentrantERC20,
+    chainId
   };
 }
 
@@ -105,6 +109,7 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
     validators,
     gravity,
     testERC20,
+    chainId
   } = await prep();
 
   // Lock tokens in gravity
@@ -144,6 +149,7 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
         "uint256",
         "address",
         "uint256",
+        "bytes32"
       ],
       [
         gravityId,
@@ -154,6 +160,7 @@ async function runSubmitBatchTest(opts: { batchSize: number }) {
         batchNonce,
         testERC20.address,
         batchTimeout,
+        chainId
       ]
     )
   );
@@ -226,6 +233,7 @@ async function runLogicCallTest(opts: {
     gravity,
     testERC20,
     reentrantERC20,
+    chainId
   } = await prep();
 
   const TestTokenBatchMiddleware = await ethers.getContractFactory(
@@ -289,6 +297,7 @@ async function runLogicCallTest(opts: {
         "uint256", // timeOut
         "bytes32", // invalidationId
         "uint256", // invalidationNonce
+        "bytes32", // chainId
       ],
       [
         gravityId,
@@ -302,6 +311,7 @@ async function runLogicCallTest(opts: {
         logicCallArgs.timeOut,
         logicCallArgs.invalidationId,
         logicCallArgs.invalidationNonce,
+        chainId
       ]
     )
   );
@@ -388,6 +398,7 @@ describe("Testing whitelisting on logic call", function() {
       gravity,
       testERC20,
       reentrantERC20,
+      chainId
     } = await prep();
   
     const TestTokenBatchMiddleware = await ethers.getContractFactory(
@@ -451,6 +462,7 @@ describe("Testing whitelisting on logic call", function() {
           "uint256", // timeOut
           "bytes32", // invalidationId
           "uint256", // invalidationNonce
+          "bytes32", // chainId
         ],
         [
           gravityId,
@@ -464,6 +476,7 @@ describe("Testing whitelisting on logic call", function() {
           logicCallArgs.timeOut,
           logicCallArgs.invalidationId,
           logicCallArgs.invalidationNonce,
+          chainId
         ]
       )
     );
@@ -501,6 +514,7 @@ describe("Testing whitelisting on logic call", function() {
       gravity,
       testERC20,
       reentrantERC20,
+      chainId
     } = await prep();
   
     const TestTokenBatchMiddleware = await ethers.getContractFactory(
@@ -564,6 +578,7 @@ describe("Testing whitelisting on logic call", function() {
           "uint256", // timeOut
           "bytes32", // invalidationId
           "uint256", // invalidationNonce
+          "bytes32",
         ],
         [
           gravityId,
@@ -577,6 +592,7 @@ describe("Testing whitelisting on logic call", function() {
           logicCallArgs.timeOut,
           logicCallArgs.invalidationId,
           logicCallArgs.invalidationNonce,
+          chainId
         ]
       )
     );

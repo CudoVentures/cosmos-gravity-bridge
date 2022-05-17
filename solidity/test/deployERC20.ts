@@ -27,6 +27,7 @@ async function runTest(opts: {}) {
   // ========================
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
+  const chainId = ethers.utils.formatBytes32String("test-chain");
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -35,9 +36,7 @@ async function runTest(opts: {}) {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
-
-
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
 
   // Deploy ERC20 contract representing Cosmos asset
@@ -102,7 +101,8 @@ async function runTest(opts: {}) {
       "uint256[]",
       "uint256",
       "address",
-      "uint256"
+      "uint256",
+      "bytes32",
     ],
     [
       gravityId,
@@ -112,7 +112,8 @@ async function runTest(opts: {}) {
       txFees,
       batchNonce,
       eventArgs._tokenContract,
-      batchTimeout
+      batchTimeout,
+      chainId
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);

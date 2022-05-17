@@ -41,6 +41,8 @@ async function runTest(opts: {
   const signers = await ethers.getSigners();
 
   const gravityId = ethers.utils.formatBytes32String("foo");
+  const chainId = ethers.utils.formatBytes32String("test-chain");
+
 
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
@@ -52,7 +54,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
   let newPowers = examplePowers();
   newPowers[0] -= 3;
@@ -287,6 +289,7 @@ describe("updateValset Go test hash", function () {
     // Prep and deploy contract
     // ========================
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
     const methodName = ethers.utils.formatBytes32String("checkpoint");
     // note these are manually sorted, functions in Go and Rust auto-sort
     // but this does not so be aware of the order!
@@ -324,7 +327,8 @@ describe("updateValset Go test hash", function () {
         "address[]", // validators
         "uint256[]", // powers
         "uint256", // rewardAmount
-        "address" // rewardToken
+        "address", // rewardToken
+        "bytes32", // chainId
       ],
       [
         gravityId,
@@ -334,6 +338,7 @@ describe("updateValset Go test hash", function () {
         newValset.powers,
         newValset.rewardAmount,
         newValset.rewardToken,
+        chainId
       ]
     );
     const valsetDigest = ethers.utils.keccak256(abiEncodedValset);

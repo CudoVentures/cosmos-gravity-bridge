@@ -335,6 +335,7 @@ describe("logicCall Go test hash", async function () {
     // ========================
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
     const powers = [6667];
     const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
@@ -342,7 +343,7 @@ describe("logicCall Go test hash", async function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
 
 
@@ -393,7 +394,8 @@ describe("logicCall Go test hash", async function () {
       "bytes", // payload
       "uint256", // timeOut
       "bytes32", // invalidationId
-      "uint256" // invalidationNonce
+      "uint256", // invalidationNonce
+      "bytes32"
     ],
     [
       gravityId,
@@ -406,7 +408,8 @@ describe("logicCall Go test hash", async function () {
       logicCallArgs.payload,
       logicCallArgs.timeOut,
       logicCallArgs.invalidationId,
-      logicCallArgs.invalidationNonce
+      logicCallArgs.invalidationNonce,
+      chainId
     ]
   );
     const logicCallDigest = ethers.utils.keccak256(abiEncodedLogicCall);

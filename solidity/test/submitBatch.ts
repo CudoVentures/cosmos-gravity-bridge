@@ -43,6 +43,8 @@ async function runTest(opts: {
   // ========================
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
+  const chainId = ethers.utils.formatBytes32String("test-chain");
+
   // This is the power distribution on the Cosmos hub as of 7/14/2020
   let powers = examplePowers();
   let validators = signers.slice(0, powers.length);
@@ -51,7 +53,7 @@ async function runTest(opts: {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
   // Transfer out to Cosmos, locking coins
   // =====================================
@@ -102,6 +104,7 @@ async function runTest(opts: {
       "uint256",
       "address",
       "uint256",
+      "bytes32",
     ],
     [
       gravityId,
@@ -112,6 +115,7 @@ async function runTest(opts: {
       batchNonce,
       testERC20.address,
       batchTimeout,
+      chainId
     ]
   );
   let digest = ethers.utils.keccak256(abiEncoded);
@@ -278,6 +282,8 @@ describe("submitBatch Go test hash", function () {
 
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
+
     const powers = [6667];
     const validators = signers.slice(0, powers.length);
     const powerThreshold = 6666;
@@ -285,7 +291,7 @@ describe("submitBatch Go test hash", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint,
-    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
     // Prepare batch
     // ===============================
@@ -319,6 +325,7 @@ describe("submitBatch Go test hash", function () {
         "uint256",
         "address",
         "uint256",
+        "bytes32"
       ],
       [
         gravityId,
@@ -329,6 +336,7 @@ describe("submitBatch Go test hash", function () {
         batchNonce,
         testERC20.address,
         batchTimeout,
+        chainId
       ]
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
@@ -380,6 +388,8 @@ it("produces good hash with newly whitelisted address", async function () {
   // ========================
   const signers = await ethers.getSigners();
   const gravityId = ethers.utils.formatBytes32String("foo");
+  const chainId = ethers.utils.formatBytes32String("test-chain");
+
   const powers = [6667 ,6668];
   const validators = signers.slice(0, powers.length);
   const powerThreshold = 6666;
@@ -387,7 +397,7 @@ it("produces good hash with newly whitelisted address", async function () {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
   // Prepare batch
   // ===============================
@@ -421,6 +431,7 @@ it("produces good hash with newly whitelisted address", async function () {
       "uint256",
       "address",
       "uint256",
+      "bytes32"
     ],
     [
       gravityId,
@@ -431,6 +442,7 @@ it("produces good hash with newly whitelisted address", async function () {
       batchNonce,
       testERC20.address,
       batchTimeout,
+      chainId
     ]
   );
   const batchDigest = ethers.utils.keccak256(abiEncodedBatch);

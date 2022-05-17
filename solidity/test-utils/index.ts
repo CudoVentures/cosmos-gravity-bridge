@@ -15,6 +15,7 @@ export async function deployContracts(
   validators: Signer[],
   powers: number[],
   cudosAccessControl: String,
+  chainId: string = "test-chain",
   opts?: DeployContractsOptions
 ) {
   const TestERC20 = await ethers.getContractFactory("TestERC20A");
@@ -31,7 +32,8 @@ export async function deployContracts(
     powerThreshold,
     await getSignerAddresses(validators),
     powers,
-    cudosAccessControl
+    cudosAccessControl,
+    chainId
   )) as Gravity;
 
   await gravity.deployed();

@@ -33,6 +33,7 @@ describe("Gravity happy path valset update + batch submit", function () {
 
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
+    const chainId = ethers.utils.formatBytes32String("test-chain");
 
     const valset0 = {
       // This is the power distribution on the Cosmos hub as of 7/14/2020
@@ -50,7 +51,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, cudosAccessControl.address);
+    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, cudosAccessControl.address, chainId);
 
 
 
@@ -158,7 +159,8 @@ describe("Gravity happy path valset update + batch submit", function () {
         "uint256[]",
         "uint256",
         "address",
-        "uint256"
+        "uint256",
+        "bytes32"
       ],
       [
         gravityId,
@@ -168,7 +170,8 @@ describe("Gravity happy path valset update + batch submit", function () {
         txFees,
         batchNonce,
         testERC20.address,
-        batchTimeout
+        batchTimeout,
+        chainId
       ]
     );
 

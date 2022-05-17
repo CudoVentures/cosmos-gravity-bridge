@@ -29,6 +29,8 @@ describe("Withdraw ERC20 Bridge Tests", function() {
 
 	const signers = await ethers.getSigners();
 	const gravityId = ethers.utils.formatBytes32String("foo");
+	const chainId = ethers.utils.formatBytes32String("test-chain");
+
 	// This is the power distribution on the Cosmos hub as of 7/14/2020
 	let powers = examplePowers();
 	let validators = signers.slice(0, powers.length);
@@ -37,7 +39,7 @@ describe("Withdraw ERC20 Bridge Tests", function() {
 		gravity,
 		testERC20,
 		checkpoint: deployCheckpoint
-	  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+	  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address, chainId);
 
 	  gravityInstance = gravity
 	  testERC20Instance = testERC20

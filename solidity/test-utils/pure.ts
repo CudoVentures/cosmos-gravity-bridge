@@ -15,13 +15,15 @@ export function makeCheckpoint(
   valsetNonce: BigNumberish,
   rewardAmount: BigNumberish,
   rewardToken: string,
-  gravityId: string
+  gravityId: string,
+  chainId: string = "test-chain",
 ) {
   const methodName = ethers.utils.formatBytes32String("checkpoint");
+  const chainIdBytes32 = ethers.utils.formatBytes32String(chainId);
 
   let abiEncoded = ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "bytes32", "uint256", "address[]", "uint256[]", "uint256", "address"],
-    [gravityId, methodName, valsetNonce, validators, powers, rewardAmount, rewardToken]
+    ["bytes32", "bytes32", "uint256", "address[]", "uint256[]", "uint256", "address", "bytes32"],
+    [gravityId, methodName, valsetNonce, validators, powers, rewardAmount, rewardToken, chainIdBytes32]
   );
 
   let checkpoint = ethers.utils.keccak256(abiEncoded);
