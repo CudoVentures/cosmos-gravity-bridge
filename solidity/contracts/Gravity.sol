@@ -48,6 +48,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 	CudosAccessControls public immutable cudosAccessControls;
 
 	mapping(address => bool) public supportedToCosmosTokens;
+  
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -230,6 +231,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 		}
 		
 		revert("not validated orchestrator");
+	}
+
+	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = true;
+	}
+
+	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = false;
 	}
 
 	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
