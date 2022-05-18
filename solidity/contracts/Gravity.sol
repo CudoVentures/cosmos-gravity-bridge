@@ -50,6 +50,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 	mapping(address => bool) public supportedToCosmosTokens;
 
+	mapping(address => bool) public supportedToCosmosTokens;
+
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -249,6 +251,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 	}
 
 	// removes a supported token from the mapping
+	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = false;
+	}
+
+	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
+		supportedToCosmosTokens[_cosmosToken] = true;
+	}
+
 	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = false;
 	}
@@ -473,7 +483,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 	{
 		uint256 lastEventNonce = state_lastEventNonce.add(1);
 		state_lastEventNonce = lastEventNonce;
-
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
