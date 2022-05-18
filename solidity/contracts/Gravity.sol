@@ -228,29 +228,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 			"given valset != checkpoint"
 		);
 	}
-
-	// checks if the arrays that hold the valset and theyr signatures are the same length
-	function checkValsetData(
-		ValsetArgs memory _currentValset,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s
-	) internal pure {
-		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
-		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
-	}
   
-	// checks if generated checkpoint matches the state one
-	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
-		require(
-			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
-			"given valset != checkpoint"
-		);
-	}
-
 	// checks if the address is in the validator / orchestrator set
 	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
 		uint256 valLength = _valset.validators.length;
