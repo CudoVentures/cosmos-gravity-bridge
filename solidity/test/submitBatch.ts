@@ -232,13 +232,13 @@ describe("submitBatch tests", function () {
 
   it("throws on batch nonce not incremented", async function () {
     await expect(runTest({ batchNonceNotHigher: true })).to.be.revertedWith(
-      "New batch nonce must be greater than the current nonce"
+      "new batch nonce <= current"
     );
   });
 
   it("throws on timeout batch", async function () {
     await expect(runTest({ batchTimeout: true })).to.be.revertedWith(
-      "Batch timeout must be greater than the current block height"
+      "batch timeout <= block height"
     );
   });
 
@@ -246,7 +246,7 @@ describe("submitBatch tests", function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
-      "Supplied current validators and powers do not match checkpoint"
+      "given valset != checkpoint"
     );
   });
 
@@ -258,7 +258,7 @@ describe("submitBatch tests", function () {
 
   it("throws if the sender is not whitelisted (trusted orchestrator)", async function () {
     await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
-      "The sender of the transaction is not validated orchestrator"
+      "not validated orchestrator"
     );
   });
 
@@ -280,7 +280,7 @@ describe("submitBatch tests", function () {
 
   it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
-      "Submitted validator set signatures do not have enough power"
+      "given valset power < threshold"
     );
   });
 
