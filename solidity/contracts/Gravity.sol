@@ -12,23 +12,6 @@ import "./CudosAccessControls.sol";
 
 pragma experimental ABIEncoderV2;
 
-// This is being used purely to avoid stack too deep errors
-struct LogicCallArgs {
-	// Transfers out to the logic contract
-	uint256[] transferAmounts;
-	address[] transferTokenContracts;
-	// The fees (transferred to msg.sender)
-	uint256[] feeAmounts;
-	address[] feeTokenContracts;
-	// The arbitrary logic call
-	address logicContractAddress;
-	bytes payload;
-	// Invalidation metadata
-	uint256 timeOut;
-	bytes32 invalidationId;
-	uint256 invalidationNonce;
-}
-
 // This is used purely to avoid stack too deep errors
 // represents everything about a given validator set
 struct ValsetArgs {
@@ -104,13 +87,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 		uint256[] _powers
 	);
 
-	event LogicCallEvent(
-		bytes32 _invalidationId,
-		uint256 _invalidationNonce,
-		bytes _returnData,
-		uint256 _eventNonce
-	);
-
 	modifier onlyAdmin() {
 		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		_;
@@ -120,10 +96,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 
 	function lastBatchNonce(address _erc20Address) external view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
-	}
-
-	function lastLogicCallNonce(bytes32 _invalidation_id) external view returns (uint256) {
-		return state_invalidationMapping[_invalidation_id];
 	}
 	
 	//pause functions
@@ -146,8 +118,9 @@ contract Gravity is ReentrancyGuard, Pausable {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
-		return _signer == ecrecover(messageDigest, _v, _r, _s);
-	}	
+		address recAddr = ECDSA.recover(messageDigest, _v, _r, _s);
+		return _signer == recAddr;
+	}
 
 	// Make a new checkpoint from the supplied validator set
 	// A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
@@ -440,122 +413,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 			uint256 lastEventNonce = state_lastEventNonce.add(1);
 			state_lastEventNonce = lastEventNonce;
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, lastEventNonce);
-		}
-	}
-
-	// This makes calls to contracts that execute arbitrary logic
-	// First, it gives the logic contract some tokens
-	// Then, it gives msg.senders tokens for fees
-	// Then, it calls an arbitrary function on the logic contract
-	// invalidationId and invalidationNonce are used for replay prevention.
-	// They can be used to implement a per-token nonce by setting the token
-	// address as the invalidationId and incrementing the nonce each call.
-	// They can be used for nonce-free replay prevention by using a different invalidationId
-	// for each call.
-	function submitLogicCall(
-		// The validators that approve the call
-		ValsetArgs memory _currentValset,
-		// These are arrays of the parts of the validators signatures
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s,
-		LogicCallArgs memory _args
-	) public nonReentrant {
-		// CHECKS scoped to reduce stack depth
-		{
-			// Check that the token transfer list is well-formed
-			require(
-				_args.transferAmounts.length == _args.transferTokenContracts.length,
-				"Malformed list token transfers"
-			);
-
-			// Check that the fee list is well-formed
-			require(
-				_args.feeAmounts.length == _args.feeTokenContracts.length,
-				"Malformed list of fees"
-			);
-
-			// Check that the call has not timed out
-			require(block.number < _args.timeOut, "Timed out");
-
-			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
-			require(
-				state_invalidationMapping[_args.invalidationId] < _args.invalidationNonce,
-				"invalidation nonce <= current"
-			);
-
-			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
-			checkValsetData(_currentValset, _v, _r, _s);
-
-			// Check that the supplied current validator set matches the saved checkpoint
-			checkCheckpoint(_currentValset, state_gravityId);
-			
-			isOrchestrator(_currentValset, msg.sender);
-		}
-
-		bytes32 argsHash = keccak256(
-			abi.encode(
-				state_gravityId,
-				// bytes32 encoding of "logicCall"
-				0x6c6f67696343616c6c0000000000000000000000000000000000000000000000,
-				_args.transferAmounts,
-				_args.transferTokenContracts,
-				_args.feeAmounts,
-				_args.feeTokenContracts,
-				_args.logicContractAddress,
-				_args.payload,
-				_args.timeOut,
-				_args.invalidationId,
-				_args.invalidationNonce
-			)
-		);
-
-		{
-			// Check that enough current validators have signed off on the transaction batch and valset
-			checkValidatorSignatures(
-				_currentValset.validators,
-				_currentValset.powers,
-				_v,
-				_r,
-				_s,
-				// Get hash of the transaction batch and checkpoint
-				argsHash
-			);
-		}
-
-		// ACTIONS
-
-		// Update invaldiation nonce
-		state_invalidationMapping[_args.invalidationId] = _args.invalidationNonce;
-
-		// Send tokens to the logic contract
-		uint256 amountsLength = _args.transferAmounts.length;
-		for (uint256 i; i < amountsLength; ++i) {
-			IERC20(_args.transferTokenContracts[i]).safeTransfer(
-				_args.logicContractAddress,
-				_args.transferAmounts[i]
-			);
-		}
-
-		// Make call to logic contract
-		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
-
-		// Send fees to msg.sender
-		uint256 feeAmountsLength = _args.feeAmounts.length;
-		for (uint256 i; i < feeAmountsLength; ++i) {
-			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
-		}
-
-		// LOGS scoped to reduce stack depth
-		{
-			uint256 lastEventNonce = state_lastEventNonce.add(1);
-			state_lastEventNonce = lastEventNonce;
-			emit LogicCallEvent(
-				_args.invalidationId,
-				_args.invalidationNonce,
-				returnData,
-				lastEventNonce
-			);
 		}
 	}
 
