@@ -37,11 +37,13 @@ contract Gravity is ReentrancyGuard, Pausable {
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce;
+
 	// event nonce zero is reserved by the Cosmos module as a special
 	// value indicating that no events have yet been submitted
 	uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
+
 	bytes32 public immutable state_gravityId;
 	uint256 public immutable state_powerThreshold;
 
@@ -87,6 +89,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		address[] _validators,
 		uint256[] _powers
 	);
+
 
 	modifier onlyAdmin() {
 		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
@@ -154,6 +157,9 @@ contract Gravity is ReentrancyGuard, Pausable {
 		return checkpoint;
 	}
 
+
+	// checks if the provided signatures are correct and also
+	// checks if the gathered validator power is over threshold
 	function checkValidatorSignatures(
 		// The current validator set and their powers
 		address[] memory _currentValidators,
@@ -194,6 +200,8 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// Success
 	}
 
+	// checks if the comulated power surpasses power threshold
+	// not using state value ot power threshold so this can be used in constructor as well
 	function checkComulatedPower(uint256 _cumulativePower, uint256 _powerThreshold) internal pure {
 		require(
 			_cumulativePower > _powerThreshold,
@@ -221,8 +229,30 @@ contract Gravity is ReentrancyGuard, Pausable {
 		);
 	}
 
-	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
+	// checks if the arrays that hold the valset and theyr signatures are the same length
+	function checkValsetData(
+		ValsetArgs memory _currentValset,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s
+	) internal pure {
+		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
+	}
+  
+	// checks if generated checkpoint matches the state one
+	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
+		require(
+			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
+			"given valset != checkpoint"
+		);
+	}
 
+	// checks if the address is in the validator / orchestrator set
+	function isOrchestrator(ValsetArgs memory _valset, address _sender) private pure {
 		uint256 valLength = _valset.validators.length;
 		for (uint256 i; i < valLength; ++i) {
 			if(_valset.validators[i] == _sender) {
@@ -233,10 +263,12 @@ contract Gravity is ReentrancyGuard, Pausable {
 		revert("not validated orchestrator");
 	}
 
+	// adds supported token to the mapping
 	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = true;
 	}
 
+	// removes a supported token from the mapping
 	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
 		supportedToCosmosTokens[_cosmosToken] = false;
 	}
@@ -285,6 +317,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		bytes32 gravityId = state_gravityId;
 		checkCheckpoint(_currentValset, gravityId);
 
+		// check that the msg.sender is one of the orchestrators
 		isOrchestrator(_currentValset, msg.sender);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -373,6 +406,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 			bytes32 gravityId = state_gravityId;
 			checkCheckpoint(_currentValset, gravityId);
 
+			// check that the msg.sender is one of the orchestrators
 			isOrchestrator(_currentValset, msg.sender);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -465,12 +499,12 @@ contract Gravity is ReentrancyGuard, Pausable {
 		external 
 		whenNotPaused 
 	{
+		uint256 lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = lastEventNonce;
 		// Deploy an ERC20 with entire supply granted to Gravity.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		uint256 lastEventNonce = state_lastEventNonce.add(1);
-		state_lastEventNonce = lastEventNonce;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
