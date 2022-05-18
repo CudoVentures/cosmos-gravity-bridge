@@ -56,7 +56,7 @@ contract Gravity is ReentrancyGuard {
 	uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
-	bytes32 public state_gravityId;
+	bytes32 public immutable state_gravityId;
 	uint256 public immutable state_powerThreshold;
 
 	CudosAccessControls public immutable cudosAccessControls;
