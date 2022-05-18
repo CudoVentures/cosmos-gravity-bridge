@@ -273,14 +273,6 @@ contract Gravity is ReentrancyGuard, Pausable {
 		supportedToCosmosTokens[_cosmosToken] = false;
 	}
 
-	function addToCosmosToken(address _cosmosToken) external onlyAdmin {
-		supportedToCosmosTokens[_cosmosToken] = true;
-	}
-
-	function removeToCosmosToken(address _cosmosToken) external onlyAdmin {
-		supportedToCosmosTokens[_cosmosToken] = false;
-	}
-
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
