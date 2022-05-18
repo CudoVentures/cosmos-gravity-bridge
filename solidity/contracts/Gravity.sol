@@ -43,15 +43,14 @@ contract Gravity is ReentrancyGuard, Pausable {
 	uint256 public state_lastEventNonce = 1;
 
 	// These are set once at initialization
-	bytes32 public state_gravityId;
+
+	bytes32 public immutable state_gravityId;
 	uint256 public immutable state_powerThreshold;
 
 	CudosAccessControls public immutable cudosAccessControls;
 
 	mapping(address => bool) public supportedToCosmosTokens;
-
-	mapping(address => bool) public supportedToCosmosTokens;
-
+  
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
 	// Cosmos module to ensure that all events are received in order, and that none are lost.
@@ -201,13 +200,32 @@ contract Gravity is ReentrancyGuard, Pausable {
 		// Success
 	}
 
-
 	// checks if the comulated power surpasses power threshold
 	// not using state value ot power threshold so this can be used in constructor as well
 	function checkComulatedPower(uint256 _cumulativePower, uint256 _powerThreshold) internal pure {
 		require(
 			_cumulativePower > _powerThreshold,
 			"given valset power < threshold"
+		);
+	}
+
+	function checkValsetData(
+		ValsetArgs memory _currentValset,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s
+	) internal pure {
+		require(_currentValset.validators.length == _currentValset.powers.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _v.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
+		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
+	}
+
+	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
+		require(
+			makeCheckpoint(_currentValset, _gravityId) == state_lastValsetCheckpoint,
+			"given valset != checkpoint"
 		);
 	}
 
@@ -224,7 +242,7 @@ contract Gravity is ReentrancyGuard, Pausable {
 		require(_currentValset.validators.length == _r.length, "Malformed current validator set");
 		require(_currentValset.validators.length == _s.length, "Malformed current validator set");
 	}
-
+  
 	// checks if generated checkpoint matches the state one
 	function checkCheckpoint(ValsetArgs memory _currentValset, bytes32 _gravityId) private view {
 		require(
