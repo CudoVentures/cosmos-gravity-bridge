@@ -269,6 +269,11 @@ pub async fn relay_valsets(
     timeout: Duration,
     config: &RelayerConfig,
 ) {
+    // CUDOS-982 - only the orchestrator of the highest power validator to send eth transactions
+    if current_valset.members[0].eth_address.unwrap() != ethereum_key.to_public_key().unwrap() {
+        return;
+    }
+
     // we have to start with the current valset, we need to know what's currently
     // in the contract in order to determine if a new validator set is valid.
     // For example the contract has set A which contains validators x/y/z the
