@@ -55,7 +55,7 @@ describe("constructor tests", function() {
     await expect(
       deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address)
     ).to.be.revertedWith(
-      "Submitted validator set signatures do not have enough power"
+      "given valset power < threshold"
     );
   });
 
@@ -70,7 +70,7 @@ describe("constructor tests", function() {
     await expect(
       deployContracts(gravityId, powerThreshold, validators, powers, zeroAddress)
     ).to.be.revertedWith(
-      "Access control contract address is incorrect"
+      "AccessControl address wrong"
     );
   })
 });

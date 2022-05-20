@@ -18,7 +18,10 @@ const { expect } = chai;
 
 let cudosAccessControl:any
 
-async function runTest(opts: {}) {
+async function runTest(opts: {
+  contractLocked:? boolean,
+  tokenNotContract:? boolean,
+}) {
 
 
   const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
@@ -37,12 +40,19 @@ async function runTest(opts: {}) {
     checkpoint: deployCheckpoint
   } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
 
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
+
+  const tokenAddress = opts.tokenNotContract ? ethers.Wallet.createRandom().address : testERC20.address;
+
+
   await expect(gravity.functions.sendToCosmos(
-    testERC20.address,
+    tokenAddress,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
   )).to.emit(gravity, 'SendToCosmosEvent').withArgs(
@@ -78,6 +88,19 @@ async function runTest(opts: {}) {
 }
 
 describe("sendToCosmos tests", function () {
+
+  it("throws token not supported", async function () {
+    await expect(runTest({ tokenNotContract: true })).to.be.revertedWith(
+      "token not supported"
+    );
+  })
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
+
   it("works right", async function () {
     await runTest({})
   });
