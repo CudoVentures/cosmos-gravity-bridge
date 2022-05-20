@@ -27,8 +27,8 @@ use gravity_proto::gravity::{MsgCancelSendToEth, MsgConfirmBatch};
 use gravity_utils::types::*;
 use std::{collections::HashMap, time::Duration};
 
-use num256::Uint256;
 use crate::utils::BadSignatureEvidence;
+use num256::Uint256;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -519,7 +519,9 @@ async fn calc_fee(
     contact: &Contact,
     messages: Vec<Msg>,
 ) -> Result<deep_space::Fee, CosmosGrpcError> {
-    let mut fee_calc = contact.get_fee_info(&messages, &[fee.clone()], private_key).await?;
+    let mut fee_calc = contact
+        .get_fee_info(&messages, &[fee.clone()], private_key)
+        .await?;
     fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
     info!("{:?}", fee_calc);
     Ok(fee_calc)
