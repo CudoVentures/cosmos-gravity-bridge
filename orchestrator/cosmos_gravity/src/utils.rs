@@ -49,7 +49,7 @@ pub async fn wait_for_tx_with_retry(contact: &Contact, response: &TxResponse) ->
         }
     }
 
-    return res;
+    res
 } 
 
 /// gets the Cosmos last event nonce, no matter how long it takes.
