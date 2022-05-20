@@ -73,13 +73,22 @@ pub async fn orchestrator(
 
     trace!("Probing RPC connections");
     // probe all rpc connections and see if they are valid
-    let connections = create_rpc_connections(
-        address_prefix,
-        Some(cosmos_grpc),
-        Some(ethereum_rpc),
-        timeout,
-    )
-    .await;
+    let mut connections;
+    loop {
+        connections = create_rpc_connections(
+            address_prefix.clone(),
+            Some(cosmos_grpc.clone()),
+            Some(ethereum_rpc.clone()),
+            timeout,
+        )
+        .await;
+
+        if connections.grpc.is_some() && connections.grpc.is_some() && connections.grpc.is_some() {
+            break;
+        }
+
+        delay_for(timeout).await;
+    }
 
     let mut grpc = connections.grpc.clone().unwrap();
     let contact = connections.contact.clone().unwrap();

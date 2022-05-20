@@ -31,6 +31,24 @@ pub async fn wait_for_cosmos_online(contact: &Contact, timeout: Duration) {
     contact.wait_for_next_block(timeout).await.unwrap();
 }
 
+pub async fn wait_for_tx_with_retry(contact: &Contact, response: &TxResponse) -> Result<TxResponse, CosmosGrpcError> {
+    let mut res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
+
+    let mut counter: i32 = 0;
+    while res.is_err() {
+        info!("Wait for tx at iteration {} of 12", counter);
+        sleep(RETRY_TIME).await;
+        res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
+        counter += 1;
+
+        if counter == 12 { // wait for 1 minute (12 * 5 = 60 seconds)
+            break;
+        }
+    }
+
+    res
+} 
+
 /// gets the Cosmos last event nonce, no matter how long it takes.
 pub async fn get_last_event_nonce_with_retry(
     client: &mut GravityQueryClient<Channel>,
