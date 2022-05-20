@@ -84,7 +84,7 @@ pub async fn relay_logic_calls(
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
     // CUDOS-982 - only the orchestrator of the highest power validator to send eth transactions
-    if current_valset.members[0].eth_address.unwrap() != our_ethereum_addresss {
+    if current_valset.members[0].eth_address.unwrap() != ethereum_key.to_public_key().unwrap() {
         return;
     }
     
