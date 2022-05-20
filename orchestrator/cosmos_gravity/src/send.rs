@@ -1,3 +1,4 @@
+use crate::utils::wait_for_tx_with_retry;
 use clarity::{constants::ZERO_ADDRESS, Address as EthAddress};
 use clarity::{PrivateKey as EthPrivateKey, Signature};
 use deep_space::address::Address;
@@ -24,7 +25,6 @@ use gravity_proto::gravity::MsgValsetUpdatedClaim;
 use gravity_proto::gravity::{MsgBatchSendToEthClaim, MsgSubmitBadSignatureEvidence};
 use gravity_proto::gravity::{MsgCancelSendToEth, MsgConfirmBatch};
 use gravity_utils::types::*;
-use crate::utils::wait_for_tx_with_retry;
 use std::{collections::HashMap, time::Duration};
 
 use num256::Uint256;
