@@ -98,12 +98,7 @@ pub async fn cosmos_to_eth(args: CosmosToEthOpts, address_prefix: String) {
 
     if !no_batch {
         info!("Requesting a batch to push transaction along immediately");
-        send_request_batch(
-            cosmos_key,
-            gravity_coin.denom,
-            fee,
-            &contact,
-            Some(TIMEOUT),
+        send_request_batch(cosmos_key, gravity_coin.denom, fee, &contact, Some(TIMEOUT),
         )
         .await
         .expect("Failed to request batch");

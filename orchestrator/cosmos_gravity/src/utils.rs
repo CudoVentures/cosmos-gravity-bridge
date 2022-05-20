@@ -36,7 +36,7 @@ pub async fn wait_for_cosmos_online(contact: &Contact, timeout: Duration) {
 
 pub async fn wait_for_tx_with_retry(
     contact: &Contact, 
-    response: &TxResponse
+    response: &TxResponse,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let mut res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
 
