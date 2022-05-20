@@ -65,7 +65,7 @@ pub struct OrchestratorOpts {
         short,
         long,
         env = "GRAVITY_FEES",
-        default_value="1acudos",
+        default_value = "1acudos",
         parse(try_from_str)
     )]
     pub fees: Coin,
