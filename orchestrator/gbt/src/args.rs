@@ -62,10 +62,10 @@ pub struct OrchestratorOpts {
     pub ethereum_rpc: String,
     /// The Cosmos Denom and amount to pay Cosmos chain fees
     #[clap(
-        short, 
-        long, 
-        env = "GRAVITY_FEES", 
-        default_value="1acudos", 
+        short,
+        long,
+        env = "GRAVITY_FEES",
+        default_value="1acudos",
         parse(try_from_str)
     )]
     pub fees: Coin,

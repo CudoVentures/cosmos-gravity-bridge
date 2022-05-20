@@ -200,7 +200,7 @@ pub async fn eth_signer_main_loop(
     loop {
         let loop_start = Instant::now();
 
-        let gravity_id = 
+        let gravity_id =
             get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
         if gravity_id.is_err() {
             error!("Failed to get GravityID, check your Eth node");

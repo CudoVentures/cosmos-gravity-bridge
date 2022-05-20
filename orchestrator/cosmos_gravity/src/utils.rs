@@ -33,7 +33,7 @@ pub async fn wait_for_cosmos_online(contact: &Contact, timeout: Duration) {
 }
 
 pub async fn wait_for_tx_with_retry(
-    contact: &Contact, 
+    contact: &Contact,
     response: &TxResponse,
 ) -> Result<TxResponse, CosmosGrpcError> {
     let mut res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
@@ -45,14 +45,14 @@ pub async fn wait_for_tx_with_retry(
         res = contact.wait_for_tx(response.clone(), TIMEOUT).await;
         counter += 1;
 
-        if counter == 12 { 
+        if counter == 12 {
             // wait for 1 minute (12 * 5 = 60 seconds)
             break;
         }
     }
 
     res
-} 
+}
 
 /// gets the Cosmos last event nonce, no matter how long it takes.
 pub async fn get_last_event_nonce_with_retry(
