@@ -407,13 +407,7 @@ pub async fn send_to_eth(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
 
-    let fee = Fee {
-        amount: vec![fee],
-        gas_limit: 500_000u64,
-        granter: None,
-        payer: None,
-    };
-
+    let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
 
     let args = contact.get_message_args(our_address, fee).await?;
@@ -496,8 +490,10 @@ pub async fn submit_bad_signature_evidence(
         "/gravity.v1.MsgSubmitBadSignatureEvidence",
         msg_submit_bad_signature_evidence,
     );
-
-    let args = contact.get_message_args(our_address, fee).await?;
+    messages.push(msg);
+    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
+  
+    let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
