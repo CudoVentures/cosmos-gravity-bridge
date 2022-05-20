@@ -27,15 +27,14 @@ async function runTest(opts: {
   nonMatchingCurrentValset?: boolean;
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
+  zeroedEcrecoverAddress?: boolean;
   notEnoughPower?: boolean;
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
   notWhiteListed?: boolean;
+  contractLocked?: boolean;
 }) {
-
-  
-
   const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
   cudosAccessControl = (await CudosAccessControls.deploy());
 
@@ -52,7 +51,7 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint,
   } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
-
+  
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
@@ -139,6 +138,15 @@ async function runTest(opts: {
     // Then zero it out to skip evaluation
     sigs.v[1] = 0;
   }
+
+  //in certain conditions ecrecover might return empty address
+  //this is to test this case
+  //when setting "v" to any positive number, other than 27 or 28 results in this
+  if(opts.zeroedEcrecoverAddress) {
+    sigs.v[0] = 17;
+    sigs.v[1] = 17;
+  }
+
   if (opts.notEnoughPower) {
     // zero out enough signatures that we dip below the threshold
     sigs.v[1] = 0;
@@ -171,8 +179,12 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
   if (opts.notWhiteListed) {
-  let testAcc = ethers.Wallet.createRandom().connect(gravity.provider);
+  let testAcc = signers[powers.length+1];
   await gravity.connect(testAcc).submitBatch(
     valset,
 
@@ -220,13 +232,13 @@ describe("submitBatch tests", function () {
 
   it("throws on batch nonce not incremented", async function () {
     await expect(runTest({ batchNonceNotHigher: true })).to.be.revertedWith(
-      "New batch nonce must be greater than the current nonce"
+      "new batch nonce <= current"
     );
   });
 
   it("throws on timeout batch", async function () {
     await expect(runTest({ batchTimeout: true })).to.be.revertedWith(
-      "Batch timeout must be greater than the current block height"
+      "batch timeout <= block height"
     );
   });
 
@@ -234,7 +246,7 @@ describe("submitBatch tests", function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
-      "Supplied current validators and powers do not match checkpoint"
+      "given valset != checkpoint"
     );
   });
 
@@ -246,17 +258,29 @@ describe("submitBatch tests", function () {
 
   it("throws if the sender is not whitelisted (trusted orchestrator)", async function () {
     await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
-      "The sender of the transaction is not validated orchestrator"
+      "not validated orchestrator"
     );
   });
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
 
   it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });
   });
 
+  it("throws on sig returning empty ecrecover address", async function () {
+    await expect(runTest({zeroedEcrecoverAddress: true})).to.be.revertedWith(
+      "ECDSA: invalid signature 'v' value"
+    );
+  })
+
   it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
-      "Submitted validator set signatures do not have enough power"
+      "given valset power < threshold"
     );
   });
 
