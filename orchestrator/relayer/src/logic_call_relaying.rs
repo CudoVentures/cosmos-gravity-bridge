@@ -83,6 +83,11 @@ pub async fn relay_logic_calls(
 ) {
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
 
+    // CUDOS-982 - only the orchestrator of the highest power validator to send eth transactions
+    if current_valset.members[0].eth_address.unwrap() != ethereum_key.to_public_key().unwrap() {
+        return;
+    }
+
     let latest_calls = get_latest_logic_calls(grpc_client).await;
     trace!("Latest Logic calls {:?}", latest_calls);
     if latest_calls.is_err() {

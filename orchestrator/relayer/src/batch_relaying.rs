@@ -39,6 +39,11 @@ pub async fn relay_batches(
     timeout: Duration,
     config: &RelayerConfig,
 ) {
+    // CUDOS-982 - only the orchestrator of the highest power validator to send eth transactions
+    if current_valset.members[0].eth_address.unwrap() != ethereum_key.to_public_key().unwrap() {
+        return;
+    }
+
     let possible_batches =
         get_batches_and_signatures(current_valset.clone(), grpc_client, gravity_id.clone()).await;
 

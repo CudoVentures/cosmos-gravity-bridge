@@ -61,7 +61,13 @@ pub struct OrchestratorOpts {
     #[clap(long, env = "GRAVITY_ETHRPC", default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// The Cosmos Denom and amount to pay Cosmos chain fees
-    #[clap(short, long, env = "GRAVITY_FEES", default_value="1acudos", parse(try_from_str))]
+    #[clap(
+        short,
+        long,
+        env = "GRAVITY_FEES",
+        default_value = "1acudos",
+        parse(try_from_str)
+    )]
     pub fees: Coin,
     /// The address fo the Gravity contract on Ethereum
     #[clap(short, long, env = "GRAVITY_CONTRACT_ADDR", parse(try_from_str))]

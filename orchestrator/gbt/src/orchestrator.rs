@@ -84,7 +84,7 @@ pub async fn orchestrator(
         )
         .await;
 
-        if !connections.grpc.is_none() && !connections.grpc.is_none() && !connections.grpc.is_none() {
+        if connections.grpc.is_some() && connections.grpc.is_some() && connections.grpc.is_some() {
             break;
         }
 

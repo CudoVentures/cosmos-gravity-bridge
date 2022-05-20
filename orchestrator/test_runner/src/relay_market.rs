@@ -81,7 +81,7 @@ async fn setup_batch_test(
         .wrap_eth(one_eth() * 10000u16.into(), *MINER_PRIVATE_KEY, None)
         .await;
     assert!(
-        !weth_acquired.is_err(),
+        weth_acquired.is_ok(),
         "Unable to wrap eth via web30.wrap_eth() {:?}",
         weth_acquired
     );
@@ -101,7 +101,7 @@ async fn setup_batch_test(
         )
         .await;
     assert!(
-        !token_acquired.is_err(),
+        token_acquired.is_ok(),
         "Unable to give the miner 1000 WETH worth of {}",
         erc20_contract
     );
@@ -191,7 +191,7 @@ async fn wait_for_batch(
     expect_batch: bool,
     web30: &Web3,
     contact: &Contact,
-    mut grpc_client: &mut GravityQueryClient<Channel>,
+    grpc_client: &mut GravityQueryClient<Channel>,
     requester_address: Address,
     erc20_contract: EthAddress,
     gravity_address: EthAddress,
@@ -201,13 +201,9 @@ async fn wait_for_batch(
         .await
         .unwrap();
 
-    get_oldest_unsigned_transaction_batch(
-        &mut grpc_client,
-        requester_address,
-        contact.get_prefix(),
-    )
-    .await
-    .expect("Failed to get batch to sign");
+    get_oldest_unsigned_transaction_batch(grpc_client, requester_address, contact.get_prefix())
+        .await
+        .expect("Failed to get batch to sign");
 
     let mut current_eth_batch_nonce =
         get_tx_batch_nonce(gravity_address, erc20_contract, *MINER_ADDRESS, web30)
