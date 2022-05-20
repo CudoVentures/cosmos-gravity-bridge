@@ -201,13 +201,9 @@ async fn wait_for_batch(
         .await
         .unwrap();
 
-    get_oldest_unsigned_transaction_batch(
-        grpc_client,
-        requester_address,
-        contact.get_prefix(),
-    )
-    .await
-    .expect("Failed to get batch to sign");
+    get_oldest_unsigned_transaction_batch(grpc_client, requester_address, contact.get_prefix())
+        .await
+        .expect("Failed to get batch to sign");
 
     let mut current_eth_batch_nonce =
         get_tx_batch_nonce(gravity_address, erc20_contract, *MINER_ADDRESS, web30)
