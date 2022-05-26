@@ -48,9 +48,15 @@ func (k Keeper) BuildOutgoingTXBatch(
 	}
 
 	selectedTx, err := k.pickUnbatchedTX(ctx, contract, maxElements)
-	if len(selectedTx) == 0 || err != nil {
+
+	if err != nil {
 		return nil, err
 	}
+
+	if len(selectedTx) == 0 {
+		return nil, sdkerrors.Wrap(types.ErrEmpty, "there are no unbatched transactions for that denom")
+	}
+
 	nextID := k.autoIncrementID(ctx, types.KeyLastOutgoingBatchID)
 	batch, err := types.NewInternalOutgingTxBatch(nextID, k.getBatchTimeoutHeight(ctx), selectedTx, contract, 0)
 	if err != nil {
