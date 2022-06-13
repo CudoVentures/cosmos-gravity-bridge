@@ -710,7 +710,7 @@ func (b *MsgValsetUpdatedClaim) ClaimHash() ([]byte, error) {
 	return tmhash.Sum([]byte(path)), nil
 }
 
-// NewMsgCancelSendToEth returns a new msgSetOrchestratorAddress
+// NewMsgCancelSendToEth returns a new msgCancelSendToEth
 func NewMsgCancelSendToEth(user sdk.AccAddress, id uint64) *MsgCancelSendToEth {
 	return &MsgCancelSendToEth{
 		Sender:        user.String(),
@@ -727,8 +727,8 @@ func (msg *MsgCancelSendToEth) Type() string { return "cancel_send_to_eth" }
 // ValidateBasic performs stateless checks
 func (msg *MsgCancelSendToEth) ValidateBasic() (err error) {
 	_, err = sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return err
+	if err != nil || len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes()).String()) != len(msg.Sender) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
 	}
 	return nil
 }
