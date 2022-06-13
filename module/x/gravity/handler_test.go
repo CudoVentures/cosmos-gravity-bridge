@@ -76,6 +76,170 @@ func TestHandleMsgSendToEth(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance4)
 }
 
+func TestHandleMsgCancelSendToEth(t *testing.T) {
+	var (
+		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		randomCosmosAddr, _             = sdk.AccAddressFromBech32("cosmos15w9q3vk4frw83h3ltgfeaz2tm6hhc3jyjtsmk2")
+		blockTime                       = time.Date(2020, 9, 14, 15, 20, 10, 0, time.UTC)
+		blockHeight           int64     = 200
+		denom                           = "gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e"
+		startingCoinAmount, _           = sdk.NewIntFromString("150000000000000000000") // 150 ETH worth, required to reach above u64 limit (which is about 18 ETH)
+		sendAmount, _                   = sdk.NewIntFromString("50000000000000000000")  // 50 ETH
+		feeAmount, _                    = sdk.NewIntFromString("5000000000000000000")   // 5 ETH
+		startingCoins         sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
+		sendingCoin           sdk.Coin  = sdk.NewCoin(denom, sendAmount)
+		feeCoin               sdk.Coin  = sdk.NewCoin(denom, feeAmount)
+		ethDestination                  = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+	)
+
+	// we start by depositing some funds into the users balance to send
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	h := NewHandler(input.GravityKeeper)
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userCosmosAddr, startingCoins)
+	balance1 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance1)
+
+	// send some coins
+	msg := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err := h(ctx, msg)
+	require.NoError(t, err)
+	balance2 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount.Sub(sendAmount).Sub(feeAmount))}, balance2)
+
+	// cancel should pass and refund funds
+	msgCancel := &types.MsgCancelSendToEth{
+		Sender:        userCosmosAddr.String(),
+		TransactionId: 1,
+	}
+	_, err = h(ctx, msgCancel)
+	require.NoError(t, err)
+	balance2 = input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}, balance2)
+
+	// cancel on the same tx should return error ransaction not found
+	cancelErrorText := "unknown transaction with id 1 from sender cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y: pool transaction: unknown"
+	msgCancel = &types.MsgCancelSendToEth{
+		Sender:        userCosmosAddr.String(),
+		TransactionId: 1,
+	}
+	_, err = h(ctx, msgCancel)
+	require.Error(t, err)
+	assert.Equal(t, cancelErrorText, err.Error())
+
+	// create another transaction
+	msg1 := &types.MsgSendToEth{
+		Sender:    userCosmosAddr.String(),
+		EthDest:   ethDestination,
+		Amount:    sendingCoin,
+		BridgeFee: feeCoin,
+	}
+
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, err1 := h(ctx, msg1)
+	require.NoError(t, err1)
+	balance3 := input.BankKeeper.GetAllBalances(ctx, userCosmosAddr)
+	finalAmount3 := startingCoinAmount.Sub(sendAmount).Sub(feeAmount)
+	assert.Equal(t, sdk.Coins{sdk.NewCoin(denom, finalAmount3)}, balance3)
+
+	// try to cancel it with a wrong sender address
+	msgCancel1 := &types.MsgCancelSendToEth{
+		Sender:        randomCosmosAddr.String(),
+		TransactionId: 2,
+	}
+
+	cancelWrongSenderErrorText := "Sender cosmos15w9q3vk4frw83h3ltgfeaz2tm6hhc3jyjtsmk2 did not send Id 2: invalid"
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight + 200)
+	_, errCancel1 := h(ctx, msgCancel1)
+	require.Error(t, err)
+	assert.Equal(t, cancelWrongSenderErrorText, errCancel1.Error())
+
+	// insert it into batch
+	msgbatch := &types.MsgRequestBatch{
+		Sender: userCosmosAddr.String(),
+		Denom:  denom,
+	}
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight)
+	_, errBatch := h(ctx, msgbatch)
+	require.NoError(t, errBatch)
+
+	// try to cancel batched transaction
+	msgCancel2 := &types.MsgCancelSendToEth{
+		Sender:        userCosmosAddr.String(),
+		TransactionId: 2,
+	}
+
+	cancelErrorText = "unknown transaction with id 2 from sender cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y: pool transaction: unknown"
+	ctx = ctx.WithBlockTime(blockTime).WithBlockHeight(blockHeight + 200)
+	_, errCancel2 := h(ctx, msgCancel2)
+	require.Error(t, err)
+	assert.Equal(t, cancelErrorText, errCancel2.Error())
+}
+
+func TestMsgSetMinFeeTransferToEth(t *testing.T) {
+	var (
+		adminAddress, _           = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
+		startingCoins   sdk.Coins = sdk.Coins{sdk.NewCoin("acudos", sdk.NewInt(100000000))}
+		adminCoin       sdk.Coin  = sdk.NewCoin("cudosAdmin", sdk.NewInt(1))
+		innitialMinFee  sdk.Int   = sdk.NewInt(1)
+		correctSetFee   sdk.Int   = sdk.NewInt(10)
+		invalidSetFee   sdk.Int   = sdk.NewInt(-10)
+	)
+
+	// we start by depositing some funds into the users balance to send
+	input := keeper.CreateTestEnv(t)
+	ctx := input.Context
+	h := NewHandler(input.GravityKeeper)
+
+	//set an account without admin token
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, startingCoins)
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, adminAddress, startingCoins)
+
+	//set innitial min fee
+	input.GravityKeeper.SetMinimumFeeTransferToEth(ctx, innitialMinFee)
+	assert.Equal(t, innitialMinFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	// try set from address without admin tokens
+	msg := &types.MsgSetMinFeeTransferToEth{
+		Sender: adminAddress.String(),
+		Fee:    correctSetFee,
+	}
+
+	_, err := h(ctx, msg)
+	require.Error(t, err)
+	assert.Equal(t, innitialMinFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//add admin coins to account
+	input.BankKeeper.MintCoins(ctx, types.ModuleName, sdk.Coins{adminCoin})
+	input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, adminAddress, sdk.Coins{adminCoin})
+	assert.Equal(t, startingCoins.Add(adminCoin), input.BankKeeper.GetAllBalances(ctx, adminAddress))
+
+	//should pass correctly
+	_, err1 := h(ctx, msg)
+	require.NoError(t, err1)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//now try with incorrect value
+	msg.Fee = invalidSetFee
+	_, err2 := h(ctx, msg)
+	require.Error(t, err2)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+	//now try with same value as it already is - should throw error
+	require.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+	msg.Fee = correctSetFee
+	_, err3 := h(ctx, msg)
+	require.Error(t, err3)
+	assert.Equal(t, correctSetFee, input.GravityKeeper.GetMinimumFeeTransferToEth(ctx))
+
+}
+
 //nolint: exhaustivestruct
 func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	var (

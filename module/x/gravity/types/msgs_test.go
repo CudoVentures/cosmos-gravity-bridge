@@ -62,4 +62,40 @@ func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
 		})
 	}
 
+func TestMsgCancelSendToEth(t *testing.T) {
+	var (
+		senderAddress sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
+	)
+
+	specs := map[string]struct {
+		sender        sdk.AccAddress
+		transactionId uint64
+		expErr        bool
+	}{
+		"all good": {
+			sender:        senderAddress,
+			transactionId: 1,
+			expErr:        false,
+		},
+		"invalid address": {
+			sender:        []byte{0x1},
+			transactionId: 1,
+			expErr:        true,
+		},
+	}
+
+	for msg, spec := range specs {
+		fmt.Println(msg)
+		t.Run(msg, func(t *testing.T) {
+			msg := NewMsgCancelSendToEth(spec.sender, spec.transactionId)
+			// when
+			err := msg.ValidateBasic()
+			if spec.expErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+		})
+	}
 }
