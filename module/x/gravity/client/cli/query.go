@@ -30,8 +30,8 @@ func GetQueryCmd() *cobra.Command {
 		// CmdGetOutgoingTXBatchByNonceRequest(),
 		// CmdGetAllAttestationsRequest(),
 		// CmdGetAttestationRequest(),
-		QueryObserved(),
-		QueryApproved(),
+		// QueryObserved(),
+		// QueryApproved(),
 	}...)
 
 	return gravityQueryCmd

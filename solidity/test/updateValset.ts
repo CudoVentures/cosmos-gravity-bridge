@@ -26,13 +26,14 @@ async function runTest(opts: {
   nonceNotIncremented?: boolean;
   badValidatorSig?: boolean;
   zeroedValidatorSig?: boolean;
+  zeroedEcrecoverAddress?: boolean;
   notEnoughPower?: boolean;
   badReward?: boolean;
   notEnoughReward?: boolean;
   withReward?: boolean;
   notWhiteListed?: boolean;
-  isWHitelisted?: boolean;
   removedWhitelist:? boolean;
+  contractLocked:? boolean;
 }) {
 
   let cudosAccessControl:any
@@ -121,6 +122,11 @@ async function runTest(opts: {
     newValset.rewardAmount = 5000000
   }
 
+
+  if(opts.zeroedEcrecoverAddress) {
+    newValset.validators[0] = ZeroAddress;
+  }
+
   const checkpoint = makeCheckpoint(
     newValset.validators,
     newValset.powers,
@@ -147,6 +153,13 @@ async function runTest(opts: {
     sigs.v[1] = 0;
   }
 
+  //in certain conditions ecrecover might return empty address
+  //this is to test this case
+  //when setting "v" to any positive number, other than 27 or 28 results in this
+  if(opts.zeroedEcrecoverAddress) {
+    sigs.v[0] = 17;
+  }
+
   if (opts.notEnoughPower) {
     // zero out enough signatures that we dip below the threshold
     sigs.v[1] = 0;
@@ -166,7 +179,9 @@ async function runTest(opts: {
   }
 
   if (opts.notWhiteListed) {
-    await gravity.connect(signers[3]).updateValset(
+    let testAcc = signers[powers.length+1];
+
+    await gravity.connect(testAcc).updateValset(
       newValset,
       currentValset,
       sigs.v,
@@ -175,42 +190,13 @@ async function runTest(opts: {
     )
   }
 
-  let valsetUpdateTx
-  if (opts.isWHitelisted) {
-    await gravity.manageWhitelist([signers[3].address], true)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
-
-    return { gravity, checkpoint };
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
   }
 
-  if(opts.removedWhitelist) {
-    await gravity.manageWhitelist([signers[3].address], true)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
+  let valsetUpdateTx;
 
-    await gravity.manageWhitelist([signers[3].address], false)
-    valsetUpdateTx = await gravity.connect(signers[3]).updateValset(
-      newValset,
-      currentValset,
-      sigs.v,
-      sigs.r,
-      sigs.s
-    )
-  }
-
-
-   valsetUpdateTx = await gravity.updateValset(
+  valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
@@ -251,13 +237,13 @@ describe("updateValset tests", function () {
     await expect(
       runTest({ nonMatchingCurrentValset: true })
     ).to.be.revertedWith(
-      "Supplied current validators and powers do not match checkpoint"
+      "given valset != checkpoint"
     );
   });
 
   it("throws on new valset nonce not incremented", async function () {
     await expect(runTest({ nonceNotIncremented: true })).to.be.revertedWith(
-      "New valset nonce must be greater than the current nonce"
+      "newValset nonce <= current"
     );
   });
 
@@ -271,9 +257,15 @@ describe("updateValset tests", function () {
     await runTest({ zeroedValidatorSig: true });
   });
 
+  it("throws on sig returning empty ecrecover address", async function () {
+    await expect(runTest({zeroedEcrecoverAddress: true})).to.be.revertedWith(
+      "ECDSA: invalid signature 'v' value"
+    );
+  })
+
   it("throws on not enough signatures", async function () {
     await expect(runTest({ notEnoughPower: true })).to.be.revertedWith(
-      "Submitted validator set signatures do not have enough power"
+      "given valset power < threshold"
     );
   });
 
@@ -288,16 +280,17 @@ describe("updateValset tests", function () {
       "transfer amount exceeds balance"
     );
   });
-  it("throws on not whitelisted signer ", async function () {
+  it("throws on not whitelisted signer (trusted validator) ", async function () {
     await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
-      "The caller is not whitelisted for this operation"
+      "not validated orchestrator"
     );
   });
-  it("throws on not already removed singer from whitelist ", async function () {
-    await expect(runTest({ removedWhitelist: true })).to.be.revertedWith(
-      "The caller is not whitelisted for this operation"
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
     );
-  });
+  })
 
   it("pays reward correctly", async function () {
     let {gravity, checkpoint} = await runTest({ withReward: true });
@@ -310,7 +303,7 @@ describe("updateValset tests", function () {
   });
 
   it("happy path with whitelisted signer", async function () {
-    let { gravity, checkpoint } = await runTest({ isWHitelisted:true});
+    let { gravity, checkpoint } = await runTest({});
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
 });

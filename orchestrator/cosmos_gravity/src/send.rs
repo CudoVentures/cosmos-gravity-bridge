@@ -1,3 +1,4 @@
+use crate::utils::wait_for_tx_with_retry;
 use clarity::{constants::ZERO_ADDRESS, Address as EthAddress};
 use clarity::{PrivateKey as EthPrivateKey, Signature};
 use deep_space::address::Address;
@@ -24,11 +25,10 @@ use gravity_proto::gravity::MsgValsetUpdatedClaim;
 use gravity_proto::gravity::{MsgBatchSendToEthClaim, MsgSubmitBadSignatureEvidence};
 use gravity_proto::gravity::{MsgCancelSendToEth, MsgConfirmBatch};
 use gravity_utils::types::*;
-use crate::utils::wait_for_tx_with_retry;
 use std::{collections::HashMap, time::Duration};
 
-use num256::Uint256;
 use crate::utils::BadSignatureEvidence;
+use num256::Uint256;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -308,10 +308,7 @@ pub async fn send_ethereum_claims(
             block_height: downcast_uint256(valset.block_height).unwrap(),
             members: valset.members.iter().map(|v| v.into()).collect(),
             reward_amount: valset.reward_amount.to_string(),
-            reward_token: valset
-                .reward_token
-                .unwrap_or_else(|| *ZERO_ADDRESS)
-                .to_string(),
+            reward_token: valset.reward_token.unwrap_or(*ZERO_ADDRESS).to_string(),
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgValsetUpdatedClaim", claim);
@@ -390,7 +387,6 @@ pub async fn send_to_eth(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
 
-  
     let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
     messages.push(msg);
@@ -467,7 +463,7 @@ pub async fn submit_bad_signature_evidence(
     );
     messages.push(msg);
     let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
-  
+
     let args = contact.get_message_args(our_address, fee_calc).await?;
     trace!("got optional tx info");
 
@@ -519,7 +515,9 @@ async fn calc_fee(
     contact: &Contact,
     messages: Vec<Msg>,
 ) -> Result<deep_space::Fee, CosmosGrpcError> {
-    let mut fee_calc = contact.get_fee_info(&messages, &[fee.clone()], private_key).await?;
+    let mut fee_calc = contact
+        .get_fee_info(&messages, &[fee.clone()], private_key)
+        .await?;
     fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
     info!("{:?}", fee_calc);
     Ok(fee_calc)

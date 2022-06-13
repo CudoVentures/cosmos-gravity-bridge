@@ -1,10 +1,10 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strconv"
-	"encoding/hex"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -322,7 +322,7 @@ func (k Keeper) GetLastObservedEthereumBlockHeight(ctx sdk.Context) types.LastOb
 	height := types.LastObservedEthereumBlockHeight{
 		CosmosBlockHeight:   0,
 		EthereumBlockHeight: 0,
-		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
+		CosmosBlockTimeMs:   0,
 	}
 	k.cdc.MustUnmarshal(bytes, &height)
 	return height
@@ -334,6 +334,7 @@ func (k Keeper) SetLastObservedEthereumBlockHeight(ctx sdk.Context, ethereumHeig
 	height := types.LastObservedEthereumBlockHeight{
 		EthereumBlockHeight: ethereumHeight,
 		CosmosBlockHeight:   uint64(ctx.BlockHeight()),
+		CosmosBlockTimeMs:   uint64(ctx.BlockTime().UnixNano() / 1000000),
 	}
 	store.Set(types.LastObservedEthereumBlockHeightKey, k.cdc.MustMarshal(&height))
 }

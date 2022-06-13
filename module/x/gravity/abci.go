@@ -26,16 +26,16 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	//create batches every 120 blocks
+	//create batches every batchCreationPeriod blocks
 	bh := uint64(ctx.BlockHeight())
-	if bh%120 != 0 {
-		ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+120-(bh%120)), "module", types.ModuleName, "action", "auto creation of batches")
+	if bh%keeper.BatchCreationPeriod != 0 {
+		ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+keeper.BatchCreationPeriod-(bh%keeper.BatchCreationPeriod)), "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
 	if !hasUnbatchedTransactions {
-		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
+		ctx.Logger().Info("There are not any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
