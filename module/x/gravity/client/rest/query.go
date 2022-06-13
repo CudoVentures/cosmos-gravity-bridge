@@ -114,6 +114,26 @@ func allBatchConfirmsHandler(cliCtx client.Context, storeName string) http.Handl
 	}
 }
 
+// gets all the unbatched send to eth transactions
+func pendingSendToEthTransactions(cliCtx client.Context, storeName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		sender := vars[sender]
+
+		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/pendingSendToEthTransactions/%s", storeName, sender))
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(res) == 0 {
+			rest.WriteErrorResponse(w, http.StatusNotFound, "valset confirms not found")
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx.WithHeight(height), res)
+	}
+}
+
 func lastValsetRequestsHandler(cliCtx client.Context, storeName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, height, err := cliCtx.Query(fmt.Sprintf("custom/%s/lastValsetRequests", storeName))

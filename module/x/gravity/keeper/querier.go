@@ -63,6 +63,9 @@ const (
 	// token type, a relayer can then estimate their potential profit when requesting
 	// a batch
 	QueryBatchFees = "batchFees"
+	// Used to query all unbatched SendToEth transactions to get their senders and ID
+	// for UI CancelSendToEth uses
+	PendingSendToEthTransactions = "pendingSendToEthTransactions"
 
 	// Logic calls
 	// note the current logic here constrains logic call throughput to one
@@ -121,6 +124,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return lastBatchesRequest(ctx, keeper)
 		case QueryBatchFees:
 			return queryBatchFees(ctx, keeper)
+		case PendingSendToEthTransactions:
+			return queryPendingSendToEthTransactions(ctx, path[1], keeper)
 
 		// Logic calls
 		case QueryLogicCall:
@@ -367,6 +372,42 @@ func queryBatchFees(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
+	return res, nil
+}
+
+func queryPendingSendToEthTransactions(ctx sdk.Context, sender string, keeper Keeper) ([]byte, error) {
+	batches := keeper.GetOutgoingTxBatches(ctx)
+	unbatched_tx := keeper.GetUnbatchedTransactions(ctx)
+
+	_, err := sdk.AccAddressFromBech32(sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "address invalid")
+	}
+
+	val := types.QueryPendingSendToEthResponse{
+		TransfersInBatches: []*types.OutgoingTransferTx{},
+		UnbatchedTransfers: []*types.OutgoingTransferTx{},
+	}
+
+	for _, batch := range batches {
+		for _, tx := range batch.Transactions {
+			if tx.Sender.String() == sender {
+				val.TransfersInBatches = append(val.TransfersInBatches, tx.ToExternal())
+			}
+		}
+	}
+
+	for _, tx := range unbatched_tx {
+		if tx.Sender.String() == sender {
+			val.UnbatchedTransfers = append(val.UnbatchedTransfers, tx.ToExternal())
+		}
+	}
+
+	res, err := codec.MarshalJSONIndent(types.ModuleCdc, val)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+
 	return res, nil
 }
 
