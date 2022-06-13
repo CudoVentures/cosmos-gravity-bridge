@@ -13,6 +13,7 @@ const (
 	tokenAddress           = "tokenAddress"
 	denom                  = "denom"
 	bech32ValidatorAddress = "bech32ValidatorAddress"
+	sender                 = "sender"
 )
 
 // Here are the routes that are actually queried by the rust
@@ -23,6 +24,7 @@ const (
 // "gravity/pending_batch_requests/{}"
 // "gravity/transaction_batches/"
 // "gravity/signed_batches"
+// "gravity/pending_send_to_eth_transactions/{}"
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
@@ -56,6 +58,8 @@ func RegisterRoutes(cliCtx client.Context, r *mux.Router, storeName string) {
 	// This endpoint gets all of the batch confirmations for a given nonce and denom In order to determine if a batch is complete
 	// the relayer will compare the valset power on the contract to the number of signatures
 	r.HandleFunc(fmt.Sprintf("/%s/batch_confirm/{%s}/{%s}", storeName, nonce, tokenAddress), allBatchConfirmsHandler(cliCtx, storeName)).Methods("GET")
+	// Gets the pending transactions. This is needed for CancelSendToEth UI
+	r.HandleFunc(fmt.Sprintf("/%s/pending_send_to_eth_transactions/{%s}", storeName, sender), pendingSendToEthTransactions(cliCtx, storeName)).Methods("GET")
 
 	/// Cosmos originated assets
 
