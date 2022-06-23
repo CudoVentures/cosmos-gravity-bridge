@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -33,6 +34,7 @@ func GetTxCmd(storeKey string) *cobra.Command {
 		CmdRequestBatch(),
 		CmdSetOrchestratorAddress(),
 		GetUnsafeTestingCmd(),
+		CmdCancelSendToEth(),
 	}...)
 
 	return gravityTxCmd
@@ -232,6 +234,40 @@ func CmdSetOrchestratorAddress() *cobra.Command {
 				Validator:    args[0],
 				Orchestrator: args[1],
 				EthAddress:   args[2],
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			// Send it
+			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdCancelSendToEth() *cobra.Command {
+	//nolint: exhaustivestruct
+	cmd := &cobra.Command{
+		Use:   "cancel-send-to-eth [transaction id]",
+		Short: "Removes an entry from the transaction pool, preventing your tokens from going to Ethereum and refunding the send.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			cosmosAddr := cliCtx.GetFromAddress()
+
+			txId, err := strconv.ParseUint(args[0], 0, 64)
+			if err != nil {
+				return sdkerrors.Wrap(err, "failed to parse transaction id")
+			}
+
+			// Make the message
+			msg := types.MsgCancelSendToEth{
+				Sender:        cosmosAddr.String(),
+				TransactionId: txId,
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
