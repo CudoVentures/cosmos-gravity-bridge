@@ -3,7 +3,7 @@ pipeline {
 
     stages {
         stage('Build') {
-            agent { label 'jenkins-node' }
+            agent { label 'jenkins-node​' }
             steps {
                 echo 'Building..'
                 sh '''
@@ -17,3 +17,4 @@ pipeline {
             echo 'This will run only if successful'
         }
     }
+}
