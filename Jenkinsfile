@@ -1,36 +1,35 @@
 pipeline {
-    agent none
+    agent any
+    tools {
+        go 'go1.18.3'
+    }
+    environment {
+        GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
+    }
     stages {
-        stage('Build') {
-            agent {
-                docker { image 'golang:1.18-bullseye' }
-            }
+        stage("build") {
             steps {
-                sh 'go --version'
-                echo '$GOPATH'
-                dir('module') {
-                     sh 'make'
+                dir('module'){
+                    echo 'BUILD EXECUTION STARTED'
+                    sh 'go version'
+                    echo '$GOPATH'
+                    sh 'make'         
                 }
-                          }
-        }
-        stage('Test') {
-            agent {
-                docker { image 'golang:1.18-bullseye' }
             }
+        }
+        stage("unit-test") {
             steps {
-                sh 'go --version'
-                echo '$GOPATH'
-                dir('module') {
-                     sh 'make test'
+                dir('module'){
+                    echo 'UNIT TEST EXECUTION STARTED'
+                    sh 'make unit-tests'
                 }
-                          }
+            } 
         }
-        stage('Run Solidity NodeJS tests') {
-            agent {
-                docker { image 'node:16.13.1-alpine' }
-            }
+        stage("functional-test") {
             steps {
-                sh 'node --version'
+                dir('module'){
+                    echo 'FUNCTIONAL TEST EXECUTION STARTED'
+                }
             }
         }
     }
