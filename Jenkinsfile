@@ -33,5 +33,33 @@ pipeline {
                 }
             }
         }
+        stage('Rust test') {
+            agent {
+                docker {
+                    image 'rust:latest'
+                    reuseNode true
+                }
+            }
+            steps {
+                  dir('orchestrator'){
+                    echo 'RUST TEST EXECUTION STARTED'
+                    sh 'cargo check --all --verbose'
+                    sh 'cargo test --all --verbose'
+                    sh 'cargo fmt --all -- --check'
+                    sh 'cargo clippy --all --all-targets --all-features -- -D warnings'
+                }
+            }
+        }
+        // stage('Store to GCS') { // not needed yet
+        //     steps{
+        //         sh '''
+        //             env > build_environment.txt
+        //         '''
+        //         // If we name pattern build_environment.txt, this will upload the local file to our GCS bucket.
+        //         step([$class: 'ClassicUploadStep', credentialsId: env
+        //                 .CREDENTIALS_ID,  bucket: "gs://${env.BUCKET}",
+        //                 pattern: env.PATTERN])
+        //     }
+        // }
     }
 }
