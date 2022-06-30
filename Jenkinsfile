@@ -3,17 +3,14 @@ pipeline {
     tools {
         go 'Go 1.18.3'
     }
-    environment {
-        GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
-    }
     stages {
         stage("build") {
             steps {
                 dir('module'){
                     echo 'BUILD EXECUTION STARTED'
-                    sh 'go version'
-                    echo '$GOPATH'
-                    sh 'make'         
+                    echo "WORKSPACE is ${WORKSPACE}"
+                    sh 'printenv'
+                    sh 'make'   
                 }
             }
         }
@@ -21,7 +18,7 @@ pipeline {
             steps {
                 dir('module'){
                     echo 'UNIT TEST EXECUTION STARTED'
-                    sh 'make unit-tests'
+                    sh 'make test'
                 }
             } 
         }
