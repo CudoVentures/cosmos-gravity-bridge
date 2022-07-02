@@ -66,7 +66,11 @@ pipeline {
     }
     post {
        success{
-              slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            def userIds = slackUserIdsFromCommitters()
+            def userIdsString = userIds.collect { "<@$it>" }.join(' ')
+            slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            echo "userIds is ${userIds}"
+            echo "userIdsString is ${userIdsString}"
        }
     }
 }
