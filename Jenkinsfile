@@ -85,5 +85,3 @@ def color_slack_msg() {
         break
     }
 }
-
-}
