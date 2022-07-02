@@ -65,15 +65,28 @@ pipeline {
         // }
     }
     post {
-       success{
-            def userIds = slackUserIdsFromCommitters()
-            def userIdsString = userIds.collect { "<@$it>" }.join(' ')
-            slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-            echo "userIds is ${userIds}"
-            echo "userIdsString is ${userIdsString}"
-       }
+        always {
+            script {
+                env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT} | head -n1', returnStdout: true).stripIndent().trim()
+                env.GIT_AUTHOR = sh (script: 'git log -1 --pretty=%ae ${GIT_COMMIT} | awk -F "@" \'{print $1}\' | grep -Po "[a-z]{1,}" | head -n1', returnStdout: true).trim()
+                slackSend(
+                    color: color_slack_msg(),
+                    message: """
+                        *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by <@${env.GIT_AUTHOR}>
+                        Build commit: ${GIT_COMMIT}
+                        Last commit message: '${env.GIT_COMMIT_MSG}'
+                        More info at: ${env.BUILD_URL}
+                        Time: ${currentBuild.durationString.minus(' and counting')}
+                        """.stripIndent().trim(),
+                    channel: 'cudos-testnet-jenkins',
+                    tokenCredentialId: 'slack-token'
+                )
+            }
+            cleanWs()
+        }
     }
 }
+
 
 def color_slack_msg() {
     switch(currentBuild.currentResult) {
