@@ -9,50 +9,47 @@ pipeline {
             steps {
                 dir('module'){
                     echo 'BUILD EXECUTION STARTED'
-                    echo "WORKSPACE is ${WORKSPACE}"
-                    sh 'printenv'
-                    // sh 'make'   
-                    sh 'cargo --version'
+                    sh 'make'   
                 }
             }
         }
-        // stage("unit-test") {
-        //     steps {
-        //         dir('module'){
-        //             echo 'UNIT TEST EXECUTION STARTED'
-        //             sh 'make test'
-        //         }
-        //     } 
-        // }
-        // stage("solidity-test") {
-        //     steps {
-        //         dir('solidity'){
-        //             echo 'SOLIDITY TEST EXECUTION STARTED'
-        //             sh 'npm install'
-        //             sh 'npx hardhat typechain'
-        //             sh 'npx hardhat test'
-        //         }
-        //     }
-        // }
-        // stage('Rust test') {
-        //     agent {
-        //         docker {
-        //             image 'rust:latest'
-        //             reuseNode true
-        //         }
-        //     }
-        //     steps {
-        //           dir('orchestrator'){
-        //             echo 'RUST TEST EXECUTION STARTED'
-        //             sh 'rustup component add rustfmt'
-        //             // sh 'rustup component add clippy'
-        //             sh 'cargo check --all --verbose'
-        //             sh 'cargo test --verbose'
-        //             sh 'cargo fmt --all -- --check'
-        //             // sh 'cargo clippy --all --all-targets --all-features -- -D warnings'  - clippy checks fails currently
-        //         }
-        //     }
-        // }
+        stage("unit-test") {
+            steps {
+                dir('module'){
+                    echo 'UNIT TEST EXECUTION STARTED'
+                    sh 'make test'
+                }
+            } 
+        }
+        stage("solidity-test") {
+            steps {
+                dir('solidity'){
+                    echo 'SOLIDITY TEST EXECUTION STARTED'
+                    sh 'npm install'
+                    sh 'npx hardhat typechain'
+                    sh 'npx hardhat test'
+                }
+            }
+        }
+        stage('Rust test') {
+            agent {
+                docker {
+                    image 'rust:latest'
+                    reuseNode true
+                }
+            }
+            steps {
+                  dir('orchestrator'){
+                    echo 'RUST TEST EXECUTION STARTED'
+                    sh 'rustup component add rustfmt'
+                    // sh 'rustup component add clippy'
+                    sh 'cargo check --all --verbose'
+                    sh 'cargo test --verbose'
+                    sh 'cargo fmt --all -- --check'
+                    // sh 'cargo clippy --all --all-targets --all-features -- -D warnings'  - clippy checks fails currently
+                }
+            }
+        }
         // stage('Store to GCS') { // not needed yet as we are not using the artifacts
         //     steps{
         //         sh '''
