@@ -99,4 +99,3 @@ def color_slack_msg() {
         break
     }
 }
- CUDOS-1127-CI-CD-GB
