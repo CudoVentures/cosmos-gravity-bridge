@@ -12,6 +12,7 @@ pipeline {
                     echo "WORKSPACE is ${WORKSPACE}"
                     sh 'printenv'
                     // sh 'make'   
+                    sh 'cargo --version'
                 }
             }
         }
@@ -65,7 +66,7 @@ pipeline {
         // }
     }
     post {
-        always {
+        failure {
             script {
                 def userIds = slackUserIdsFromCommitters()
                 def userIdsString = userIds.collect { "<@$it>" }.join(' ')
