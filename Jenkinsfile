@@ -9,7 +9,7 @@ pipeline {
             steps {
                 dir('module'){
                     echo 'BUILD EXECUTION STARTED'
-                    sh 'make'   
+                    // sh 'make'   
                 }
             }
         }
@@ -17,7 +17,7 @@ pipeline {
             steps {
                 dir('module'){
                     echo 'UNIT TEST EXECUTION STARTED'
-                    sh 'make test'
+                    // sh 'make test'
                 }
             } 
         }
@@ -25,9 +25,9 @@ pipeline {
             steps {
                 dir('solidity'){
                     echo 'SOLIDITY TEST EXECUTION STARTED'
-                    sh 'npm install'
-                    sh 'npx hardhat typechain'
-                    sh 'npx hardhat test'
+                    // sh 'npm install'
+                    // sh 'npx hardhat typechain'
+                    // sh 'npx hardhat test'
                 }
             }
         }
@@ -41,12 +41,12 @@ pipeline {
             steps {
                   dir('orchestrator'){
                     echo 'RUST TEST EXECUTION STARTED'
-                    sh 'rustup component add rustfmt'
-                    // sh 'rustup component add clippy'
-                    sh 'cargo check --all --verbose'
-                    sh 'cargo test --verbose'
-                    sh 'cargo fmt --all -- --check'
-                    // sh 'cargo clippy --all --all-targets --all-features -- -D warnings'  - clippy checks fails currently
+                    // sh 'rustup component add rustfmt'
+                    sh 'rustup component add clippy'
+                    // sh 'cargo check --all --verbose'
+                    // sh 'cargo test --verbose'
+                    // sh 'cargo fmt --all -- --check'
+                    sh 'cargo clippy --all --all-targets --all-features -- -D warnings' 
                 }
             }
         }
