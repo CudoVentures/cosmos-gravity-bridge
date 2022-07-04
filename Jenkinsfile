@@ -69,18 +69,19 @@ pipeline {
             script {
                 def userIds = slackUserIdsFromCommitters()
                 def userIdsString = userIds.collect { "<@$it>" }.join(' ')
-                slackSend(color: "good", message: "$userIdsString Message from Jenkins Pipeline")
                 env.GIT_COMMIT_MSG = sh (script: 'git log -1 --pretty=%B ${GIT_COMMIT} | head -n1', returnStdout: true).stripIndent().trim()
                 slackSend(
                     color: color_slack_msg(),
                     message: """
-                        *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by $userIdsString
+                        *${currentBuild.currentResult}:* Job `${env.JOB_NAME}` build `${env.BUILD_DISPLAY_NAME}` by ${userIdsString}
                         Build commit: ${GIT_COMMIT}
                         Last commit message: '${env.GIT_COMMIT_MSG}'
                         More info at: ${env.BUILD_URL}
                         Time: ${currentBuild.durationString.minus(' and counting')}
                         """.stripIndent().trim()
+                )
             }
+            cleanWs()
         }
     }
 }
