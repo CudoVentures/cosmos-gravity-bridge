@@ -71,7 +71,7 @@ pipeline {
                 echo "userIds is ${userIds}"
                 def userIdsString = userIds.collect { "<@$it>" }.join(' ')
                 echo "userIdsString is ${userIdsString}"
-                // slackSend(color: "good", message: "$userIdsString Message from Jenkins Pipeline")
+                slackSend(color: "good", message: "$userIdsString Message from Jenkins Pipeline")
             }
             cleanWs()
         }
