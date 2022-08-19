@@ -4,7 +4,7 @@ go 1.15
 
 // replace github.com/cosmos/cosmos-sdk => ../../cosmos-sdk
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220428091713-7509d08ecf5c
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
@@ -14,7 +14,6 @@ require (
 	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
-	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
