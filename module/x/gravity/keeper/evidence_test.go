@@ -35,7 +35,7 @@ func TestSubmitBadSignatureEvidenceBatchExists(t *testing.T) {
 	require.NoError(t, input.BankKeeper.MintCoins(ctx, types.ModuleName, allVouchers))
 	// set senders balance
 	input.AccountKeeper.NewAccountWithAddress(ctx, mySender)
-	require.NoError(t, input.BankKeeper.SetBalances(ctx, mySender, allVouchers))
+	require.NoError(t, input.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, mySender, allVouchers))
 
 	// CREATE BATCH
 
@@ -116,7 +116,7 @@ func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
 
 	batch := types.OutgoingTxBatch{
 		TokenContract: "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
-		BatchTimeout: 420,
+		BatchTimeout:  420,
 	}
 
 	checkpoint := batch.GetCheckpoint(input.GravityKeeper.GetGravityID(ctx))

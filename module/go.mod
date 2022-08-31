@@ -2,9 +2,11 @@ module github.com/althea-net/cosmos-gravity-bridge/module
 
 go 1.15
 
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220111092913-4117cd46b688
+
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/cosmos/cosmos-sdk v0.44.4
+	github.com/cosmos/cosmos-sdk v0.44.5
 	github.com/cosmos/ibc-go v1.2.3
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/gin-gonic/gin v1.7.0 // indirect

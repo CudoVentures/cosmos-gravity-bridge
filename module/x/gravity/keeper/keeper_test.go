@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,15 +68,17 @@ func TestCurrentValsetNormalization(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			operators := make([]MockStakingValidatorData, len(spec.srcPowers))
 			for i, v := range spec.srcPowers {
-				cAddr := bytes.Repeat([]byte{byte(i)}, sdk.AddrLen)
+				cAddr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+				vAddr := sdk.ValAddress(cAddr)
+
 				operators[i] = MockStakingValidatorData{
 					// any unique addr
-					Operator: cAddr,
+					Operator: vAddr,
 					Power:    int64(v),
 				}
 				ethAddr, err := types.NewEthAddress(EthAddrs[i].String())
 				require.NoError(t, err)
-				input.GravityKeeper.SetEthAddressForValidator(ctx, cAddr, *ethAddr)
+				input.GravityKeeper.SetEthAddressForValidator(ctx, vAddr, *ethAddr)
 			}
 			input.GravityKeeper.StakingKeeper = NewStakingKeeperWeightedMock(operators...)
 			r := input.GravityKeeper.GetCurrentValset(ctx)
