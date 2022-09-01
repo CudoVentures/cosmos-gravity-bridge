@@ -112,3 +112,11 @@ You can keep up with the latest development by watching our [public standups](ht
 
 - There must be a validator set update made on the Ethereum contract by calling the `updateValset` method at least once every Cosmos unbonding period (usually 2 weeks). This is because if there has not been an update for longer than the unbonding period, the validator set stored by the Ethereum contract could contain validators who cannot be slashed for misbehavior.
 - Cosmos full nodes do not verify events coming from Ethereum. These events are accepted into the Cosmos state based purely on the signatures of the current validator set. It is possible for the validators with >2/3 of the stake to put events into the Cosmos state which never happened on Ethereum. In this case observers of both chains will need to "raise the alarm". We have built this functionality into the relayer.
+
+## Cudos changes to original Althea GravityBridge
+Since we forked the project, there are several changes that we've made to the repo. They are described below
+
+### Added static valset functionality
+We've added a static list of validators that participate in the orchestrating process. This is set during the init of the chain and can only be changed with a fork.
+
+This is done on the module level, where if a validator tries to set itself as orchestrator, and is not in the static valset list, an error is thrown.
