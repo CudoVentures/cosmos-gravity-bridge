@@ -112,3 +112,11 @@ You can keep up with the latest development by watching our [public standups](ht
 
 - There must be a validator set update made on the Ethereum contract by calling the `updateValset` method at least once every Cosmos unbonding period (usually 2 weeks). This is because if there has not been an update for longer than the unbonding period, the validator set stored by the Ethereum contract could contain validators who cannot be slashed for misbehavior.
 - Cosmos full nodes do not verify events coming from Ethereum. These events are accepted into the Cosmos state based purely on the signatures of the current validator set. It is possible for the validators with >2/3 of the stake to put events into the Cosmos state which never happened on Ethereum. In this case observers of both chains will need to "raise the alarm". We have built this functionality into the relayer.
+
+## Cudos changes to original Althea GravityBridge
+Since we forked the project, there are several changes that we've made to the repo. They are described below
+
+### Added minimum bridge fee for MsgSendToEth
+Since the orchestrators sign ethereum transactions in order to validate the transfers from Cudos to Ethereum, they need to receive some minimum amount of CUDOS in order to not be at a loss at the end. We've implemented a minimum amount of bridge fee that needs to be set in each transfer.
+
+To do this we've implemented a new parameter, messages for setting it, that can be ran only by adminToken holders and checks in MsgSendToEth. Also we've redone some other tests to accomodate that change.
