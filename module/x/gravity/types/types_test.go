@@ -15,9 +15,9 @@ import (
 func TestValsetConfirmHash(t *testing.T) {
 	powers := []uint64{3333, 3333, 3333}
 	ethAddresses := []string{
-		"0xc783df8a850f42e7F7e57013759C285caa701eB6",
-		"0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4",
-		"0xE5904695748fe4A84b40b3fc79De2277660BD1D3",
+		"0xc783df8a850f42e7f7e57013759c285caa701eb6",
+		"0xead9c93b79ae7c1591b1fb5323bd777e86e150d4",
+		"0xe5904695748fe4a84b40b3fc79de2277660bd1d3",
 	}
 	members := make(InternalBridgeValidators, len(powers))
 	for i := range powers {
@@ -37,14 +37,14 @@ func TestValsetConfirmHash(t *testing.T) {
 	// the same hardcoded value in the solidity tests
 	hash := v.GetCheckpoint("foo")
 	hexHash := hex.EncodeToString(hash)
-	correctHash := "0xaca2f283f21a03ba182dc7d34a55c04771b25087401d680011df7dcba453f798"[2:]
+	correctHash := "0x28677918928946680f0b059f632ae3c0f61d7006b6ece017adfec722ef5ca8a7"[2:]
 	assert.Equal(t, correctHash, hexHash)
 }
 
 func TestValsetCheckpointGold1(t *testing.T) {
 	bridgeValidators, err := BridgeValidators{{
 		Power:           6667,
-		EthereumAddress: "0xc783df8a850f42e7F7e57013759C285caa701eB6",
+		EthereumAddress: "0xc783df8a850f42e7f7e57013759c285caa701eb6",
 	}}.ToInternal()
 	require.NoError(t, err)
 	src, err := NewValset(0, 0, *bridgeValidators, sdk.NewInt(0), *ZeroAddress())

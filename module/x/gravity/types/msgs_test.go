@@ -10,7 +10,7 @@ import (
 
 func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
 	var (
-		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
+		ethAddress                   = "0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255"
 		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 	)

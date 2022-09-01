@@ -18,8 +18,8 @@ func TestAddToOutgoingPool(t *testing.T) {
 	ctx := input.Context
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -106,8 +106,8 @@ func TestAddToOutgoingPoolEdgeCases(t *testing.T) {
 	ctx := input.Context
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -170,7 +170,7 @@ func TestAddToOutgoingPoolEdgeCases(t *testing.T) {
 	require.Zero(t, r)
 
 	//////// Inconsistent Entry ////////
-	badFeeContractAddr := "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca6"
+	badFeeContractAddr := "0x429881672b9ae42b8eba0e26cd9c73711b891ca6"
 	badFeeToken, err = types.NewInternalERC20Token(sdk.NewInt(100), badFeeContractAddr)
 	require.NoError(t, err)
 	badFee = badFeeToken.GravityCoin()
@@ -186,8 +186,8 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 	// token1
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -252,7 +252,7 @@ func TestTotalBatchFeeInPool(t *testing.T) {
 	batchFees := input.GravityKeeper.GetAllBatchFees(ctx, OutgoingTxBatchSize)
 	/*
 		tokenFeeMap should be
-		map[0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5:8 0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0:500]
+		map[0x429881672b9ae42b8eba0e26cd9c73711b891ca5:8 0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0:500]
 		**/
 	assert.Equal(t, batchFees[0].TotalFees.BigInt(), big.NewInt(int64(8)))
 	assert.Equal(t, batchFees[1].TotalFees.BigInt(), big.NewInt(int64(500)))
@@ -268,10 +268,10 @@ func TestGetBatchFeeByTokenType(t *testing.T) {
 		mySender1, _                        = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
 		mySender2            sdk.AccAddress = []byte("cosmos1ahx7f8wyertus")
 		mySender3            sdk.AccAddress = []byte("cosmos1ahx7f8wyertut")
-		myReceiver                          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr1                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
-		myTokenContractAddr2                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca6"
-		myTokenContractAddr3                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca7"
+		myReceiver                          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr1                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
+		myTokenContractAddr2                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca6"
+		myTokenContractAddr3                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca7"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -376,8 +376,8 @@ func TestRemoveFromOutgoingPoolAndRefund(t *testing.T) {
 	ctx := input.Context
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 		myTokenDenom        = "gravity" + myTokenContractAddr
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
@@ -465,14 +465,14 @@ func TestRefundInconsistentTx(t *testing.T) {
 	ctx := input.Context
 	var (
 		mySender, _            = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver, _          = types.NewEthAddress("0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7")
-		myTokenContractAddr, _ = types.NewEthAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5")
+		myReceiver, _          = types.NewEthAddress("0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7")
+		myTokenContractAddr, _ = types.NewEthAddress("0x429881672b9ae42b8eba0e26cd9c73711b891ca5")
 	)
 
 	//////// Refund an inconsistent tx ////////
 	amountToken, err := types.NewInternalERC20Token(sdk.NewInt(100), myTokenContractAddr.GetAddress())
 	require.NoError(t, err)
-	badTokenContractAddr, _ := types.NewEthAddress("0x429881672B9AE42b8EbA0E26cD9C73711b891Ca6") // different last char
+	badTokenContractAddr, _ := types.NewEthAddress("0x429881672b9ae42b8eba0e26cd9c73711b891ca6") // different last char
 	badFeeToken, err := types.NewInternalERC20Token(sdk.NewInt(2), badTokenContractAddr.GetAddress())
 	require.NoError(t, err)
 
@@ -516,8 +516,8 @@ func TestRefundTwice(t *testing.T) {
 	ctx := input.Context
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -571,9 +571,9 @@ func TestGetUnbatchedTransactions(t *testing.T) {
 	var (
 		mySender1, _                        = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
 		mySender2            sdk.AccAddress = []byte("cosmos1ahx7f8wyertus")
-		myReceiver                          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr1                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
-		myTokenContractAddr2                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca6"
+		myReceiver                          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr1                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
+		myTokenContractAddr2                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca6"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -717,9 +717,9 @@ func TestIterateUnbatchedTransactions(t *testing.T) {
 	var (
 		mySender1, _                        = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
 		mySender2            sdk.AccAddress = []byte("cosmos1ahx7f8wyertus")
-		myReceiver                          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr1                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
-		myTokenContractAddr2                = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca6"
+		myReceiver                          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr1                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
+		myTokenContractAddr2                = "0x429881672b9ae42b8eba0e26cd9c73711b891ca6"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
@@ -836,8 +836,8 @@ func TestAddToOutgoingPoolExportGenesis(t *testing.T) {
 	k := input.GravityKeeper
 	var (
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5"
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5ead7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cd9c73711b891ca5"
 	)
 	receiver, err := types.NewEthAddress(myReceiver)
 	require.NoError(t, err)
