@@ -117,3 +117,4 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Added gas optimizations
+Prerequisites: accessControls, whitelist, onlyAdmin, only orchestrator calls to some functions, pause functionality, 
