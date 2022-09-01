@@ -123,7 +123,7 @@ func DefaultParams() *Params {
 	return &Params{
 		GravityId:                    "defaultgravityid",
 		ContractSourceHash:           "",
-		BridgeEthereumAddress:        "0x0000000000000000000000000000000000000000",
+		BridgeEthereumAddress:        ZeroAddressString,
 		BridgeChainId:                0,
 		SignedValsetsWindow:          10000,
 		SignedBatchesWindow:          10000,
