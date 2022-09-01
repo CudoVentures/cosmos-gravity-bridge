@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -620,125 +619,125 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
 
-//nolint: exhaustivestruct
-func TestQueryLogicCalls(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	k := input.GravityKeeper
-	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
-	)
+// //nolint: exhaustivestruct
+// func TestQueryLogicCalls(t *testing.T) {
+// 	input := CreateTestEnv(t)
+// 	ctx := input.Context
+// 	k := input.GravityKeeper
+// 	var (
+// 		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+// 		payload                  = []byte("fake bytes")
+// 		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+// 		invalidationId           = []byte("GravityTesting")
+// 		invalidationNonce uint64 = 1
+// 	)
 
-	// seed with valset requests and eth addresses to make validators
-	// that we will later use to lookup calls to be signed
-	for i := 0; i < 6; i++ {
-		var validators []sdk.ValAddress
-		for j := 0; j <= i; j++ {
-			// add an validator each block
-			// TODO: replace with real SDK addresses
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
-			require.NoError(t, err)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
-			validators = append(validators, valAddr)
-		}
-		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
-	}
+// 	// seed with valset requests and eth addresses to make validators
+// 	// that we will later use to lookup calls to be signed
+// 	for i := 0; i < 6; i++ {
+// 		var validators []sdk.ValAddress
+// 		for j := 0; j <= i; j++ {
+// 			// add an validator each block
+// 			// TODO: replace with real SDK addresses
+// 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
+// 			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+// 			require.NoError(t, err)
+// 			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+// 			validators = append(validators, valAddr)
+// 		}
+// 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
+// 	}
 
-	token := []*types.ERC20Token{{
-		Contract: tokenContract,
-		Amount:   sdk.NewIntFromUint64(5000),
-	}}
+// 	token := []*types.ERC20Token{{
+// 		Contract: tokenContract,
+// 		Amount:   sdk.NewIntFromUint64(5000),
+// 	}}
 
-	call := types.OutgoingLogicCall{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: logicContract,
-		Payload:              payload,
-		Timeout:              10000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    uint64(invalidationNonce),
-	}
-	k.SetOutgoingLogicCall(ctx, &call)
+// 	call := types.OutgoingLogicCall{
+// 		Transfers:            token,
+// 		Fees:                 token,
+// 		LogicContractAddress: logicContract,
+// 		Payload:              payload,
+// 		Timeout:              10000,
+// 		InvalidationId:       invalidationId,
+// 		InvalidationNonce:    uint64(invalidationNonce),
+// 	}
+// 	k.SetOutgoingLogicCall(ctx, &call)
 
-	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
+// 	res := k.GetOutgoingLogicCall(ctx, invalidationId, invalidationNonce)
 
-	require.Equal(t, call, *res)
+// 	require.Equal(t, call, *res)
 
-	_, err := lastLogicCallRequests(ctx, k)
-	require.NoError(t, err)
+// 	_, err := lastLogicCallRequests(ctx, k)
+// 	require.NoError(t, err)
 
-	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
-	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
-	require.NoError(t, err)
+// 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+// 	_, err = lastPendingLogicCallRequest(ctx, valAddr.String(), k)
+// 	require.NoError(t, err)
 
-	require.NoError(t, err)
-}
+// 	require.NoError(t, err)
+// }
 
-//nolint: exhaustivestruct
-func TestQueryLogicCallsConfirms(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	k := input.GravityKeeper
-	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
-	)
+// //nolint: exhaustivestruct
+// func TestQueryLogicCallsConfirms(t *testing.T) {
+// 	input := CreateTestEnv(t)
+// 	ctx := input.Context
+// 	k := input.GravityKeeper
+// 	var (
+// 		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+// 		payload                  = []byte("fake bytes")
+// 		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+// 		invalidationId           = []byte("GravityTesting")
+// 		invalidationNonce uint64 = 1
+// 	)
 
-	// seed with valset requests and eth addresses to make validators
-	// that we will later use to lookup calls to be signed
-	for i := 0; i < 6; i++ {
-		var validators []sdk.ValAddress
-		for j := 0; j <= i; j++ {
-			// add an validator each block
-			// TODO: replace with real SDK addresses
-			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
-			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
-			require.NoError(t, err)
-			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
-			validators = append(validators, valAddr)
-		}
-		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
-	}
+// 	// seed with valset requests and eth addresses to make validators
+// 	// that we will later use to lookup calls to be signed
+// 	for i := 0; i < 6; i++ {
+// 		var validators []sdk.ValAddress
+// 		for j := 0; j <= i; j++ {
+// 			// add an validator each block
+// 			// TODO: replace with real SDK addresses
+// 			valAddr := bytes.Repeat([]byte{byte(j)}, sdk.AddrLen)
+// 			ethAddr, err := types.NewEthAddress(gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(j + 1)}, 20)).String())
+// 			require.NoError(t, err)
+// 			input.GravityKeeper.SetEthAddressForValidator(ctx, valAddr, *ethAddr)
+// 			validators = append(validators, valAddr)
+// 		}
+// 		input.GravityKeeper.StakingKeeper = NewStakingKeeperMock(validators...)
+// 	}
 
-	token := []*types.ERC20Token{{
-		Contract: tokenContract,
-		Amount:   sdk.NewIntFromUint64(5000),
-	}}
+// 	token := []*types.ERC20Token{{
+// 		Contract: tokenContract,
+// 		Amount:   sdk.NewIntFromUint64(5000),
+// 	}}
 
-	call := types.OutgoingLogicCall{
-		Transfers:            token,
-		Fees:                 token,
-		LogicContractAddress: logicContract,
-		Payload:              payload,
-		Timeout:              10000,
-		InvalidationId:       invalidationId,
-		InvalidationNonce:    uint64(invalidationNonce),
-	}
-	k.SetOutgoingLogicCall(ctx, &call)
+// 	call := types.OutgoingLogicCall{
+// 		Transfers:            token,
+// 		Fees:                 token,
+// 		LogicContractAddress: logicContract,
+// 		Payload:              payload,
+// 		Timeout:              10000,
+// 		InvalidationId:       invalidationId,
+// 		InvalidationNonce:    uint64(invalidationNonce),
+// 	}
+// 	k.SetOutgoingLogicCall(ctx, &call)
 
-	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
+// 	var valAddr sdk.AccAddress = bytes.Repeat([]byte{byte(1)}, sdk.AddrLen)
 
-	confirm := types.MsgConfirmLogicCall{
-		InvalidationId:    hex.EncodeToString(invalidationId),
-		InvalidationNonce: 1,
-		EthSigner:         "test",
-		Orchestrator:      valAddr.String(),
-		Signature:         "test",
-	}
+// 	confirm := types.MsgConfirmLogicCall{
+// 		InvalidationId:    hex.EncodeToString(invalidationId),
+// 		InvalidationNonce: 1,
+// 		EthSigner:         "test",
+// 		Orchestrator:      valAddr.String(),
+// 		Signature:         "test",
+// 	}
 
-	k.SetLogicCallConfirm(ctx, &confirm)
+// 	k.SetLogicCallConfirm(ctx, &confirm)
 
-	res := k.GetLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, 1)
-	assert.Equal(t, len(res), 1)
-}
+// 	res := k.GetLogicConfirmByInvalidationIDAndNonce(ctx, invalidationId, 1)
+// 	assert.Equal(t, len(res), 1)
+// }
 
 //nolint: exhaustivestruct
 // TODO: test that it gets the correct batch, not just any batch.
