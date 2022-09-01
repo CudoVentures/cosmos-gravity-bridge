@@ -550,6 +550,12 @@ contract Gravity is ReentrancyGuard {
 		);
 	}
 
+	uint32 size;
+	assembly {
+		size := extcodesize(_tokenContract)
+	}
+	require(size != 0, "empty bytecode token");
+
 	function deployERC20(
 		string memory _cosmosDenom,
 		string memory _name,
