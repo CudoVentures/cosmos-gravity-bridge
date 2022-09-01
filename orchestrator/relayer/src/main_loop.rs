@@ -1,6 +1,5 @@
 use crate::{
-    batch_relaying::relay_batches, find_latest_valset::find_latest_valset,
-    logic_call_relaying::relay_logic_calls, valset_relaying::relay_valsets,
+    batch_relaying::relay_batches, find_latest_valset::find_latest_valset, valset_relaying::relay_valsets,
 };
 use clarity::address::Address as EthAddress;
 use clarity::PrivateKey as EthPrivateKey;
@@ -68,17 +67,17 @@ pub async fn relayer_main_loop(
         )
         .await;
 
-        relay_logic_calls(
-            current_valset,
-            ethereum_key,
-            &web3,
-            &mut grpc_client,
-            gravity_contract_address,
-            gravity_id.clone(),
-            LOOP_SPEED,
-            relayer_config,
-        )
-        .await;
+        // relay_logic_calls(
+        //     current_valset,
+        //     ethereum_key,
+        //     &web3,
+        //     &mut grpc_client,
+        //     gravity_contract_address,
+        //     gravity_id.clone(),
+        //     LOOP_SPEED,
+        //     relayer_config,
+        // )
+        // .await;
 
         // a bit of logic that tires to keep things running every 5 seconds exactly
         // this is not required for any specific reason. In fact we expect and plan for
