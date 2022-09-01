@@ -16,6 +16,7 @@
   "license": "None",
   "devDependencies": {
     "@commitlint/cli": "^9.1.2",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@commitlint/config-conventional": "^9.1.2",
     "@ethersproject/abstract-signer": "^5.0.6",
     "@ethersproject/bignumber": "^5.0.8",
