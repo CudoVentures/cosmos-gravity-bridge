@@ -28,11 +28,11 @@ fn default_valset_market_enabled() -> bool {
 }
 
 fn default_batch_market_enabled() -> bool {
-    true
+    false
 }
 
 fn default_logic_call_market_enabled() -> bool {
-    true
+    false
 }
 
 impl Default for RelayerConfig {
