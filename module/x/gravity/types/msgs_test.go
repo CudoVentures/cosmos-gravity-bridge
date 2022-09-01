@@ -2,10 +2,12 @@ package types
 
 import (
 	"bytes"
+	fmt "fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func TestValidateMsgSetOrchestratorAddress(t *testing.T) {

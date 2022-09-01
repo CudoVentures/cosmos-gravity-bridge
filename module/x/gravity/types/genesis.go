@@ -150,9 +150,6 @@ func (p Params) ValidateBasic() error {
 	if err := validateGravityID(p.GravityId); err != nil {
 		return sdkerrors.Wrap(err, "gravity id")
 	}
-	if err := validateMinimumTransferToEth(p.MinimumTransferToEth); err != nil {
-		return sdkerrors.Wrap(err, "Minimum transfer to ETH")
-	}
 	if err := validateContractHash(p.ContractSourceHash); err != nil {
 		return sdkerrors.Wrap(err, "contract hash")
 	}

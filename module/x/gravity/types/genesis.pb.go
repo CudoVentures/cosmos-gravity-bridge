@@ -110,6 +110,7 @@ func (m *Params) GetMinimumFeeTransferToEth() types.Int {
 		return m.MinimumFeeTransferToEth
 	}
 	return types.OneInt()
+}
 
 func (m *Params) GetContractSourceHash() string {
 	if m != nil {
@@ -523,20 +524,7 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.MinimumTransferToEth) > 0 {
-		i -= len(m.MinimumTransferToEth)
-		copy(dAtA[i:], m.MinimumTransferToEth)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.MinimumFeeTransferToEth) > 0 {
-		i -= len(m.MinimumTransferToEth)
-		copy(dAtA[i:], m.MinimumTransferToEth)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.MinimumTransferToEth)))
-		i--
-		dAtA[i] = 0x12
-	}
+	
 	if len(m.GravityId) > 0 {
 		i -= len(m.GravityId)
 		copy(dAtA[i:], m.GravityId)
