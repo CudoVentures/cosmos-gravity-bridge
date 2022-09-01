@@ -112,3 +112,98 @@ You can keep up with the latest development by watching our [public standups](ht
 
 - There must be a validator set update made on the Ethereum contract by calling the `updateValset` method at least once every Cosmos unbonding period (usually 2 weeks). This is because if there has not been an update for longer than the unbonding period, the validator set stored by the Ethereum contract could contain validators who cannot be slashed for misbehavior.
 - Cosmos full nodes do not verify events coming from Ethereum. These events are accepted into the Cosmos state based purely on the signatures of the current validator set. It is possible for the validators with >2/3 of the stake to put events into the Cosmos state which never happened on Ethereum. In this case observers of both chains will need to "raise the alarm". We have built this functionality into the relayer.
+
+## Cudos changes to original Althea GravityBridge
+Since we forked the project, there are several changes that we've made to the repo. They are described below
+
+### Cosmos sdk, tendermint, osmosis-lab ibc version updates
+We've replaced the cosmos-sdk repo to our own fork of it.
+
+We've updated the tendermint version because of the above.
+
+We've replaced the osmosis-lab ibc module to cosmos-sdk's one. This was also needed because of the cosmos-sdk update.
+
+### Removed hardcoded bridge fee while using gbt
+We've removed the ahrdcoded bridge fee that was set in the msgs, sent from gbt. We needed it removed for test purposes and since it is not used in production we left it at that.
+
+### Replaced all ETH address checks to lowercase
+We replaced all ETH addresses checks and tests to lowr cases for consistency sake, since the addresses we receive from events are not consistent.
+
+### Export all params to genesis
+Some params were missing in genesis, so we added them in.
+
+### Fix param in genesis order
+We've added a key sorting priod to getting the values, so we can ensure that we always get them in the same order. This fixes a non-determinism issue that might occur.
+
+### Removed market feature
+
+### Removed slashing
+Removed the slashing feature and and the tests for it
+
+### Handle non-running eth/cosmos nodes
+Prior to our change, when a probe to RPC connection to a node failed, the orchestrator qould panic. We've changed it so it rather throws an error and retries,
+
+### Remove logic calls
+We've removed all LogicCall functions from the contract, the module and the orchestrator and the tests for them.
+
+### Added check for 0th address in MsgSendToEth
+
+### Added env variables to orchestrator
+
+### Initialize chain with 0th Gravity contract address vy default
+
+### Added access control
+We've added an access control to the Gravity contract, which limits who can call some functions.
+
+### Fixed some typos and outputs
+
+### Added minimum amount to send to ETH
+We've implemented a minimum amount of acudos to send to ETH as to prevent spammint with 1 acudo transactions. This includes new parameted in Gravity module, new checks to the messages, new message for setting the minimum amount by admin and some unit tests.
+
+### Added automatic fee calculation in orchestrator
+
+### Added whitelist functionality on some functions
+
+### Added minimum bridge fee for MsgSendToEth
+Since the orchestrators sign ethereum transactions in order to validate the transfers from Cudos to Ethereum, they need to receive some minimum amount of CUDOS in order to not be at a loss at the end. We've implemented a minimum amount of bridge fee that needs to be set in each transfer.
+
+To do this we've implemented a new parameter, messages for setting it, that can be ran only by adminToken holders and checks in MsgSendToEth. Also we've redone some other tests to accomodate that change.
+
+### Fixed and improved MsgCancelSendToEth
+The CancelSendToEth functionality we had from the fork had a bug. We've fixed it and improved it by adding queries for transfers that are not yet included in a batch and can be canceled. This is done for ease of UI use.
+
+Also more tests added.
+
+### Added Gravity contract verifivation on etherscan
+
+### Updated ECRECOVER function
+There are a few potential problems with the standard ecrecover function. That is why we implemented a zero address check after the ecrecover and also decided to use OpenZeppelins' tryEcrecover function. The latter required us to update our solidity version to ^0.8.0. From the update a few changes to the imports and a little change to the CosmosToken were required, but nothing major.
+
+### Added pause functionality on Gravity contract
+
+### Only admin to some functions
+
+### Added check for empty bytecode address on sendToCosmos
+This makes sure that the ERC20 contract address leads to a deployed contract, because there is a case where SendToCosmos could be called with not yet deployed contract.
+
+### Added list of supported tokens
+We've added a list with supported tokens in which the functions check if the given ERC20 address is valid.
+
+### Added gas optimizations
+
+### Only the highest power orchestrator sends submitBatch transactions
+This is a change in the orchestrator only. We check if the current orchestartor is the one with the highest power, and only if it is, we let it send the submit batch transaction. 
+
+This is done so not all orchestrators waste gas on resubmiting batches.
+
+### Tests reformatting for orchestrator
+Prerequisites: validator with highest power sends batch, retry getting gravity id, automatic fee calculations, 
+
+Ater all the changes, some test reforms had to be made in order to incorporate everything.
+
+### Removed test uniswap luquidity
+
+### Added static valset functionality
+We've added a static list of validators that participate in the orchestrating process. This is set during the init of the chain and can only be changed with a fork.
+
+This is done on the module level, where if a validator tries to set itself as orchestrator, and is not in the static valset list, an error is thrown.
