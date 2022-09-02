@@ -26,6 +26,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgSendToEth:
 			res, err := msgServer.SendToEth(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		// case *types.MsgSetMinFeeTransferToEth:
+		// 	res, err := msgServer.SetMinFeeTransferToEth(sdk.WrapSDKContext(ctx), msg)
+		// 	return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRequestBatch:
 			res, err := msgServer.RequestBatch(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

@@ -97,6 +97,7 @@ func CmdUnsafeETHAddr() *cobra.Command {
 }
 
 func CmdSendToEth() *cobra.Command {
+
 	//nolint: exhaustivestruct
 	cmd := &cobra.Command{
 		Use:   "send-to-eth [eth-dest] [amount] [bridge-fee]",
@@ -113,6 +114,7 @@ func CmdSendToEth() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			bridgeFee, err := sdk.ParseCoinsNormalized(args[2])
 			if err != nil {
 				return err
