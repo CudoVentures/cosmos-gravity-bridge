@@ -15,6 +15,7 @@ var (
 	_ sdk.Msg = &MsgSetOrchestratorAddress{}
 	_ sdk.Msg = &MsgValsetConfirm{}
 	_ sdk.Msg = &MsgSendToEth{}
+	_ sdk.Msg = &MsgSetMinFeeTransferToEth{}
 	_ sdk.Msg = &MsgCancelSendToEth{}
 	_ sdk.Msg = &MsgRequestBatch{}
 	_ sdk.Msg = &MsgConfirmBatch{}
@@ -171,6 +172,51 @@ func (msg MsgSendToEth) GetSignBytes() []byte {
 
 // GetSigners defines whose signature is required
 func (msg MsgSendToEth) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// NewMsgSetMinFeeTransferToEth returns a new MsgSetMinFeeTransferToEth
+func NewMsgSetMinFeeTransferToEth(sender sdk.AccAddress, feeAmount sdk.Int) *MsgSetMinFeeTransferToEth {
+	return &MsgSetMinFeeTransferToEth{
+		Sender: sender.String(),
+		Fee:    feeAmount,
+	}
+}
+
+// Route should return the name of the module
+func (msg MsgSetMinFeeTransferToEth) Route() string { return RouterKey }
+
+// Type should return the action
+func (msg MsgSetMinFeeTransferToEth) Type() string { return "set_min_fee_transfer_to_eth" }
+
+// ValidateBasic runs stateless checks on the message
+// Checks if the Eth address is valid
+func (msg MsgSetMinFeeTransferToEth) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil ||
+		len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes()).String()) != len(msg.Sender) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Sender)
+	}
+
+	// fee and send must be of the same denom
+	if msg.Fee.LT(sdk.OneInt()) {
+		return fmt.Errorf("fee amount should be mroe than 1")
+	}
+
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgSetMinFeeTransferToEth) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgSetMinFeeTransferToEth) GetSigners() []sdk.AccAddress {
 	acc, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)

@@ -279,40 +279,6 @@ func validateGravityID(i interface{}) error {
 	return nil
 }
 
-func validateMinimumTransferToEth(i interface{}) error {
-	v, ok := i.(sdk.Int)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNil() {
-		return fmt.Errorf("minimumTransferToEth param should not be empty")
-	}
-
-	if v.LT(sdk.OneInt()) {
-		return fmt.Errorf("minimumTransferToEth param should be bigger than 0")
-	}
-
-	return nil
-}
-
-func validateMinimumFeeTransferToEth(i interface{}) error {
-	v, ok := i.(sdk.Int)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNil() {
-		return fmt.Errorf("minimumFeeTransferToEth param should not be empty")
-	}
-
-	if v.LT(sdk.OneInt()) {
-		return fmt.Errorf("minimumFeeTransferToEth param should be bigger than 0")
-	}
-
-	return nil
-}
-
 func validateContractHash(i interface{}) error {
 	// TODO: should we validate that the input here is a properly formatted
 	// SHA256 (or other) hash?

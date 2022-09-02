@@ -122,6 +122,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -156,3 +157,11 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 We've implemented a minimum amount of acudos to send to ETH as to prevent spammint with 1 acudo transactions. This includes new parameted in Gravity module, new checks to the messages, new message for setting the minimum amount by admin and some unit tests.
 >>>>>>> cudos-v0.0.29-feature-min-transfer-to-eth
+=======
+### Added minimum bridge fee for MsgSendToEth
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-min-transfer-to-eth
+
+Since the orchestrators sign ethereum transactions in order to validate the transfers from Cudos to Ethereum, they need to receive some minimum amount of CUDOS in order to not be at a loss at the end. We've implemented a minimum amount of bridge fee that needs to be set in each transfer.
+
+To do this we've implemented a new parameter, messages for setting it, that can be ran only by adminToken holders and checks in MsgSendToEth. Also we've redone some other tests to accomodate that change.
+>>>>>>> cudos-v0.0.29-feature-min-fee-transfer-to-eth

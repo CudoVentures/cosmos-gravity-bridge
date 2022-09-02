@@ -178,13 +178,11 @@ func exportImport(t *testing.T, input *TestInput) {
 
 // Test parsing invalid Minimum Transaction Amount to panic
 func InitGenesisWithFailData(t *testing.T, input *TestInput) {
-	invalidValue := "5.5"
 	expectedPanicMessage := "error while parsing: 5.5"
 
 	genesisState := ExportGenesis(input.Context, input.GravityKeeper)
 
 	var ok bool
-	genesisState.Params.MinimumTransferToEth, ok = sdk.NewIntFromString(invalidValue)
 
 	assert.False(t, ok)
 	newEnv := CreateTestEnv(t)

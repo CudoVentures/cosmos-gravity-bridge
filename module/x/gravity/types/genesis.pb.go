@@ -106,6 +106,13 @@ func (m *Params) GetGravityId() string {
 	return ""
 }
 
+func (m *Params) GetMinimumFeeTransferToEth() types.Int {
+	if m != nil {
+		return m.MinimumFeeTransferToEth
+	}
+	return types.OneInt()
+}
+
 func (m *Params) GetContractSourceHash() string {
 	if m != nil {
 		return m.ContractSourceHash
@@ -590,28 +597,8 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.ContractSourceHash)
 		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ContractSourceHash)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x12
 	}
-	{
-		size := m.MinimumFeeTransferToEth.Size()
-		i -= size
-		if _, err := m.MinimumFeeTransferToEth.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x1a
-	{
-		size := m.MinimumTransferToEth.Size()
-		i -= size
-		if _, err := m.MinimumTransferToEth.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
 	if len(m.GravityId) > 0 {
 		i -= len(m.GravityId)
 		copy(dAtA[i:], m.GravityId)

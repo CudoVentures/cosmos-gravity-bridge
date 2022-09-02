@@ -377,6 +377,94 @@ func (m *MsgSendToEthResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSendToEthResponse proto.InternalMessageInfo
 
+// MsgSetMinFeeTransferToEth
+// This is the message that a user calls when they want to change the
+// paameterMinFeeTransferToEth used to send from cosmos to eth
+// -------------
+// FEE:
+// the value of the parameter to be set
+// this is the min fee required
+type MsgSetMinFeeTransferToEth struct {
+	Sender string                                 `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	Fee   github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=fee,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee"`
+}
+
+func (m *MsgSetMinFeeTransferToEth) Reset()         { *m = MsgSetMinFeeTransferToEth{} }
+func (m *MsgSetMinFeeTransferToEth) String() string { return proto.CompactTextString(m) }
+func (*MsgSetMinFeeTransferToEth) ProtoMessage()    {}
+func (*MsgSetMinFeeTransferToEth) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2f8523f2f6feb451, []int{6}
+}
+func (m *MsgSetMinFeeTransferToEth) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetMinFeeTransferToEth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetMinFeeTransferToEth.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetMinFeeTransferToEth) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetMinFeeTransferToEth.Merge(m, src)
+}
+func (m *MsgSetMinFeeTransferToEth) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetMinFeeTransferToEth) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetMinFeeTransferToEth.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetMinFeeTransferToEth proto.InternalMessageInfo
+
+func (m *MsgSetMinFeeTransferToEth) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+type MsgSetMinFeeTransferToEthResponse struct {
+}
+
+func (m *MsgSetMinFeeTransferToEthResponse) Reset()         { *m = MsgSetMinFeeTransferToEthResponse{} }
+func (m *MsgSetMinFeeTransferToEthResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetMinFeeTransferToEthResponse) ProtoMessage()    {}
+func (*MsgSetMinFeeTransferToEthResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2f8523f2f6feb451, []int{7}
+}
+func (m *MsgSetMinFeeTransferToEthResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetMinFeeTransferToEthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetMinFeeTransferToEthResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetMinFeeTransferToEthResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetMinFeeTransferToEthResponse.Merge(m, src)
+}
+func (m *MsgSetMinFeeTransferToEthResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetMinFeeTransferToEthResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetMinFeeTransferToEthResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetMinFeeTransferToEthResponse proto.InternalMessageInfo
+
 // MsgRequestBatch
 // this is a message anyone can send that requests a batch of transactions to
 // send across the bridge be created for whatever block height this message is
@@ -395,7 +483,7 @@ func (m *MsgRequestBatch) Reset()         { *m = MsgRequestBatch{} }
 func (m *MsgRequestBatch) String() string { return proto.CompactTextString(m) }
 func (*MsgRequestBatch) ProtoMessage()    {}
 func (*MsgRequestBatch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{6}
+	return fileDescriptor_2f8523f2f6feb451, []int{8}
 }
 func (m *MsgRequestBatch) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -445,7 +533,7 @@ func (m *MsgRequestBatchResponse) Reset()         { *m = MsgRequestBatchResponse
 func (m *MsgRequestBatchResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRequestBatchResponse) ProtoMessage()    {}
 func (*MsgRequestBatchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{7}
+	return fileDescriptor_2f8523f2f6feb451, []int{9}
 }
 func (m *MsgRequestBatchResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -494,7 +582,7 @@ func (m *MsgConfirmBatch) Reset()         { *m = MsgConfirmBatch{} }
 func (m *MsgConfirmBatch) String() string { return proto.CompactTextString(m) }
 func (*MsgConfirmBatch) ProtoMessage()    {}
 func (*MsgConfirmBatch) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{8}
+	return fileDescriptor_2f8523f2f6feb451, []int{10}
 }
 func (m *MsgConfirmBatch) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -565,7 +653,7 @@ func (m *MsgConfirmBatchResponse) Reset()         { *m = MsgConfirmBatchResponse
 func (m *MsgConfirmBatchResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgConfirmBatchResponse) ProtoMessage()    {}
 func (*MsgConfirmBatchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{9}
+	return fileDescriptor_2f8523f2f6feb451, []int{11}
 }
 func (m *MsgConfirmBatchResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -614,7 +702,7 @@ func (m *MsgConfirmLogicCall) Reset()         { *m = MsgConfirmLogicCall{} }
 func (m *MsgConfirmLogicCall) String() string { return proto.CompactTextString(m) }
 func (*MsgConfirmLogicCall) ProtoMessage()    {}
 func (*MsgConfirmLogicCall) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{10}
+	return fileDescriptor_2f8523f2f6feb451, []int{12}
 }
 func (m *MsgConfirmLogicCall) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -685,7 +773,7 @@ func (m *MsgConfirmLogicCallResponse) Reset()         { *m = MsgConfirmLogicCall
 func (m *MsgConfirmLogicCallResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgConfirmLogicCallResponse) ProtoMessage()    {}
 func (*MsgConfirmLogicCallResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{11}
+	return fileDescriptor_2f8523f2f6feb451, []int{13}
 }
 func (m *MsgConfirmLogicCallResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -733,7 +821,7 @@ func (m *MsgSendToCosmosClaim) Reset()         { *m = MsgSendToCosmosClaim{} }
 func (m *MsgSendToCosmosClaim) String() string { return proto.CompactTextString(m) }
 func (*MsgSendToCosmosClaim) ProtoMessage()    {}
 func (*MsgSendToCosmosClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{12}
+	return fileDescriptor_2f8523f2f6feb451, []int{14}
 }
 func (m *MsgSendToCosmosClaim) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -811,7 +899,7 @@ func (m *MsgSendToCosmosClaimResponse) Reset()         { *m = MsgSendToCosmosCla
 func (m *MsgSendToCosmosClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgSendToCosmosClaimResponse) ProtoMessage()    {}
 func (*MsgSendToCosmosClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{13}
+	return fileDescriptor_2f8523f2f6feb451, []int{15}
 }
 func (m *MsgSendToCosmosClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -854,7 +942,7 @@ func (m *MsgBatchSendToEthClaim) Reset()         { *m = MsgBatchSendToEthClaim{}
 func (m *MsgBatchSendToEthClaim) String() string { return proto.CompactTextString(m) }
 func (*MsgBatchSendToEthClaim) ProtoMessage()    {}
 func (*MsgBatchSendToEthClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{14}
+	return fileDescriptor_2f8523f2f6feb451, []int{16}
 }
 func (m *MsgBatchSendToEthClaim) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -925,7 +1013,7 @@ func (m *MsgBatchSendToEthClaimResponse) Reset()         { *m = MsgBatchSendToEt
 func (m *MsgBatchSendToEthClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgBatchSendToEthClaimResponse) ProtoMessage()    {}
 func (*MsgBatchSendToEthClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{15}
+	return fileDescriptor_2f8523f2f6feb451, []int{17}
 }
 func (m *MsgBatchSendToEthClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -972,7 +1060,7 @@ func (m *MsgERC20DeployedClaim) Reset()         { *m = MsgERC20DeployedClaim{} }
 func (m *MsgERC20DeployedClaim) String() string { return proto.CompactTextString(m) }
 func (*MsgERC20DeployedClaim) ProtoMessage()    {}
 func (*MsgERC20DeployedClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{16}
+	return fileDescriptor_2f8523f2f6feb451, []int{18}
 }
 func (m *MsgERC20DeployedClaim) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1064,7 +1152,7 @@ func (m *MsgERC20DeployedClaimResponse) Reset()         { *m = MsgERC20DeployedC
 func (m *MsgERC20DeployedClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgERC20DeployedClaimResponse) ProtoMessage()    {}
 func (*MsgERC20DeployedClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{17}
+	return fileDescriptor_2f8523f2f6feb451, []int{19}
 }
 func (m *MsgERC20DeployedClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1107,7 +1195,7 @@ func (m *MsgLogicCallExecutedClaim) Reset()         { *m = MsgLogicCallExecutedC
 func (m *MsgLogicCallExecutedClaim) String() string { return proto.CompactTextString(m) }
 func (*MsgLogicCallExecutedClaim) ProtoMessage()    {}
 func (*MsgLogicCallExecutedClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{18}
+	return fileDescriptor_2f8523f2f6feb451, []int{20}
 }
 func (m *MsgLogicCallExecutedClaim) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1178,7 +1266,7 @@ func (m *MsgLogicCallExecutedClaimResponse) Reset()         { *m = MsgLogicCallE
 func (m *MsgLogicCallExecutedClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgLogicCallExecutedClaimResponse) ProtoMessage()    {}
 func (*MsgLogicCallExecutedClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{19}
+	return fileDescriptor_2f8523f2f6feb451, []int{21}
 }
 func (m *MsgLogicCallExecutedClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1223,7 +1311,7 @@ func (m *MsgValsetUpdatedClaim) Reset()         { *m = MsgValsetUpdatedClaim{} }
 func (m *MsgValsetUpdatedClaim) String() string { return proto.CompactTextString(m) }
 func (*MsgValsetUpdatedClaim) ProtoMessage()    {}
 func (*MsgValsetUpdatedClaim) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{20}
+	return fileDescriptor_2f8523f2f6feb451, []int{22}
 }
 func (m *MsgValsetUpdatedClaim) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1301,7 +1389,7 @@ func (m *MsgValsetUpdatedClaimResponse) Reset()         { *m = MsgValsetUpdatedC
 func (m *MsgValsetUpdatedClaimResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgValsetUpdatedClaimResponse) ProtoMessage()    {}
 func (*MsgValsetUpdatedClaimResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{21}
+	return fileDescriptor_2f8523f2f6feb451, []int{23}
 }
 func (m *MsgValsetUpdatedClaimResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1342,7 +1430,7 @@ func (m *MsgCancelSendToEth) Reset()         { *m = MsgCancelSendToEth{} }
 func (m *MsgCancelSendToEth) String() string { return proto.CompactTextString(m) }
 func (*MsgCancelSendToEth) ProtoMessage()    {}
 func (*MsgCancelSendToEth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{22}
+	return fileDescriptor_2f8523f2f6feb451, []int{24}
 }
 func (m *MsgCancelSendToEth) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1392,7 +1480,7 @@ func (m *MsgCancelSendToEthResponse) Reset()         { *m = MsgCancelSendToEthRe
 func (m *MsgCancelSendToEthResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgCancelSendToEthResponse) ProtoMessage()    {}
 func (*MsgCancelSendToEthResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{23}
+	return fileDescriptor_2f8523f2f6feb451, []int{25}
 }
 func (m *MsgCancelSendToEthResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1435,7 +1523,7 @@ func (m *MsgSubmitBadSignatureEvidence) Reset()         { *m = MsgSubmitBadSigna
 func (m *MsgSubmitBadSignatureEvidence) String() string { return proto.CompactTextString(m) }
 func (*MsgSubmitBadSignatureEvidence) ProtoMessage()    {}
 func (*MsgSubmitBadSignatureEvidence) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{24}
+	return fileDescriptor_2f8523f2f6feb451, []int{26}
 }
 func (m *MsgSubmitBadSignatureEvidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1492,7 +1580,7 @@ func (m *MsgSubmitBadSignatureEvidenceResponse) Reset()         { *m = MsgSubmit
 func (m *MsgSubmitBadSignatureEvidenceResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgSubmitBadSignatureEvidenceResponse) ProtoMessage()    {}
 func (*MsgSubmitBadSignatureEvidenceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2f8523f2f6feb451, []int{25}
+	return fileDescriptor_2f8523f2f6feb451, []int{27}
 }
 func (m *MsgSubmitBadSignatureEvidenceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1528,6 +1616,8 @@ func init() {
 	proto.RegisterType((*MsgValsetConfirmResponse)(nil), "gravity.v1.MsgValsetConfirmResponse")
 	proto.RegisterType((*MsgSendToEth)(nil), "gravity.v1.MsgSendToEth")
 	proto.RegisterType((*MsgSendToEthResponse)(nil), "gravity.v1.MsgSendToEthResponse")
+	proto.RegisterType((*MsgSetMinFeeTransferToEth)(nil), "gravity.v1.MsgSetMinFeeTransferToEth")
+	proto.RegisterType((*MsgSetMinFeeTransferToEthResponse)(nil), "gravity.v1.MsgSetMinFeeTransferToEthResponse")
 	proto.RegisterType((*MsgRequestBatch)(nil), "gravity.v1.MsgRequestBatch")
 	proto.RegisterType((*MsgRequestBatchResponse)(nil), "gravity.v1.MsgRequestBatchResponse")
 	proto.RegisterType((*MsgConfirmBatch)(nil), "gravity.v1.MsgConfirmBatch")
@@ -1669,6 +1759,7 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opts ...grpc.CallOption) (*MsgValsetConfirmResponse, error)
 	SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error)
+	SetMinFeeTransferToEth(ctx context.Context, in *MsgSetMinFeeTransferToEth, opts ...grpc.CallOption) (*MsgSetMinFeeTransferToEthResponse, error)
 	RequestBatch(ctx context.Context, in *MsgRequestBatch, opts ...grpc.CallOption) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(ctx context.Context, in *MsgConfirmBatch, opts ...grpc.CallOption) (*MsgConfirmBatchResponse, error)
 	ConfirmLogicCall(ctx context.Context, in *MsgConfirmLogicCall, opts ...grpc.CallOption) (*MsgConfirmLogicCallResponse, error)
@@ -1702,6 +1793,15 @@ func (c *msgClient) ValsetConfirm(ctx context.Context, in *MsgValsetConfirm, opt
 func (c *msgClient) SendToEth(ctx context.Context, in *MsgSendToEth, opts ...grpc.CallOption) (*MsgSendToEthResponse, error) {
 	out := new(MsgSendToEthResponse)
 	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/SendToEth", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) SetMinFeeTransferToEth(ctx context.Context, in *MsgSetMinFeeTransferToEth, opts ...grpc.CallOption) (*MsgSetMinFeeTransferToEthResponse, error) {
+	out := new(MsgSetMinFeeTransferToEthResponse)
+	err := c.cc.Invoke(ctx, "/gravity.v1.Msg/SetMinFeeTransferToEth", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1811,6 +1911,7 @@ func (c *msgClient) SubmitBadSignatureEvidence(ctx context.Context, in *MsgSubmi
 type MsgServer interface {
 	ValsetConfirm(context.Context, *MsgValsetConfirm) (*MsgValsetConfirmResponse, error)
 	SendToEth(context.Context, *MsgSendToEth) (*MsgSendToEthResponse, error)
+	SetMinFeeTransferToEth(context.Context, *MsgSetMinFeeTransferToEth) (*MsgSetMinFeeTransferToEthResponse, error)
 	RequestBatch(context.Context, *MsgRequestBatch) (*MsgRequestBatchResponse, error)
 	ConfirmBatch(context.Context, *MsgConfirmBatch) (*MsgConfirmBatchResponse, error)
 	ConfirmLogicCall(context.Context, *MsgConfirmLogicCall) (*MsgConfirmLogicCallResponse, error)
@@ -1833,6 +1934,9 @@ func (*UnimplementedMsgServer) ValsetConfirm(ctx context.Context, req *MsgValset
 }
 func (*UnimplementedMsgServer) SendToEth(ctx context.Context, req *MsgSendToEth) (*MsgSendToEthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendToEth not implemented")
+}
+func (*UnimplementedMsgServer) SetMinFeeTransferToEth(ctx context.Context, req *MsgSetMinFeeTransferToEth) (*MsgSetMinFeeTransferToEthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetMinFeeTransferToEth not implemented")
 }
 func (*UnimplementedMsgServer) RequestBatch(ctx context.Context, req *MsgRequestBatch) (*MsgRequestBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestBatch not implemented")
@@ -1904,6 +2008,24 @@ func _Msg_SendToEth_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).SendToEth(ctx, req.(*MsgSendToEth))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_SetMinFeeTransferToEth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetMinFeeTransferToEth)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetMinFeeTransferToEth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gravity.v1.Msg/SetMinFeeTransferToEth",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetMinFeeTransferToEth(ctx, req.(*MsgSetMinFeeTransferToEth))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2117,6 +2239,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendToEth",
 			Handler:    _Msg_SendToEth_Handler,
+		},
+		{
+			MethodName: "SetMinFeeTransferToEth",
+			Handler:    _Msg_SetMinFeeTransferToEth_Handler,
 		},
 		{
 			MethodName: "RequestBatch",
@@ -2379,6 +2505,69 @@ func (m *MsgSendToEthResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgSendToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetMinFeeTransferToEth) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetMinFeeTransferToEth) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetMinFeeTransferToEth) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Fee.Size()
+		i -= size
+		if _, err := m.Fee.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintMsgs(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintMsgs(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetMinFeeTransferToEthResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetMinFeeTransferToEthResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetMinFeeTransferToEthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3269,6 +3458,30 @@ func (m *MsgSendToEth) Size() (n int) {
 }
 
 func (m *MsgSendToEthResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgSetMinFeeTransferToEth) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovMsgs(uint64(l))
+	}
+	l = m.Fee.Size()
+	n += 1 + l + sovMsgs(uint64(l))
+	return n
+}
+
+func (m *MsgSetMinFeeTransferToEthResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4273,6 +4486,178 @@ func (m *MsgSendToEthResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgSendToEthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetMinFeeTransferToEth) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetMinFeeTransferToEth: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetMinFeeTransferToEth: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsgs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fee", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMsgs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Fee.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMsgs(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthMsgs
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetMinFeeTransferToEthResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMsgs
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetMinFeeTransferToEthResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetMinFeeTransferToEthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
