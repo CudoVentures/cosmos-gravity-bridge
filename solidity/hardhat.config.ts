@@ -2,6 +2,8 @@ import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
 import "hardhat-typechain";
 import { task } from "hardhat/config";
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-etherscan"
 
 task("accounts", "Prints the list of accounts", async (args, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -35,19 +37,17 @@ module.exports = {
       optimizer: {
         enabled: true
       }
-    }  
-  },
-  {
-    version: "0.6.12",
-    settings: {
-      optimizer: {
-        enabled: true
-      }
-    }  
-  }
-]
-  },
-  networks: {
+    }  },
+    defaultNetwork: process.env.DEFAULT_NETWORK,
+    networks: {
+      rinkeby: {
+        url: "https://rinkeby.infura.io/v3/62f1fc27624f401283692320734e387e"
+      },
+      url: `${process.env.ETH_NODE}`
+    },
+    mainnet: {
+      url: `${process.env.ETH_NODE}`
+    },
     hardhat: {
       timeout: 2000000,
       accounts: [
@@ -836,8 +836,8 @@ module.exports = {
             "0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7",
           balance: "5000000000000000000000"
         }
-      ]
-    }
+      ],
+      timeout: 2000000
   },
   typechain: {
     outDir: "typechain",
@@ -850,4 +850,7 @@ module.exports = {
   mocha: {
     timeout: 2000000
   },
+  etherscan:{
+    apiKey: `${process.env.ETHERSCAN_API_KEY}`
+  }
 };

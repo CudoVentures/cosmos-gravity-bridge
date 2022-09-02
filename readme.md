@@ -119,6 +119,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -137,3 +138,7 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 ### Update IBC-GO
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-improvements
 >>>>>>> cudos-v0.0.29-feature-update-ibc-go
+=======
+### Added Gravity contract verifivation on etherscan
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-update-ibc-go
+>>>>>>> cudos-v0.0.29-feature-etherscan-verify
