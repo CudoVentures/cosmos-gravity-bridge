@@ -118,6 +118,7 @@ Since we forked the project, there are several changes that we've made to the re
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Automatic creation of batches
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-eth-address-lowercase
 
@@ -134,3 +135,6 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 We've added a key sorting priod to getting the values, so we can ensure that we always get them in the same order. This fixes a non-determinism issue that might occur.
 >>>>>>> cudos-v0.0.29-fix-gravity-params-in-genesis-order
+=======
+### Removed market feature
+>>>>>>> cudos-v0.0.29-remove-feature-disable-market-feature
