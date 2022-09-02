@@ -117,6 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Fix param in genesis order
-Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-add-all-gravity-params-to-genesis
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
 We've added a key sorting priod to getting the values, so we can ensure that we always get them in the same order. This fixes a non-determinism issue that might occur.
