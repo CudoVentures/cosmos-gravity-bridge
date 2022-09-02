@@ -115,6 +115,6 @@ You can keep up with the latest development by watching our [public standups](ht
 
 
 ### Tests reformatting for orchestrator
-Prerequisites: validator with highest power sends batch, retry getting gravity id, automatic fee calculations, 
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-only-validator-with-highest-power-should-sign-submitBatch-transactions
 
 Ater all the changes, some test reforms had to be made in order to incorporate everything.
