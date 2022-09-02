@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"testing"
 	"time"
@@ -624,18 +623,18 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
 
-//nolint: exhaustivestruct
-func TestQueryLogicCalls(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
-	k := input.GravityKeeper
-	var (
-		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
-		payload                  = []byte("fake bytes")
-		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
-		invalidationId           = []byte("GravityTesting")
-		invalidationNonce uint64 = 1
-	)
+// //nolint: exhaustivestruct
+// func TestQueryLogicCalls(t *testing.T) {
+// 	input := CreateTestEnv(t)
+// 	ctx := input.Context
+// 	k := input.GravityKeeper
+// 	var (
+// 		logicContract            = "0x510ab76899430424d209a6c9a5b9951fb8a6f47d"
+// 		payload                  = []byte("fake bytes")
+// 		tokenContract            = "0x7580bfe88dd3d07947908fae12d95872a260f2d8"
+// 		invalidationId           = []byte("GravityTesting")
+// 		invalidationNonce uint64 = 1
+// 	)
 
 	// seed with valset requests and eth addresses to make validators
 	// that we will later use to lookup calls to be signed

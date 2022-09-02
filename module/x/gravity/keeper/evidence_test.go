@@ -89,26 +89,29 @@ func TestSubmitBadSignatureEvidenceValsetExists(t *testing.T) {
 }
 
 //nolint: exhaustivestruct
-func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
-	input := CreateTestEnv(t)
-	ctx := input.Context
+// func TestSubmitBadSignatureEvidenceLogicCallExists(t *testing.T) {
+// 	input := CreateTestEnv(t)
+// 	ctx := input.Context
 
-	logicCall := types.OutgoingLogicCall{
-		Timeout: 420,
-	}
+// 	logicCall := types.OutgoingLogicCall{
+// 		Timeout: 420,
+// 	}
 
-	input.GravityKeeper.SetOutgoingLogicCall(ctx, &logicCall)
+// 	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// 	//SetOutgoingLogicCall is not supported
+// 	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// 	input.GravityKeeper.SetOutgoingLogicCall(ctx, &logicCall)
 
-	any, _ := codectypes.NewAnyWithValue(&logicCall)
+// 	any, _ := codectypes.NewAnyWithValue(&logicCall)
 
-	msg := types.MsgSubmitBadSignatureEvidence{
-		Subject:   any,
-		Signature: "foo",
-	}
+// 	msg := types.MsgSubmitBadSignatureEvidence{
+// 		Subject:   any,
+// 		Signature: "foo",
+// 	}
 
-	err := input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
-	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
-}
+// 	err := input.GravityKeeper.CheckBadSignatureEvidence(ctx, &msg)
+// 	require.EqualError(t, err, "Checkpoint exists, cannot slash: invalid")
+// }
 
 //nolint: exhaustivestruct
 func TestSubmitBadSignatureEvidenceSlash(t *testing.T) {
