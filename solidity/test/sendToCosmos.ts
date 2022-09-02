@@ -20,6 +20,10 @@ let cudosAccessControl:any
 
 async function runTest(opts: {contractLocked:? boolean}) {
 
+  async function runTest(opts: {
+    contractLocked:? boolean,
+    tokenNotContract:? boolean,
+  }) {
 
   const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
   cudosAccessControl = (await CudosAccessControls.deploy());
@@ -44,12 +48,14 @@ async function runTest(opts: {contractLocked:? boolean}) {
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
+  const tokenAddress = opts.tokenNotContract ? ethers.Wallet.createRandom().address : testERC20.address;
+
   await expect(gravity.functions.sendToCosmos(
     testERC20.address,
     ethers.utils.formatBytes32String("myCosmosAddress"),
     1000
   )).to.emit(gravity, 'SendToCosmosEvent').withArgs(
-      testERC20.address,
+      tokenAddress,
       await signers[0].getAddress(),
       ethers.utils.formatBytes32String("myCosmosAddress"),
       1000, 
@@ -81,6 +87,12 @@ async function runTest(opts: {contractLocked:? boolean}) {
 }
 
 describe("sendToCosmos tests", function () {
+  it("throws token empty bytecode", async function () {
+    await expect(runTest({ tokenNotContract: true })).to.be.revertedWith(
+      "empty bytecode token"
+    );
+  })
+
 
   it("throws contract locked", async function () {
     await expect(runTest({ contractLocked: true })).to.be.revertedWith(

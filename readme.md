@@ -123,6 +123,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -159,3 +160,9 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 ### Added only admin functionality to some contract functions
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-pause
 >>>>>>> cudos-v0.0.29-feature-gravity-contract-deploy-onlyAdmin
+=======
+### Added check for empty bytecode address on sendToCosmos
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-deploy-onlyAdmin
+
+This makes sure that the ERC20 contract address leads to a deployed contract, because there is a case where SendToCosmos could be called with not yet deployed contract.
+>>>>>>> cudos-v0.0.29-feature-gravity-contract-empty-byte-code
