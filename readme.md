@@ -115,6 +115,6 @@ You can keep up with the latest development by watching our [public standups](ht
 
 
 ### Tests reformatting for orchestrator
-Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-only-validator-with-highest-power-should-sign-submitBatch-transactions
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
 Ater all the changes, some test reforms had to be made in order to incorporate everything.
