@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Removed hardcoded bridge fee while using gbt
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-update-lib-cosmos-sdk-tendermint-ibc
+
 We've removed the ahrdcoded bridge fee that was set in the msgs, sent from gbt. We needed it removed for test purposes and since it is not used in production we left it at that.
