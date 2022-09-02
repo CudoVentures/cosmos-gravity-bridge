@@ -117,6 +117,7 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -127,3 +128,7 @@ We've added a static list of validators that participate in the orchestrating pr
 
 This is done on the module level, where if a validator tries to set itself as orchestrator, and is not in the static valset list, an error is thrown.
 >>>>>>> cudos-v0.0.29-feature-static-validator-set
+=======
+### Added env variables to orchestrator
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-static-validator-set
+>>>>>>> cudos-v0.0.29-feature-update-env-variables

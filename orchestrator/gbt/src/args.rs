@@ -27,7 +27,7 @@ pub struct Opts {
     pub home: Option<PathBuf>,
     /// Set the address prefix for the Cosmos chain
     /// default is 'cosmos'
-    #[clap(short, long, default_value = "cosmos")]
+    #[clap(short, long, env = "GRAVITY_ADDRESS_PREFIX", default_value = "cosmos")]
     pub address_prefix: String,
     #[clap(subcommand)]
     pub subcmd: SubCommand,
@@ -48,23 +48,23 @@ pub enum SubCommand {
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct OrchestratorOpts {
     /// Cosmos mnemonic phrase containing the tokens you would like to send
-    #[clap(short, long, parse(try_from_str))]
+    #[clap(short, long, env = "GRAVITY_COSMOS_ORCH_MNEMONIC", parse(try_from_str))]
     pub cosmos_phrase: Option<CosmosPrivateKey>,
     /// An Ethereum private key containing ETH to pay for fees, this will also hold the relayers earnings
     /// in the near future it will be possible to disable the Orchestrators integrated relayer
-    #[clap(short, long, parse(try_from_str))]
+    #[clap(short, long, env = "GRAVITY_ETH_PRIV_KEY_HEX", parse(try_from_str))]
     pub ethereum_key: Option<EthPrivateKey>,
     /// (Optional) The Cosmos gRPC server that will be used
-    #[clap(long, default_value = "http://localhost:9090")]
+    #[clap(long, env = "GRAVITY_GRPC", default_value = "http://localhost:9090")]
     pub cosmos_grpc: String,
     /// (Optional) The Ethereum RPC server that will be used
-    #[clap(long, default_value = "http://localhost:8545")]
+    #[clap(long, env = "GRAVITY_ETHRPC", default_value = "http://localhost:8545")]
     pub ethereum_rpc: String,
     /// The Cosmos Denom and amount to pay Cosmos chain fees
-    #[clap(short, long, parse(try_from_str))]
+    #[clap(short, long, env = "GRAVITY_FEES", default_value="1acudos", parse(try_from_str))]
     pub fees: Coin,
     /// The address fo the Gravity contract on Ethereum
-    #[clap(short, long, parse(try_from_str))]
+    #[clap(short, long, env = "GRAVITY_CONTRACT_ADDR", parse(try_from_str))]
     pub gravity_contract_address: Option<EthAddress>,
 }
 
