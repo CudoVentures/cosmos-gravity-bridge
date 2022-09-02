@@ -1,5 +1,6 @@
 import { Gravity } from "../typechain/Gravity";
 import { TestERC20A } from "../typechain/TestERC20A";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { ethers } from "hardhat";
 import { makeCheckpoint, signHash, getSignerAddresses, ZeroAddress } from "./pure";
 import { Signer } from "ethers";
@@ -13,6 +14,7 @@ export async function deployContracts(
   powerThreshold: number,
   validators: Signer[],
   powers: number[],
+  cudosAccessControl: String,
   opts?: DeployContractsOptions
 ) {
   const TestERC20 = await ethers.getContractFactory("TestERC20A");
@@ -29,6 +31,7 @@ export async function deployContracts(
     powerThreshold,
     await getSignerAddresses(validators),
     powers,
+    cudosAccessControl
   )) as Gravity;
 
   await gravity.deployed();

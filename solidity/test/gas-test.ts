@@ -1,6 +1,7 @@
 import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 
 import { deployContracts } from "../test-utils";
 import {
@@ -14,6 +15,14 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("Gas tests", function () {
+
+    let cudosAccessControl:any
+
+    beforeEach(async () => {
+      const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+      cudosAccessControl = (await CudosAccessControls.deploy()) ;
+    });
+
     it("makeCheckpoint in isolation", async function () {
         const signers = await ethers.getSigners();
         const gravityId = ethers.utils.formatBytes32String("foo");
@@ -28,7 +37,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, powerThreshold, validators, powers);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
         let valset = {
             validators: await getSignerAddresses(validators),
@@ -58,7 +67,7 @@ describe("Gas tests", function () {
             gravity,
             testERC20,
             checkpoint: deployCheckpoint
-        } = await deployContracts(gravityId, powerThreshold, validators, powers);
+        } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
 
         let sigs = await signHash(
             validators,

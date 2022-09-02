@@ -2,6 +2,7 @@ import chai from "chai";
 import { ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 
+import { CudosAccessControls } from "../typechain/CudosAccessControls";
 import { deployContracts } from "../test-utils";
 import {
   getSignerAddresses,
@@ -16,6 +17,15 @@ const { expect } = chai;
 
 
 describe("Gravity happy path valset update + batch submit", function () {
+
+  let cudosAccessControl:any
+
+  beforeEach(async () => {
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
+  });
+
+
   it("Happy path", async function () {
 
     // DEPLOY CONTRACTS
@@ -40,7 +50,7 @@ describe("Gravity happy path valset update + batch submit", function () {
       gravity,
       testERC20,
       checkpoint: deployCheckpoint
-    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers);
+    } = await deployContracts(gravityId, powerThreshold, valset0.validators, valset0.powers, cudosAccessControl.address);
 
 
 

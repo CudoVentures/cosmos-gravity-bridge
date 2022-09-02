@@ -119,6 +119,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -137,3 +138,9 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 ### Initialize chain with 0th Gravity contract address vy default
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-update-env-variables
 >>>>>>> cudos-v0.0.29-fix-initial-value-of-bridge-contract-address
+=======
+### Added access control
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-initial-value-of-bridge-contract-address
+
+We've added an access control to the Gravity contract, which limits who can call some functions.
+>>>>>>> cudos-v0.0.29-feature-access-control

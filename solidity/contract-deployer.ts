@@ -22,6 +22,8 @@ const args = commandLineArgs([
   { name: "contract", type: String },
   // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
+  // the address of the cudoss access control smart contract
+  { name: "cudos-access-control", type: String}
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
@@ -183,6 +185,10 @@ async function deploy() {
   const gravityIdString = await getGravityId();
   const gravityId = ethers.utils.formatBytes32String(gravityIdString);
 
+  
+  let cudosAccessControl:any
+  cudosAccessControl = args["cudos-access-control"];
+
   console.log("Starting Gravity contract deploy");
   const { abi, bytecode } = getContractArtifacts(args["contract"]);
   const factory = new ethers.ContractFactory(abi, bytecode, wallet);
@@ -216,6 +222,12 @@ async function deploy() {
     exit(1)
   }
 
+  console.log("gravity id:",gravityId)
+  console.log("vote power:",vote_power)
+  console.log("eth addresses:",eth_addresses)
+  console.log("powers:",powers)
+  console.log("cudos access control:",cudosAccessControl)
+
   const gravity = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
     // anything but intentional conflicts
@@ -223,12 +235,27 @@ async function deploy() {
     vote_power,
     eth_addresses,
     powers,
-    overrides
+    cudosAccessControl
   )) as Gravity;
 
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
+
+  
+  await gravity.deployTransaction.wait(10)
+  console.log("Verifying contract on Etherscan...");
+
+  await hre.run("verify:verify", {
+    address: gravity.address,
+    constructorArguments: [
+      gravityId,
+      vote_power,
+      eth_addresses,
+      powers,
+      cudosAccessControl
+    ],
+  });
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
