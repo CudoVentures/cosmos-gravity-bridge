@@ -120,6 +120,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Automatic creation of batches
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-eth-address-lowercase
 
@@ -145,3 +146,9 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 Removed the slashing feature and and the tests for it.
 >>>>>>> cudos-v0.0.29-remove-feature-slashing
+=======
+### Handle non-running eth/cosmos nodes
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-slashing
+
+Prior to our change, when a probe to RPC connection to a node failed, the orchestrator qould panic. We've changed it so it rather throws an error and retries,
+>>>>>>> cudos-v0.0.29-feature-handle-non-running-eth-cosmos-nodes

@@ -14,6 +14,7 @@ use relayer::main_loop::LOOP_SPEED as RELAYER_LOOP_SPEED;
 use std::cmp::min;
 use std::path::Path;
 use std::process::exit;
+use tokio::time::sleep as delay_for;
 
 pub async fn orchestrator(
     args: OrchestratorOpts,
@@ -73,13 +74,22 @@ pub async fn orchestrator(
 
     trace!("Probing RPC connections");
     // probe all rpc connections and see if they are valid
-    let connections = create_rpc_connections(
-        address_prefix,
-        Some(cosmos_grpc),
-        Some(ethereum_rpc),
-        timeout,
-    )
-    .await;
+    let mut connections;
+    loop {
+        connections = create_rpc_connections(
+            address_prefix.clone(),
+            Some(cosmos_grpc.clone()),
+            Some(ethereum_rpc.clone()),
+            timeout,
+        )
+        .await;
+
+        if !connections.grpc.is_none() && !connections.grpc.is_none() && !connections.grpc.is_none() {
+            break;
+        }
+
+        delay_for(timeout).await;
+    }
 
     let mut grpc = connections.grpc.clone().unwrap();
     let contact = connections.contact.clone().unwrap();
