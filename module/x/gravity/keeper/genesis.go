@@ -169,6 +169,10 @@ func InitGenesis(ctx sdk.Context, k Keeper, data types.GenesisState) {
 	k.SetLastUnBondingBlockHeight(ctx, data.LastUnBondingBlockHeight)
 	k.SetLatestValsetNonce(ctx, data.LastLatestValsetNonce)
 
+	for _, cosmosAddr := range data.StaticValCosmosAddrs {
+		k.SetStaticValCosmosAddr(ctx, cosmosAddr)
+	}
+
 }
 
 // ExportGenesis exports all the state needed to restart the chain
@@ -195,6 +199,7 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		lastSlashedValsetNonce    = k.GetLastSlashedValsetNonce(ctx)
 		lastUnBondingBlockHeight  = k.GetLastUnBondingBlockHeight(ctx)
 		lastLatestValsetNonce     = k.GetLatestValsetNonce(ctx)
+		staticValCosmosAddrs      = k.GetStaticValCosmosAddrs(ctx)
 	)
 
 	// export valset confirmations from state
@@ -265,5 +270,6 @@ func ExportGenesis(ctx sdk.Context, k Keeper) types.GenesisState {
 		LastSlashedValsetNonce:    lastSlashedValsetNonce,
 		LastUnBondingBlockHeight:  lastUnBondingBlockHeight,
 		LastLatestValsetNonce:     lastLatestValsetNonce,
+		StaticValCosmosAddrs:      staticValCosmosAddrs,
 	}
 }

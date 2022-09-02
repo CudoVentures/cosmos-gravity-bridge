@@ -78,7 +78,27 @@ func (k Keeper) TryAttestation(ctx sdk.Context, att *types.Attestation) {
 	if !att.Observed {
 		// Sum the current powers of all validators who have voted and see if it passes the current threshold
 		// TODO: The different integer types and math here needs a careful review
-		totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
+		// totalPower := k.StakingKeeper.GetLastTotalPower(ctx)
+
+		validators := k.StakingKeeper.GetBondedValidatorsByPower(ctx)
+		staticValOperAddrsMap := k.GetStaticValOperAddrsAsMap(ctx)
+
+		var staticTotalPower uint64 = 0
+		for _, validator := range validators {
+			// ctx.Logger().Error("Debug Attesation", "validator.OperatorAddress", validator.OperatorAddress)
+			if _, found := staticValOperAddrsMap[validator.OperatorAddress]; !found {
+				// ctx.Logger().Error("Debug Attesation", "Skipped validator.OperatorAddress", validator.OperatorAddress)
+				continue
+			}
+
+			// ctx.Logger().Error("Debug Attesation", "Static validator.OperatorAddress", validator.OperatorAddress)
+			val := validator.GetOperator()
+			p := uint64(k.StakingKeeper.GetLastValidatorPower(ctx, val))
+			staticTotalPower += p
+		}
+		// ctx.Logger().Error("Debug Attesation", "staticTotalPower", staticTotalPower)
+		totalPower := sdk.NewIntFromUint64(staticTotalPower)
+
 		requiredPower := types.AttestationVotesPowerThreshold.Mul(totalPower).Quo(sdk.NewInt(100))
 		attestationPower := sdk.NewInt(0)
 		for _, validator := range att.Votes {

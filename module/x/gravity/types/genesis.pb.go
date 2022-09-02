@@ -202,6 +202,7 @@ type GenesisState struct {
 	LastSlashedValsetNonce    uint64                       `protobuf:"varint,17,opt,name=last_slashed_valset_nonce,json=lastSlashedValsetNonce,proto3" json:"last_slashed_valset_nonce,omitempty"`
 	LastUnBondingBlockHeight  uint64                       `protobuf:"varint,18,opt,name=last_un_bonding_block_height,json=lastUnBondingBlockHeight,proto3" json:"last_un_bonding_block_height,omitempty"`
 	LastLatestValsetNonce     uint64                       `protobuf:"varint,19,opt,name=last_latest_valset_nonce,json=lastLatestValsetNonce,proto3" json:"last_latest_valset_nonce,omitempty"`
+	StaticValCosmosAddrs      []string                     `protobuf:"bytes,20,rep,name=static_val_cosmos_addrs,json=staticValCosmosAddrs,proto3" json:"static_val_cosmos_addrs,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
