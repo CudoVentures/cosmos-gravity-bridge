@@ -116,7 +116,14 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
+<<<<<<< HEAD
 ### Automatic creation of batches
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-eth-address-lowercase
 
 In Cudos fork we decided to do an automatic batch creation each 120 blocks. This is done in abci with a check on each block. 
+=======
+### Export all params to genesis
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-creation-of-batches
+
+Some params were missing in genesis, so we added them in.
+>>>>>>> cudos-v0.0.29-fix-add-all-gravity-params-to-genesis
