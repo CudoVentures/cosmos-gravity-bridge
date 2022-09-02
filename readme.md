@@ -119,4 +119,4 @@ Since we forked the project, there are several changes that we've made to the re
 ### Improve wait transactions
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
-Added retry on transaction receipts.
+In the original repo, if a transaction receipt query failed, it was final. We made it so that the query is retried until successfull.
