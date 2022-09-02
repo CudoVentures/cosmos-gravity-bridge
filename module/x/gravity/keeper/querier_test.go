@@ -507,32 +507,32 @@ func TestLastPendingBatchRequest(t *testing.T) {
 	"transactions": [
 		{
 		"id": "2",
-		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
-		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+		"dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 		"erc20_token": {
 			"amount": "101",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		"erc20_fee": {
 			"amount": "3",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 		},
 		{
 		"id": "3",
-		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
-		"dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+		"sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du",
+		"dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 		"erc20_token": {
 			"amount": "102",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		"erc20_fee": {
 			"amount": "2",
-			"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+			"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 		}
 	],
-	"token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+	"token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 	}
 }
 			`,
@@ -551,7 +551,7 @@ func TestLastPendingBatchRequest(t *testing.T) {
 //nolint: exhaustivestruct
 func createTestBatch(t *testing.T, input TestInput) {
 	var (
-		mySender            = sdk.AccAddress(bytes.Repeat([]byte{1}, len(sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().String()))))
+		mySender            = bytes.Repeat([]byte{1}, sdk.AddrLen)
 		myReceiver          = "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934"
 		myTokenContractAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
 		now                 = time.Now().UTC()
@@ -604,7 +604,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	ctx := input.Context
 
 	var (
-		tokenContract    = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		tokenContract    = "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		validatorAddr, _ = sdk.AccAddressFromBech32("cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh")
 	)
 
@@ -619,7 +619,7 @@ func TestQueryAllBatchConfirms(t *testing.T) {
 	batchConfirms, err := queryAllBatchConfirms(ctx, "1", tokenContract, input.GravityKeeper)
 	require.NoError(t, err)
 
-	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
+	expectedJSON := []byte(`[{"eth_signer":"0xf35e2cc8e6523d683ed44870f5b7cc785051a77d", "nonce":"1", "signature":"signature", "token_contract":"0xab5801a7d398351b8be11c439e05c5b3259aec9b", "orchestrator":"cosmos1mgamdcs9dah0vn0gqupl05up7pedg2mvupe6hh"}]`)
 
 	assert.JSONEq(t, string(expectedJSON), string(batchConfirms), "json is equal")
 }
@@ -753,7 +753,7 @@ func TestQueryBatch(t *testing.T) {
 	ctx := input.Context
 
 	var (
-		tokenContract = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		tokenContract = "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 	)
 
 	createTestBatch(t, input)
@@ -768,12 +768,12 @@ func TestQueryBatch(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "2"
@@ -781,12 +781,12 @@ func TestQueryBatch(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "102",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "3"
@@ -794,7 +794,7 @@ func TestQueryBatch(t *testing.T) {
 		  ],
 		  "batch_nonce": "1",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 	  }
 	  `)
@@ -820,12 +820,12 @@ func TestLastBatchesRequest(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "6"
@@ -833,12 +833,12 @@ func TestLastBatchesRequest(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "102",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "7"
@@ -846,19 +846,19 @@ func TestLastBatchesRequest(t *testing.T) {
 		  ],
 		  "batch_nonce": "2",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		},
 		{
 		  "transactions": [
 			{
 			  "erc20_fee": {
 				"amount": "3",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "101",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "2"
@@ -866,12 +866,12 @@ func TestLastBatchesRequest(t *testing.T) {
 			{
 			  "erc20_fee": {
 				"amount": "2",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
-			  "dest_address": "0x320915BD0F1bad11cBf06e85D5199DBcAC4E9934",
+			  "dest_address": "0x320915bd0f1bad11cbf06e85d5199dbcac4e9934",
 			  "erc20_token": {
 				"amount": "102",
-				"contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+				"contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 			  },
 			  "sender": "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgppsdtue",
 			  "id": "3"
@@ -879,7 +879,7 @@ func TestLastBatchesRequest(t *testing.T) {
 		  ],
 		  "batch_nonce": "1",
 		  "block": "1234567",
-		  "token_contract": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+		  "token_contract": "0xab5801a7d398351b8be11c439e05c5b3259aec9b"
 		}
 	  ]
 	  `)
@@ -916,7 +916,7 @@ func TestQueryCurrentValset(t *testing.T) {
 //nolint: exhaustivestruct
 func TestQueryERC20ToDenom(t *testing.T) {
 	var (
-		erc20, err = types.NewEthAddress("0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255")
+		erc20, err = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
 		denom      = "uatom"
 	)
 	require.NoError(t, err)
@@ -939,7 +939,7 @@ func TestQueryERC20ToDenom(t *testing.T) {
 //nolint: exhaustivestruct
 func TestQueryDenomToERC20(t *testing.T) {
 	var (
-		erc20, err = types.NewEthAddress("0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255")
+		erc20, err = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
 		denom      = "uatom"
 	)
 	require.NoError(t, err)
@@ -967,8 +967,8 @@ func TestQueryPendingSendToEth(t *testing.T) {
 	var (
 		now                 = time.Now().UTC()
 		mySender, _         = sdk.AccAddressFromBech32("cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn")
-		myReceiver          = "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7"
-		myTokenContractAddr = "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5" // Pickle
+		myReceiver          = "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7"
+		myTokenContractAddr = "0x429881672b9ae42b8eba0e26cf9c73711b891ca5" // Pickle
 		token, err          = types.NewInternalERC20Token(sdk.NewInt(99999), myTokenContractAddr)
 		allVouchers         = sdk.NewCoins(token.GravityCoin())
 	)
@@ -1020,26 +1020,26 @@ func TestQueryPendingSendToEth(t *testing.T) {
     {
       "id": "2",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "101"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "3"
       }
     },
     {
       "id": "3",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "102"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "2"
       }
     }
@@ -1048,26 +1048,26 @@ func TestQueryPendingSendToEth(t *testing.T) {
     {
       "id": "1",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "100"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "2"
       }
     },
     {
       "id": "4",
       "sender": "cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn",
-      "dest_address": "0xd041c41EA1bf0F006ADBb6d2c9ef9D425dE5eaD7",
+      "dest_address": "0xd041c41ea1bf0f006adbb6d2c9ef9d425de5eaf7",
       "erc20_token": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "103"
       },
       "erc20_fee": {
-        "contract": "0x429881672B9AE42b8EbA0E26cD9C73711b891Ca5",
+        "contract": "0x429881672b9ae42b8eba0e26cf9c73711b891ca5",
         "amount": "1"
       }
     }

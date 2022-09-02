@@ -120,7 +120,7 @@ func lockCoinsInModule(tv *testingVars) {
 		startingCoins      sdk.Coins = sdk.Coins{sdk.NewCoin(denom, startingCoinAmount)}
 		sendingCoin        sdk.Coin  = sdk.NewCoin(denom, sendAmount)
 		feeCoin            sdk.Coin  = sdk.NewCoin(denom, feeAmount)
-		ethDestination               = "0x3c9289da00b02dC623d0D8D907619890301D26d4"
+		ethDestination               = "0x3c9289da00b02dc623d0d8d907619890301d26d4"
 	)
 
 	// we start by depositing some funds into the users balance to send

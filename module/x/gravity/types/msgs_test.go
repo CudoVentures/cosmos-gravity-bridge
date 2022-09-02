@@ -1,18 +1,18 @@
 package types
 
 import (
+	"bytes"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 func TestValidateMsgSetOrchestratorAddress(t *testing.T) {
 	var (
-		ethAddress                   = "0xb462864E395d88d6bc7C5dd5F3F5eb4cc2599255"
-		cosmosAddress sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
-		valAddress    sdk.ValAddress = sdk.ValAddress(cosmosAddress)
+		ethAddress                   = "0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255"
+		cosmosAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		valAddress    sdk.ValAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 	)
 	specs := map[string]struct {
 		srcCosmosAddr sdk.AccAddress
