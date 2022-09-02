@@ -215,10 +215,6 @@ All the changes we've done would have to be reimplemented manually once we merge
 
 cudos-v0.0.29-update-lib-cosmos-sdk-tendermint-ibc
 
-cudos-v0.0.29-update-lib-tendermint
-
-cudos-v0.0.29-remove-lib-osmosis-lab
-
 cudos-v0.0.29-fix-remove-hardcoded-bridge-fee-while-using-gbt
 
 cudos-v0.0.29-fix-remove-double-bridge-fee
