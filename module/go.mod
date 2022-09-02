@@ -6,8 +6,8 @@ replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.
 
 require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/cosmos/cosmos-sdk v0.44.5
-	github.com/cosmos/ibc-go v1.2.3
+	github.com/cosmos/cosmos-sdk v0.45.3
+	github.com/cosmos/ibc-go/v2 v2.2.0
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/gogo/protobuf v1.3.3
