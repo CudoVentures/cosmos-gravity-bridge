@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Updated ECRECOVER function
+https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-etherscan-verify
+
 There are a few potential problems with the standard ecrecover function. That is why we implemented a zero address check after the ecrecover and also decided to use OpenZeppelins' tryEcrecover function. The latter required us to update our solidity version to ^0.8.0. From the update a few changes to the imports and a little change to the CosmosToken were required, but nothing major.
