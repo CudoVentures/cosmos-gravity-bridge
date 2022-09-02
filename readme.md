@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added automatic fee calculation in orchestrator
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+The original gas in the transactions ran through gbt was hardcoded. This led to many of them failing because they are not enough for example. We've made the gas calculated automatically during the transaction creation to avoid that.
