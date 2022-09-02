@@ -122,6 +122,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -154,3 +155,7 @@ There are a few potential problems with the standard ecrecover function. That is
 ### Added pause functionality on Gravity contract
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-ecrecover
 >>>>>>> cudos-v0.0.29-feature-gravity-contract-pause
+=======
+### Added only admin functionality to some contract functions
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-pause
+>>>>>>> cudos-v0.0.29-feature-gravity-contract-deploy-onlyAdmin
