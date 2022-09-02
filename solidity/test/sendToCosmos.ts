@@ -100,6 +100,13 @@ describe("sendToCosmos tests", function () {
     );
   })
 
+
+  it("throws token not supported", async function () {
+    await expect(runTest({ tokenNotContract: true })).to.be.revertedWith(
+      "token not supported"
+    );
+  })
+
   it("works right", async function () {
     await runTest({})
   });

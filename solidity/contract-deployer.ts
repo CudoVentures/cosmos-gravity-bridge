@@ -6,11 +6,9 @@ import { TestUniswapLiquidity } from "./typechain/TestUniswapLiquidity";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios from "axios";
 import { exit } from "process";
-import { start } from "node:repl";
-import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
-import  hre from "hardhat";
+import hre from "hardhat";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -23,8 +21,10 @@ const args = commandLineArgs([
   { name: "contract", type: String },
   // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
-  // the address of the cudoss access control smart contract
-  { name: "cudos-access-control", type: String}
+  // the address of the cudos access control smart contract
+  { name: "cudos-access-control", type: String},
+  // the address of the cudos token
+  { name: "cudos-token-address", type: String}
 ]);
 
 // 4. Now, the deployer script hits a full node api, gets the Eth signatures of the valset from the latest block, and deploys the Ethereum contract.
@@ -223,11 +223,13 @@ async function deploy() {
     exit(1)
   }
 
+  const cudosToken = args["cudos-token-address"];
   console.log("gravity id:",gravityId)
   console.log("vote power:",vote_power)
   console.log("eth addresses:",eth_addresses)
   console.log("powers:",powers)
   console.log("cudos access control:",cudosAccessControl)
+  console.log("cudos token address:",cudosToken)
 
   const gravity = (await factory.deploy(
     // todo generate this randomly at deployment time that way we can avoid
@@ -236,7 +238,8 @@ async function deploy() {
     vote_power,
     eth_addresses,
     powers,
-    cudosAccessControl
+    cudosAccessControl,
+    cudosToken,
   )) as Gravity;
 
   await gravity.deployed();
@@ -254,7 +257,8 @@ async function deploy() {
         vote_power,
         eth_addresses,
         powers,
-        cudosAccessControl
+        cudosAccessControl,
+        cudosToken,
       ],
     });
     console.log("Contract is verified")
