@@ -118,6 +118,7 @@ Since we forked the project, there are several changes that we've made to the re
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -132,3 +133,7 @@ This is done on the module level, where if a validator tries to set itself as or
 ### Added env variables to orchestrator
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-static-validator-set
 >>>>>>> cudos-v0.0.29-feature-update-env-variables
+=======
+### Initialize chain with 0th Gravity contract address vy default
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-update-env-variables
+>>>>>>> cudos-v0.0.29-fix-initial-value-of-bridge-contract-address
