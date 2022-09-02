@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added Gravity contract verifivation on etherscan
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+We've added a function to verify the gravity bridge contract on etherscan in the contract deployer script.
