@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added check for 0th address in MsgSendToEth
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+We've added a check for the Ethereum address, to check if it is not a 0th address for security purposes and to limit mistakes in transactions
