@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Removed market feature
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+The market feature was calculating if the batch is profitable for the orchestrators and based on that the batch creaion could be stop. We decided to remove it to have it work better with the automatic batch creation. Also we've made a minimum bridge fee, which is supposed to be enough for even one transfer to cover the ETH fees for the orchestrator.
