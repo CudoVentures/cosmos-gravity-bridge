@@ -116,7 +116,12 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
+<<<<<<< HEAD
 ### Improve wait transactions
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-Increase-log-level-from-info-to-error
 
 Added retry on transaction receipts.
+=======
+### Batches timeout calculation
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-wait-transactions
+>>>>>>> cudos-v0.0.29-fix-batches-timout-calculation
