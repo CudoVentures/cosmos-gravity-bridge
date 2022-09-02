@@ -119,4 +119,4 @@ Since we forked the project, there are several changes that we've made to the re
 ### Removed slashing
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
-Removed the slashing feature and and the tests for it.
+Removed the slashing feature and and the tests for it. We've decided to do it since we've limited the orchestrators to only trusted ones and we don't want to risk slashing a perfectly fine orchestrator, because of relayer instablity for example.
