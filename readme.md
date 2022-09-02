@@ -117,6 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Handle non-running eth/cosmos nodes
-Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-slashing
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
 Prior to our change, when a probe to RPC connection to a node failed, the orchestrator qould panic. We've changed it so it rather throws an error and retries,
