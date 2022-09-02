@@ -119,4 +119,4 @@ Since we forked the project, there are several changes that we've made to the re
 ### Automatic creation of batches
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
-In Cudos fork we decided to do an automatic batch creation each 120 blocks. This is done in abci with a check on each block. 
+In Cudos fork we decided to do an automatic batch creation each 120 blocks. This is done in abci with a check on each block. If the block height is divisible by 120 and there are unbatched transactions, we automatically create a batch for them.
