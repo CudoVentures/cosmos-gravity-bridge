@@ -126,6 +126,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -178,3 +179,11 @@ We've added a list with supported tokens in which the functions check if the giv
 ### Added gas optimizations
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-multiple-tokens
 >>>>>>> cudos-v0.0.29-feature-gravity-contract-gas-optimizations
+=======
+### Only the highest power orchestrator sends submitBatch transactions
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-gas-optimizations
+
+This is a change in the orchestrator only. We check if the current orchestartor is the one with the highest power, and only if it is, we let it send the submit batch transaction. 
+
+This is done so not all orchestrators waste gas on resubmiting batches.
+>>>>>>> cudos-v0.0.29-feature-only-validator-with-highest-power-should-sign-submitBatch-transactions
