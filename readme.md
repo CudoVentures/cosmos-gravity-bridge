@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added pause functionality on Gravity contract
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+Having a pause function in the contract is a good practice in event of a found bug or an attack. We've added this, since it was missing in the original gravity bridge repo.
