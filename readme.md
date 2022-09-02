@@ -119,4 +119,4 @@ Since we forked the project, there are several changes that we've made to the re
 ### Remove logic calls
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
-We've removed all LogicCall functions from the contract, the module and the orchestrator and the tests for them.
+We've removed all LogicCall functions from the contract, the module and the orchestrator and the tests for them. This is done since we don't plan to use them for now.
