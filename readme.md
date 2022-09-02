@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Gravity contract improvements
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+Added a orchestrator check for valset update too. Only orchestrator should be allowed to submit it.
