@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Fixed some typos and outputs
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+The state of the original repo, from which we forked, wasn't outputting all the gravity params to the genesis. This lead to losing the state when hardforking. For this purpose we made the change in our repo to output all the parameters in the genesis.
