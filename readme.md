@@ -117,7 +117,7 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Only the highest power orchestrator sends submitBatch transactions
-Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-gas-optimizations
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
 This is a change in the orchestrator only. We check if the current orchestartor is the one with the highest power, and only if it is, we let it send the submit batch transaction. 
 
