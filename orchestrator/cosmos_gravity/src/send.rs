@@ -25,6 +25,7 @@ use gravity_proto::gravity::MsgValsetUpdatedClaim;
 use gravity_proto::gravity::{MsgBatchSendToEthClaim, MsgSubmitBadSignatureEvidence};
 use gravity_proto::gravity::{MsgCancelSendToEth, MsgConfirmBatch};
 use gravity_utils::types::*;
+use crate::utils::wait_for_tx_with_retry;
 use std::{collections::HashMap, time::Duration};
 
 use crate::utils::BadSignatureEvidence;
@@ -135,7 +136,8 @@ pub async fn send_valset_confirms(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 /// Send in a confirmation for a specific transaction batch
@@ -187,7 +189,8 @@ pub async fn send_batch_confirm(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 /// Send in a confirmation for a specific logic call
@@ -239,7 +242,8 @@ pub async fn send_logic_call_confirm(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -356,7 +360,8 @@ pub async fn send_ethereum_claims(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 /// Sends tokens from Cosmos to Ethereum. These tokens will not be sent immediately instead
@@ -424,7 +429,8 @@ pub async fn send_to_eth(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 pub async fn send_request_batch(
@@ -505,7 +511,8 @@ pub async fn submit_bad_signature_evidence(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
 
 /// Cancels a user provided SendToEth transaction, provided it's not already in a batch
@@ -541,5 +548,6 @@ pub async fn cancel_send_to_eth(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    contact.wait_for_tx(response, TIMEOUT).await
+    // contact.wait_for_tx(response, TIMEOUT).await
+    wait_for_tx_with_retry(contact, &response).await
 }
