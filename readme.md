@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Fix error getting gravity id
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-remove-double-bridge-fee
+
 During the orchestrator's loop, if a connection fails for a bit and the gravity id query fails, the whole loop stops. We've changed this, so it rather continues to search for it until it gets it.
