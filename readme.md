@@ -119,4 +119,6 @@ Since we forked the project, there are several changes that we've made to the re
 ### Fixes incorporating cosmos-sdk min self delegation feature
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-update-lib-cosmos-sdk-tendermint-ibc
+
 In our fork of cosmos-sdk we've set a minimum value for min self delegation flag. because of this everywhere (mainly tests) where a validator is being created, we have to change the code to set the flag for min self delegation and also delegate more to the validator.
