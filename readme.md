@@ -123,6 +123,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -165,3 +166,7 @@ Since the orchestrators sign ethereum transactions in order to validate the tran
 
 To do this we've implemented a new parameter, messages for setting it, that can be ran only by adminToken holders and checks in MsgSendToEth. Also we've redone some other tests to accomodate that change.
 >>>>>>> cudos-v0.0.29-feature-min-fee-transfer-to-eth
+=======
+### Added automatic fee calculation in orchestrator
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-min-fee-transfer-to-eth
+>>>>>>> cudos-v0.0.29-feature-automatic-gas-calculation
