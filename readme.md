@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Automatic creation of batches
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-eth-address-lowercase
+
 In Cudos fork we decided to do an automatic batch creation each 120 blocks. This is done in abci with a check on each block. 
