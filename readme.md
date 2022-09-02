@@ -117,6 +117,8 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Added static valset functionality
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-add-0th-eth-address-checks
+
 We've added a static list of validators that participate in the orchestrating process. This is set during the init of the chain and can only be changed with a fork.
 
 This is done on the module level, where if a validator tries to set itself as orchestrator, and is not in the static valset list, an error is thrown.
