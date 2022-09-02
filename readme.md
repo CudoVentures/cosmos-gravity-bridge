@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Increase log level to error on exceptions
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-fix-getting-gravity-id
+
 Increased the log level to error on the following exceptions - failed to send tokens to eth, failed to send tokens to cosmos, failed to get unsigned logic calls.
