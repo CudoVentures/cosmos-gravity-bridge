@@ -117,3 +117,4 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Added env variables to orchestrator
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-static-validator-set
