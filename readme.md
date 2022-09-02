@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Initialize chain with 0th Gravity contract address vy default
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+In older versions of gravity the genesis had an empty string set as default gravity contract address. This lead to the problem where we were hardforking to a newer version of gravity bridge, where the script panicked, because the default address was now the zero Ethereum address. We've added check to accomodate that.
