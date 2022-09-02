@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Added minimum amount to send to ETH
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-output-params
+
 We've implemented a minimum amount of acudos to send to ETH as to prevent spammint with 1 acudo transactions. This includes new parameted in Gravity module, new checks to the messages, new message for setting the minimum amount by admin and some unit tests.
