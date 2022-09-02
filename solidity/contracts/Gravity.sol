@@ -1,10 +1,11 @@
-pragma solidity ^0.6.6;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./CosmosToken.sol";
 import "./CudosAccessControls.sol";
 
@@ -125,11 +126,12 @@ contract Gravity is ReentrancyGuard {
 		uint8 _v,
 		bytes32 _r,
 		bytes32 _s
-	) private pure returns (bool) {
+	) private pure returns (bool ) {
 		bytes32 messageDigest = keccak256(
 			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
 		);
-		return _signer == ecrecover(messageDigest, _v, _r, _s);
+		address recAddr = ECDSA.recover(messageDigest, _v, _r, _s);
+		return _signer == recAddr;
 	}
 
 	// Make a new checkpoint from the supplied validator set

@@ -23,7 +23,7 @@
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
-    "@openzeppelin/contracts": "3.1.0",
+    "@openzeppelin/contracts": "^4.3.0",
     "@typechain/ethers-v5": "^5.0.0",
     "@types/chai": "^4.3.1",
     "@types/command-line-args": "^5.0.0",

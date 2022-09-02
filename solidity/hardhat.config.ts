@@ -37,17 +37,28 @@ module.exports = {
       optimizer: {
         enabled: true
       }
-    }  },
-    defaultNetwork: process.env.DEFAULT_NETWORK,
-    networks: {
-      rinkeby: {
-        url: "https://rinkeby.infura.io/v3/62f1fc27624f401283692320734e387e"
-      },
-      url: `${process.env.ETH_NODE}`
-    },
-    mainnet: {
-      url: `${process.env.ETH_NODE}`
-    },
+    }  
+  },
+  {
+    version: "0.6.12",
+    settings: {
+      optimizer: {
+        enabled: true
+      }
+    }  
+  },
+  {
+    version: "0.8.1",
+    settings: {
+      optimizer: {
+        enabled: true
+      }
+    }  
+  }
+]
+  },
+  defaultNetwork: process.env.DEFAULT_NETWORK,
+  networks: {
     hardhat: {
       timeout: 2000000,
       accounts: [
