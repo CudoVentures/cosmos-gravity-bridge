@@ -116,9 +116,14 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
 The CancelSendToEth functionality we had from the fork had a bug. We've fixed it and improved it by adding queries for transfers that are not yet included in a batch and can be canceled. This is done for ease of UI use.
 
 Also more tests added.
+=======
+### Fixes incorporating cosmos-sdk min self delegation feature
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-cancel-sendToEth
+>>>>>>> cudos-v0.0.29-feature-min-self-delegation
