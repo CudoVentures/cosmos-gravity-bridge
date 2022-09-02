@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added env variables to orchestrator
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+The original orchestrator's settings were passed as parameters to the binary. For our purposes we needed them in env files, mainly for security purposes.
