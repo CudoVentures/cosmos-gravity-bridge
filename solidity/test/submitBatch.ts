@@ -12,6 +12,7 @@ import {
   examplePowers,
   ZeroAddress,
 } from "../test-utils/pure";
+import { connect } from "node:http2";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -30,6 +31,7 @@ async function runTest(opts: {
   barelyEnoughPower?: boolean;
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
+  notWhiteListed?: boolean;
 }) {
 
   
@@ -169,7 +171,25 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
-  let batchSubmitTx = await gravity.submitBatch(
+  if (opts.notWhiteListed) {
+  let testAcc = signers[powers.length+1];
+  await gravity.connect(testAcc).submitBatch(
+    valset,
+
+    sigs.v,
+    sigs.r,
+    sigs.s,
+
+    txAmounts,
+    txDestinations,
+    txFees,
+    batchNonce,
+    testERC20.address,
+    batchTimeout
+  );
+  }
+  
+  let batchSubmitTx = await gravity.connect(signers[2]).submitBatch(
     valset,
 
     sigs.v,
@@ -224,6 +244,12 @@ describe("submitBatch tests", function () {
     );
   });
 
+  it("throws if the sender is not whitelisted (trusted orchestrator)", async function () {
+    await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
+      "The sender of the transaction is not validated orchestrator"
+    );
+  });
+
   it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });
   });
@@ -242,9 +268,14 @@ describe("submitBatch tests", function () {
 // This test produces a hash for the contract which should match what is being used in the Go unit tests. It's here for
 // the use of anyone updating the Go tests.
 describe("submitBatch Go test hash", function () {
+
   it("produces good hash", async function () {
     // Prep and deploy contract
     // ========================
+
+    const CudosAccessControls = await ethers.getContractFactory("CudosAccessControls");
+    cudosAccessControl = (await CudosAccessControls.deploy());
+
     const signers = await ethers.getSigners();
     const gravityId = ethers.utils.formatBytes32String("foo");
     const powers = [6667];
@@ -302,21 +333,21 @@ describe("submitBatch Go test hash", function () {
     );
     const batchDigest = ethers.utils.keccak256(abiEncodedBatch);
 
-    // console.log("elements in batch digest:", {
-    //   gravityId: gravityId,
-    //   batchMethodName: batchMethodName,
-    //   txAmounts: txAmounts,
-    //   txDestinations: txDestinations,
-    //   txFees: txFees,
-    //   batchNonce: batchNonce,
-    //   batchTimeout: batchTimeout,
-    //   tokenContract: testERC20.address,
-    // });
-    // console.log("abiEncodedBatch:", abiEncodedBatch);
-    // console.log("batchDigest:", batchDigest);
+    console.log("elements in batch digest:", {
+      gravityId: gravityId,
+      batchMethodName: batchMethodName,
+      txAmounts: txAmounts,
+      txDestinations: txDestinations,
+      txFees: txFees,
+      batchNonce: batchNonce,
+      batchTimeout: batchTimeout,
+      tokenContract: testERC20.address,
+    });
+    console.log("abiEncodedBatch:", abiEncodedBatch);
+    console.log("batchDigest:", batchDigest);
 
-    const sigs = await signHash(validators, batchDigest);
-    const currentValsetNonce = 0;
+  const sigs = await signHash(validators, batchDigest);
+  const currentValsetNonce = 0;
 
     let valset = {
       validators: await getSignerAddresses(validators),
@@ -325,7 +356,6 @@ describe("submitBatch Go test hash", function () {
       rewardAmount: 0,
       rewardToken: ZeroAddress
     }
-
     await gravity.submitBatch(
       valset,
 
@@ -354,7 +384,7 @@ it("produces good hash with newly whitelisted address", async function () {
     gravity,
     testERC20,
     checkpoint: deployCheckpoint,
-  } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
+  } = await deployContracts(gravityId, powerThreshold, validators, powers, bridgeAccessControl.address);
 
   // Prepare batch
   // ===============================
@@ -425,9 +455,6 @@ it("produces good hash with newly whitelisted address", async function () {
     rewardAmount: 0,
     rewardToken: ZeroAddress
   }
-  await gravity.manageWhitelist([signers[3].address], true)
-  await gravity.connect(signers[3]).submitBatch(
-    valset,
 
     sigs.v,
     sigs.r,
@@ -540,23 +567,6 @@ it("throws when an address is removed from the whitelist", async function () {
     testERC20.address,
     batchTimeout
   );
-
-  await gravity.manageWhitelist([signers[3].address], false)
-
-  await expect(gravity.connect(signers[3]).submitBatch(
-    valset,
-
-    sigs.v,
-    sigs.r,
-    sigs.s,
-
-    txAmounts,
-    txDestinations,
-    txFees,
-    batchNonce,
-    testERC20.address,
-    batchTimeout
-  )).to.be.revertedWith("The caller is not whitelisted for this operation")
 });
 
 });

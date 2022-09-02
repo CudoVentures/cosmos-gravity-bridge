@@ -42,7 +42,7 @@ contract Gravity is ReentrancyGuard {
 	bytes32 public state_gravityId;
 	uint256 public state_powerThreshold;
 
-	CudosAccessControls public cudosAccessControls;
+	BridgeAccessControl public bridgeAccessControl;
 
 	// TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
 	// This is incremented every time one of these events is emitted. It is checked by the
@@ -79,35 +79,12 @@ contract Gravity is ReentrancyGuard {
 		address[] _validators,
 		uint256[] _powers
 	);
-
-	event WhitelistedStatusModified(
-		address _sender,
-		address[] _users,
-		bool _isWhitelisted
+	event LogicCallEvent(
+		bytes32 _invalidationId,
+		uint256 _invalidationNonce,
+		bytes _returnData,
+		uint256 _eventNonce
 	);
-
-
-	modifier onlyWhitelisted() {
-		 require(
-            whitelisted[msg.sender] || cudosAccessControls.hasAdminRole(msg.sender) ,
-            "The caller is not whitelisted for this operation"
-        );
-		_;
-	}
-
-	function manageWhitelist(
-		address[] memory _users,
-		bool _isWhitelisted
-		) public onlyWhitelisted {
-		 for (uint256 i = 0; i < _users.length; i++) {
-            require(
-                _users[i] != address(0),
-                "User is the zero address"
-            );
-            whitelisted[_users[i]] = _isWhitelisted;
-        }
-        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
-	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -228,6 +205,16 @@ contract Gravity is ReentrancyGuard {
 		// Success
 	}
 
+	function isOrchestrator(ValsetArgs memory _newValset, address _sender) private pure returns(bool) {
+
+		for (uint256 i = 0; i < _newValset.validators.length; i++) {
+			if(_newValset.validators[i] == _sender) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// This updates the valset by checking that the validators in the current valset have signed off on the
 	// new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
 	// generated from the new valset.
@@ -270,6 +257,11 @@ contract Gravity is ReentrancyGuard {
 		require(
 			makeCheckpoint(_currentValset, state_gravityId) == state_lastValsetCheckpoint,
 			"Supplied current validators and powers do not match checkpoint."
+		);
+
+		require(
+			isOrchestrator(_newValset, msg.sender),
+			"The sender of the transaction is not validated orchestrator"
 		);
 
 		// Check that enough current validators have signed off on the new validator set
@@ -316,7 +308,7 @@ contract Gravity is ReentrancyGuard {
 	// to the destination addresses. It is approved by the current Cosmos validator set.
 	// Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
 	// the batch.
-	function submitBatch(
+	function submitBatch (
 		// The validators that approve the batch
 		ValsetArgs memory _currentValset,
 		// These are arrays of the parts of the validators signatures
@@ -366,6 +358,11 @@ contract Gravity is ReentrancyGuard {
 			require(
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
 				"Malformed batch of transactions"
+			);
+
+			require(
+				isOrchestrator(_currentValset, msg.sender),
+				"The sender of the transaction is not validated orchestrator"
 			);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
@@ -421,7 +418,7 @@ contract Gravity is ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant {
+	) public nonReentrant  {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(

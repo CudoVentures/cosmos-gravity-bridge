@@ -30,6 +30,8 @@ async function runTest(opts: {
   badReward?: boolean;
   notEnoughReward?: boolean;
   withReward?: boolean;
+  notWhiteListed?: boolean;
+  removedWhitelist:? boolean;
 }) {
 
   let cudosAccessControl:any
@@ -162,8 +164,21 @@ async function runTest(opts: {
     powers.pop();
   }
 
+  if (opts.notWhiteListed) {
 
-  let valsetUpdateTx = await gravity.updateValset(
+    let testAcc = signers[powers.length+1];
+
+    await gravity.connect(testAcc).updateValset(
+      newValset,
+      currentValset,
+      sigs.v,
+      sigs.r,
+      sigs.s
+    )
+  }
+  let valsetUpdateTx;
+
+   valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
@@ -241,6 +256,11 @@ describe("updateValset tests", function () {
       "transfer amount exceeds balance"
     );
   });
+  it("throws on not whitelisted signer (trusted validator) ", async function () {
+    await expect(runTest({ notWhiteListed: true })).to.be.revertedWith(
+      "The sender of the transaction is not validated orchestrator"
+    );
+  });
 
   it("pays reward correctly", async function () {
     let {gravity, checkpoint} = await runTest({ withReward: true });
@@ -248,6 +268,11 @@ describe("updateValset tests", function () {
   });
 
   it("happy path", async function () {
+    let { gravity, checkpoint } = await runTest({});
+    expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
+  });
+
+  it("happy path with whitelisted signer", async function () {
     let { gravity, checkpoint } = await runTest({});
     expect((await gravity.functions.state_lastValsetCheckpoint())[0]).to.equal(checkpoint);
   });
