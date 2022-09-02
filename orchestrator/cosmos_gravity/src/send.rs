@@ -29,6 +29,7 @@ use std::{collections::HashMap, time::Duration};
 
 use num256::Uint256;
 use crate::utils::BadSignatureEvidence;
+use num256::Uint256;
 
 pub const MEMO: &str = "Sent using Althea Orchestrator";
 pub const TIMEOUT: Duration = Duration::from_secs(60);
@@ -308,10 +309,7 @@ pub async fn send_ethereum_claims(
             block_height: downcast_uint256(valset.block_height).unwrap(),
             members: valset.members.iter().map(|v| v.into()).collect(),
             reward_amount: valset.reward_amount.to_string(),
-            reward_token: valset
-                .reward_token
-                .unwrap_or_else(|| *ZERO_ADDRESS)
-                .to_string(),
+            reward_token: valset.reward_token.unwrap_or(*ZERO_ADDRESS).to_string(),
             orchestrator: our_address.to_string(),
         };
         let msg = Msg::new("/gravity.v1.MsgValsetUpdatedClaim", claim);
@@ -390,7 +388,6 @@ pub async fn send_to_eth(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
 
-  
     let mut messages = Vec::new();
     let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
     messages.push(msg);
@@ -509,8 +506,7 @@ pub async fn cancel_send_to_eth(
         .send_transaction(msg_bytes, BroadcastMode::Sync)
         .await?;
 
-    // contact.wait_for_tx(response, TIMEOUT).await
-    wait_for_tx_with_retry(contact, &response).await
+    contact.wait_for_tx(response, TIMEOUT).await
 }
 
 async fn calc_fee(
@@ -519,7 +515,9 @@ async fn calc_fee(
     contact: &Contact,
     messages: Vec<Msg>,
 ) -> Result<deep_space::Fee, CosmosGrpcError> {
-    let mut fee_calc = contact.get_fee_info(&messages, &[fee.clone()], private_key).await?;
+    let mut fee_calc = contact
+        .get_fee_info(&messages, &[fee.clone()], private_key)
+        .await?;
     fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
     info!("{:?}", fee_calc);
     Ok(fee_calc)
