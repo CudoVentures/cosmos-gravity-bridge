@@ -125,6 +125,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -173,3 +174,7 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 We've added a list with supported tokens in which the functions check if the given ERC20 address is valid.
 >>>>>>> cudos-v0.0.29-feature-gravity-contract-multiple-tokens
+=======
+### Added gas optimizations
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-gravity-contract-multiple-tokens
+>>>>>>> cudos-v0.0.29-feature-gravity-contract-gas-optimizations
