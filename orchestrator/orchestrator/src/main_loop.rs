@@ -196,15 +196,16 @@ pub async fn eth_signer_main_loop(
     let our_cosmos_address = cosmos_key.to_address(&contact.get_prefix()).unwrap();
     let our_ethereum_address = ethereum_key.to_public_key().unwrap();
     let mut grpc_client = grpc_client;
-    let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
-    if gravity_id.is_err() {
-        error!("Failed to get GravityID, check your Eth node");
-        return;
-    }
-    let gravity_id = gravity_id.unwrap();
 
     loop {
         let loop_start = Instant::now();
+
+        let gravity_id = get_gravity_id(gravity_contract_address, our_ethereum_address, &web3).await;
+        if gravity_id.is_err() {
+            error!("Failed to get GravityID, check your Eth node");
+            continue;
+        }
+        let gravity_id = gravity_id.unwrap();
 
         let latest_eth_block = web3.eth_block_number().await;
         let latest_cosmos_block = contact.get_chain_status().await;
