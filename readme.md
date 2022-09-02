@@ -118,3 +118,7 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Batches timeout calculation
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+In the original repo the passed time on the cosmos network was calculated by getting an average block time and multiplying it to the blocks passed. This is very unaccurate, since the time between cosmos blocks can vary a lot.
+
+We've changed the calculations to get the timestamps of the blocks and substract them. That way we get the real time passed.
