@@ -120,6 +120,7 @@ Since we forked the project, there are several changes that we've made to the re
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Added check for 0th address in MsgSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-remove-feature-logic-call-creation
 =======
@@ -144,3 +145,7 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 We've added an access control to the Gravity contract, which limits who can call some functions.
 >>>>>>> cudos-v0.0.29-feature-access-control
+=======
+### Fixed some typos and outputs
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-access-control
+>>>>>>> cudos-v0.0.29-feature-output-params
