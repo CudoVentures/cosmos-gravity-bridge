@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Removed test uniswap luquidity
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+We've removed the test for uniswap liquidity since we're not using it.
