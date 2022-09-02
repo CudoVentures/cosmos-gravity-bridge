@@ -117,6 +117,7 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Fixed and improved MsgCancelSendToEth
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-automatic-gas-calculation
 
@@ -127,3 +128,7 @@ Also more tests added.
 ### Fixes incorporating cosmos-sdk min self delegation feature
 Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-cancel-sendToEth
 >>>>>>> cudos-v0.0.29-feature-min-self-delegation
+=======
+### Gravity contract improvements
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-min-self-delegation
+>>>>>>> cudos-v0.0.29-feature-gravity-contract-improvements
