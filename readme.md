@@ -117,4 +117,6 @@ You can keep up with the latest development by watching our [public standups](ht
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
 ### Remove logic calls
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-feature-handle-non-running-eth-cosmos-nodes
+
 We've removed all LogicCall functions from the contract, the module and the orchestrator and the tests for them.
