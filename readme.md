@@ -118,3 +118,5 @@ Since we forked the project, there are several changes that we've made to the re
 
 ### Added gas optimizations
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+This includes a series of gas optimizations that we've decided to implement from the Code4Rena audit reports.
