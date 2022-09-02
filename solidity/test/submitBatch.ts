@@ -33,6 +33,7 @@ async function runTest(opts: {
   malformedCurrentValset?: boolean;
   batchTimeout?: boolean;
   notWhiteListed?: boolean;
+  contractLocked?: boolean;
 }) {
 
   
@@ -53,7 +54,7 @@ async function runTest(opts: {
     testERC20,
     checkpoint: deployCheckpoint,
   } = await deployContracts(gravityId, powerThreshold, validators, powers, cudosAccessControl.address);
-
+  
   // Transfer out to Cosmos, locking coins
   // =====================================
   await testERC20.functions.approve(gravity.address, 1000);
@@ -181,6 +182,10 @@ async function runTest(opts: {
     rewardToken: ZeroAddress
   }
 
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
   if (opts.notWhiteListed) {
   let testAcc = signers[powers.length+1];
   await gravity.connect(testAcc).submitBatch(
@@ -259,6 +264,12 @@ describe("submitBatch tests", function () {
       "The sender of the transaction is not validated orchestrator"
     );
   });
+
+  it("throws contract locked", async function () {
+    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
+      "Pausable: paused"
+    );
+  })
 
   it("allows zeroed sig", async function () {
     await runTest({ zeroedValidatorSig: true });

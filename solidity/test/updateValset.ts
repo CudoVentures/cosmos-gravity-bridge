@@ -178,6 +178,7 @@ async function runTest(opts: {
   }
 
   if (opts.notWhiteListed) {
+
     let testAcc = signers[powers.length+1];
 
     await gravity.connect(testAcc).updateValset(
@@ -189,9 +190,13 @@ async function runTest(opts: {
     )
   }
 
+  if (opts.contractLocked) {
+    await gravity.functions.pause();
+  }
+
   let valsetUpdateTx;
 
-  valsetUpdateTx = await gravity.updateValset(
+   valsetUpdateTx = await gravity.updateValset(
     newValset,
     currentValset,
     sigs.v,
