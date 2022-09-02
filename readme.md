@@ -114,6 +114,7 @@ You can keep up with the latest development by watching our [public standups](ht
 - Cosmos full nodes do not verify events coming from Ethereum. These events are accepted into the Cosmos state based purely on the signatures of the current validator set. It is possible for the validators with >2/3 of the stake to put events into the Cosmos state which never happened on Ethereum. In this case observers of both chains will need to "raise the alarm". We have built this functionality into the relayer.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
@@ -195,3 +196,10 @@ Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-
 
 Ater all the changes, some test reforms had to be made in order to incorporate everything.
 >>>>>>> cudos-v0.0.29-improvement-code-formatting
+=======
+## Cudos changes to original Althea GravityBridge
+Since we forked the project, there are several changes that we've made to the repo. They are described below
+
+### Removed test uniswap luquidity
+Prerequisites: https://github.com/CudoVentures/cosmos-gravity-bridge/tree/cudos-v0.0.29-improvement-code-formatting
+>>>>>>> cudos-v0.0.29-feature-remove-test-uniswap-liquidity

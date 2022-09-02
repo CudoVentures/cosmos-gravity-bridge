@@ -173,15 +173,15 @@ async function deploy() {
     console.log("ERC20 deployed at Address - ", erc20TestAddress2);
 
 
-    const arbitrary_logic_path = "/gravity/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
-    if (fs.existsSync(arbitrary_logic_path)) { 
-      const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
-      const liquidityFactory = new ethers.ContractFactory(abi, bytecode, wallet);
-      const testUniswapLiquidity = (await liquidityFactory.deploy(erc20TestAddress)) as TestUniswapLiquidity;
-      await testUniswapLiquidity.deployed();
-      const testAddress = testUniswapLiquidity.address;
-      console.log("Uniswap Liquidity test deployed at Address - ", testAddress);
-    }
+    // const arbitrary_logic_path = "/gravity/solidity/artifacts/contracts/TestUniswapLiquidity.sol/TestUniswapLiquidity.json"
+    // if (fs.existsSync(arbitrary_logic_path)) { 
+    //   const { abi, bytecode } = getContractArtifacts(arbitrary_logic_path);
+    //   const liquidityFactory = new ethers.ContractFactory(abi, bytecode, wallet);
+    //   const testUniswapLiquidity = (await liquidityFactory.deploy(erc20TestAddress)) as TestUniswapLiquidity;
+    //   await testUniswapLiquidity.deployed();
+    //   const testAddress = testUniswapLiquidity.address;
+    //   console.log("Uniswap Liquidity test deployed at Address - ", testAddress);
+    // }
   }
   const gravityIdString = await getGravityId();
   const gravityId = ethers.utils.formatBytes32String(gravityIdString);
