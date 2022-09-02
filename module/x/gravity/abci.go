@@ -1,6 +1,7 @@
 package gravity
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
@@ -8,6 +9,48 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
+
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+	createBatch(ctx, k)
+}
+
+func createBatch(ctx sdk.Context, k keeper.Keeper) {
+	msg := types.MsgRequestBatch{
+		Sender: "",
+		Denom:  k.StakingKeeper.GetParams(ctx).BondDenom,
+	}
+
+	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
+	if err != nil {
+		ctx.Logger().Error("Cannot find RequestBatchdenom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
+		return
+	}
+
+	//create batches every batchCreationPeriod blocks
+	bh := uint64(ctx.BlockHeight())
+	if bh%keeper.BatchCreationPeriod != 0 {
+		ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+keeper.BatchCreationPeriod-(bh%keeper.BatchCreationPeriod)), "module", types.ModuleName, "action", "auto creation of batches")
+		return
+	}
+
+	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
+	if !hasUnbatchedTransactions {
+		ctx.Logger().Info("There are no any pending transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+		return
+	}
+
+	batch, err := k.BuildOutgoingTXBatch(ctx, *tokenContract, keeper.OutgoingTxBatchSize)
+	if err != nil {
+		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", "gravity", "action", "auto creation of batches", "err", err)
+		return
+	}
+
+	if batch != nil {
+		ctx.Logger().Info("A batch was created", "module", "gravity", "action", "auto creation of batches")
+	} else {
+		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", "gravity", "action", "auto creation of batches")
+	}
+}
 
 // EndBlocker is called at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
