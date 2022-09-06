@@ -111,27 +111,11 @@ contract Gravity is ReentrancyGuard {
 	);
 
 
-	modifier onlyWhitelisted() {
-		 require(
-            whitelisted[msg.sender] || cudosAccessControls.hasAdminRole(msg.sender) ,
-            "The caller is not whitelisted for this operation"
-        );
+	modifier onlyAdmin() {
+		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		_;
 	}
 
-	function manageWhitelist(
-		address[] memory _users,
-		bool _isWhitelisted
-		) public onlyWhitelisted {
-		 for (uint256 i = 0; i < _users.length; i++) {
-            require(
-                _users[i] != address(0),
-                "User is the zero address"
-            );
-            whitelisted[_users[i]] = _isWhitelisted;
-        }
-        emit WhitelistedStatusModified(msg.sender, _users, _isWhitelisted);
-	}
 
 	// TEST FIXTURES
 	// These are here to make it easier to measure gas usage. They should be removed before production
@@ -608,8 +592,7 @@ contract Gravity is ReentrancyGuard {
 
 	function withdrawERC20(
 		address _tokenAddress) 
-		external {
-		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
+		external onlyAdmin {
 		uint256 totalBalance = IERC20(_tokenAddress).balanceOf(address(this));
 		IERC20(_tokenAddress).safeTransfer(msg.sender , totalBalance);
 	}
