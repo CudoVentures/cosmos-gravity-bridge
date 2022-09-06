@@ -80,12 +80,6 @@ describe("sendToCosmos tests", function () {
     );
   })
 
-  it("throws contract locked", async function () {
-    await expect(runTest({ contractLocked: true })).to.be.revertedWith(
-      "Pausable: paused"
-    );
-  })
-
   it("works right", async function () {
     await runTest({})
   });

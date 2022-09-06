@@ -6,9 +6,10 @@ import { TestUniswapLiquidity } from "./typechain/TestUniswapLiquidity";
 import { ethers } from "ethers";
 import fs from "fs";
 import commandLineArgs from "command-line-args";
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { exit } from "process";
-import hre from "hardhat";
+import { start } from "node:repl";
+import { SSL_OP_EPHEMERAL_RSA } from "node:constants";
 
 const args = commandLineArgs([
   // the ethernum node used to deploy the contract
@@ -21,8 +22,6 @@ const args = commandLineArgs([
   { name: "contract", type: String },
   // test mode, if enabled this script deploys three ERC20 contracts for testing
   { name: "test-mode", type: String },
-  // the address of the cudos access control smart contract
-  { name: "cudos-access-control", type: String},
   // the address of the cudos token
   { name: "cudos-token-address", type: String}
 ]);
@@ -220,11 +219,6 @@ async function deploy() {
   }
 
   const cudosToken = args["cudos-token-address"];
-  console.log("gravity id:",gravityId)
-  console.log("vote power:",vote_power)
-  console.log("eth addresses:",eth_addresses)
-  console.log("powers:",powers)
-  console.log("cudos access control:",cudosAccessControl)
   console.log("cudos token address:",cudosToken)
 
   const gravity = (await factory.deploy(
@@ -234,37 +228,13 @@ async function deploy() {
     vote_power,
     eth_addresses,
     powers,
-    cudosAccessControl,
+    overrides
     cudosToken,
   )) as Gravity;
 
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
-
-  await gravity.deployTransaction.wait(10)
-  console.log("Verifying contract on Etherscan...");
-
-  try {
-    await hre.run("verify:verify", {
-      address: gravity.address,
-      constructorArguments: [
-        gravityId,
-        vote_power,
-        eth_addresses,
-        powers,
-        cudosAccessControl,
-        cudosToken,
-      ],
-    });
-    console.log("Contract is verified")
-  } catch (err) {
-    if (err.message.includes("Reason: Already Verified")) {
-      console.log("Contract is already verified!");
-    } else {
-      throw err
-    }
-  }
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {

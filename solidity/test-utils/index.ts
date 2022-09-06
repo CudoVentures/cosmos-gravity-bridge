@@ -29,7 +29,6 @@ export async function deployContracts(
     powerThreshold,
     await getSignerAddresses(validators),
     powers,
-    cudosAccessControl,
     testERC20.address,
   )) as Gravity;
 
