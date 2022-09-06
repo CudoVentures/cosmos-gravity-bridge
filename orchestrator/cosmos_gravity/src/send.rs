@@ -404,7 +404,13 @@ pub async fn send_to_eth(
         bridge_fee: Some(bridge_fee.clone().into()),
     };
 
-    let mut messages = Vec::new();
+    let fee = Fee {
+        amount: vec![fee],
+        gas_limit: 500_000u64,
+        granter: None,
+        payer: None,
+    };
+
     let msg = Msg::new("/gravity.v1.MsgSendToEth", msg_send_to_eth);
 
     let args = contact.get_message_args(our_address, fee).await?;
@@ -487,10 +493,7 @@ pub async fn submit_bad_signature_evidence(
         "/gravity.v1.MsgSubmitBadSignatureEvidence",
         msg_submit_bad_signature_evidence,
     );
-    messages.push(msg);
-    let fee_calc = calc_fee(private_key, fee.clone(), contact, messages.clone()).await?;
-  
-    let args = contact.get_message_args(our_address, fee_calc).await?;
+    let args = contact.get_message_args(our_address, fee).await?;
     trace!("got optional tx info");
 
     let msg_bytes = private_key.sign_std_msg(&[msg], args, MEMO)?;
@@ -536,6 +539,20 @@ pub async fn cancel_send_to_eth(
         .await?;
 
     contact.wait_for_tx(response, TIMEOUT).await
+}
+
+async fn calc_fee(
+    private_key: PrivateKey,
+    fee: Coin,
+    contact: &Contact,
+    messages: Vec<Msg>,
+) -> Result<deep_space::Fee, CosmosGrpcError> {
+    let mut fee_calc = contact
+        .get_fee_info(&messages, &[fee.clone()], private_key)
+        .await?;
+    fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
+    info!("{:?}", fee_calc);
+    Ok(fee_calc)
 }
 
 async fn calc_fee(

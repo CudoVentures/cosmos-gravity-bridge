@@ -122,6 +122,8 @@ async fn should_relay_valset(
     cost: GasCost,
     web3: &Web3,
 ) -> bool {
+    let mut should_relay;
+
     let relaying_cost = cost.gas * cost.gas_price;
     let pub_key = ethereum_key.to_public_key().unwrap();
     let reward = valset.reward_amount.clone();
@@ -134,9 +136,9 @@ async fn should_relay_valset(
     // for now we always want weth
     let token_out = *web30::amm::WETH_CONTRACT_ADDRESS;
     // If we're being rewarded in weth, we can just compare cost of gas to reward and see if we're getting enough
-    let mut should_relay = if token_out == token_in {
+    if token_out == token_in {
         // TODO: Give relayers a configuration option in this case
-        reward > relaying_cost
+        should_relay = reward > relaying_cost;
     } else {
         warn!(
             "No potential reward for relaying valset: {:#?} - not relaying!",
