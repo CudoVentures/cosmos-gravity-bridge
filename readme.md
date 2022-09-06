@@ -116,7 +116,7 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
-### Added whitelist functionality on some functions
+### Added only orchestrator calls limit on some functions
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
 For security purposes we've added a check for some of the functions (like sumbitBatch) of the GravityBridge contract so that only orchestrators can use them. 
