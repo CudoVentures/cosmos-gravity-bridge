@@ -241,21 +241,6 @@ async function deploy() {
   await gravity.deployed();
   console.log("Gravity deployed at Address - ", gravity.address);
   await submitGravityAddress(gravity.address);
-
-  
-  await gravity.deployTransaction.wait(10)
-  console.log("Verifying contract on Etherscan...");
-
-  await hre.run("verify:verify", {
-    address: gravity.address,
-    constructorArguments: [
-      gravityId,
-      vote_power,
-      eth_addresses,
-      powers,
-      cudosAccessControl
-    ],
-  });
 }
 
 function getContractArtifacts(path: string): { bytecode: string; abi: string } {
