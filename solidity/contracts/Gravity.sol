@@ -104,13 +104,6 @@ contract Gravity is ReentrancyGuard {
 		uint256 _eventNonce
 	);
 
-	event WhitelistedStatusModified(
-		address _sender,
-		address[] _users,
-		bool _isWhitelisted
-	);
-
-
 	modifier onlyAdmin() {
 		require(cudosAccessControls.hasAdminRole(msg.sender), "Recipient is not an admin");
 		_;
