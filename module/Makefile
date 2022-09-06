@@ -70,7 +70,7 @@ lint:
 ###############################################################################
 
 proto-gen:
-	./contrib/local/protocgen.sh
+	./scripts/protocgen.sh
 
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
