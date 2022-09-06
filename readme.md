@@ -290,3 +290,8 @@ cudos-v0.0.29-feature-only-validator-with-highest-power-should-sign-submitBatch-
 cudos-v0.0.29-improvement-code-formatting
 
 cudos-v0.0.29-feature-remove-test-uniswap-liquidity
+
+### Remove redundant code
+We've removed the app folder and some sim setup commands from the cmd folder. Also we've moved the scripts from `contrib/local` to `scripts` folder for clarity. This was done so that we don't have to update repos and code that we don't actually use. We are using only the module part of the original repo.
+
+For the changes look at these commits: https://github.com/CudoVentures/cosmos-gravity-bridge/commit/e237ac34bad6e836adb50eb4388e7ee9365d8478
