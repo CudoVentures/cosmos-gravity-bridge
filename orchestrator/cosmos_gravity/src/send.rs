@@ -542,17 +542,3 @@ pub async fn cancel_send_to_eth(
 
     contact.wait_for_tx(response, TIMEOUT).await
 }
-
-async fn calc_fee(
-    private_key: PrivateKey,
-    fee: Coin,
-    contact: &Contact,
-    messages: Vec<Msg>,
-) -> Result<deep_space::Fee, CosmosGrpcError> {
-    let mut fee_calc = contact
-        .get_fee_info(&messages, &[fee.clone()], private_key)
-        .await?;
-    fee_calc.amount[0].amount = fee.amount * Uint256::from(fee_calc.gas_limit);
-    info!("{:?}", fee_calc);
-    Ok(fee_calc)
-}
