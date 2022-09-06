@@ -47,11 +47,6 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gravity \
 
 BUILD_FLAGS := -ldflags '$(ldflags)' -gcflags="all=-N -l"
 
-all: install
-
-install: go.sum
-		go install $(BUILD_FLAGS) ./cmd/gravity
-
 go.sum: go.mod
 		@echo "--> Ensure dependencies have not been modified"
 		GO111MODULE=on go mod verify
