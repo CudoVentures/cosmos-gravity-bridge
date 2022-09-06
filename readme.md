@@ -112,3 +112,16 @@ You can keep up with the latest development by watching our [public standups](ht
 
 - There must be a validator set update made on the Ethereum contract by calling the `updateValset` method at least once every Cosmos unbonding period (usually 2 weeks). This is because if there has not been an update for longer than the unbonding period, the validator set stored by the Ethereum contract could contain validators who cannot be slashed for misbehavior.
 - Cosmos full nodes do not verify events coming from Ethereum. These events are accepted into the Cosmos state based purely on the signatures of the current validator set. It is possible for the validators with >2/3 of the stake to put events into the Cosmos state which never happened on Ethereum. In this case observers of both chains will need to "raise the alarm". We have built this functionality into the relayer.
+
+## Cudos changes to original Althea GravityBridge
+Since we forked the project, there are several changes that we've made to the repo. They are described below
+
+### Fixes incorporating cosmos-sdk min self delegation feature
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+In our fork of cosmos-sdk we've set a minimum value for min self delegation flag. because of this everywhere (mainly tests) where a validator is being created, we have to change the code to set the flag for min self delegation and also delegate more to the validator.
+
+### Added minimum amount to send to ETH
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+We've implemented a minimum amount of acudos to send to ETH as to prevent spammint with 1 acudo transactions. This includes new parameted in Gravity module, new checks to the messages, new message for setting the minimum amount by admin and some unit tests.
