@@ -119,7 +119,7 @@ Since we forked the project, there are several changes that we've made to the re
 ### Minimum transfer amount from Cudos to Ethereum
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
 
-A new parameter was introduced in the genesis that is responsible for limiting the minimum amount of funds that could be transfered from Cudos to Ethereum. There is no Msg for changing this option. It can be modified only by ParamChangeProposal.
+A new parameter was introduced in the genesis that is responsible for limiting the minimum amount of funds that could be transfered from Cudos to Ethereum to prevent spamming with 1 acudo transactions. There is no Msg for changing this option. It can be modified only by ParamChangeProposal.
 
 ### Minimum transfer amount's fee from Cudos to Ethereum
 To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
