@@ -42,18 +42,18 @@ func (k Keeper) AddToOutgoingPool(
 	// If it is a cosmos-originated asset we lock it
 	if isCosmosOriginated {
 		// lock coins in module
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
 			return 0, err
 		}
 	} else {
 		// If it is an ethereum-originated asset we burn it
 		// send coins to module in prep for burn
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, totalInVouchers); err != nil {
 			return 0, err
 		}
 
 		// burn vouchers to send them back to ETH
-		if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
+		if err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, totalInVouchers); err != nil {
 			panic(err)
 		}
 	}
@@ -153,16 +153,16 @@ func (k Keeper) RemoveFromOutgoingPoolAndRefund(ctx sdk.Context, txId uint64, se
 
 	// If it is a cosmos-originated the coins are in the module (see AddToOutgoingPool) so we can just take them out
 	if isCosmosOriginated {
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+		if err := k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
 			return err
 		}
 	} else {
 		// If it is an ethereum-originated asset we have to mint it (see Handle in attestation_handler.go)
 		// mint coins in module for prep to send
-		if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
+		if err := k.BankKeeper.MintCoins(ctx, types.ModuleName, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrapf(err, "mint vouchers coins: %s", totalToRefundCoins)
 		}
-		if err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
+		if err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, totalToRefundCoins); err != nil {
 			return sdkerrors.Wrap(err, "transfer vouchers")
 		}
 	}

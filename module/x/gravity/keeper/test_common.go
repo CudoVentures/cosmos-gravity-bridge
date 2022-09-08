@@ -499,9 +499,9 @@ func MakeTestMarshaler() codec.Marshaler {
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
 	coin := amount.GravityCoin()
 	vouchers := sdk.Coins{coin}
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
 	require.NoError(t, err)
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
 	require.NoError(t, err)
 	return coin
 }
@@ -738,6 +738,10 @@ func (s *StakingKeeperMock) Slash(sdk.Context, sdk.ConsAddress, int64, int64, sd
 
 // Jail staisfies the interface
 func (s *StakingKeeperMock) Jail(sdk.Context, sdk.ConsAddress) {}
+
+func (s *StakingKeeperMock) BondDenom(ctx sdk.Context) (res string) {
+	return "acudos"
+}
 
 // AlwaysPanicStakingMock is a mock staking keeper that panics on usage
 type AlwaysPanicStakingMock struct{}

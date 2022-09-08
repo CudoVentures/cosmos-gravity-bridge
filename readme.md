@@ -116,7 +116,7 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
-### Automatic creation of batches
-To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+### Logging
+To see the changes, compare to this branch: cudos-v0.0.29-feature-automatic-creation-of-batches
 
-In Cudos fork we decided to do an automatic batch creation each 120 blocks. This is done in abci with a check on each block. If the block height is divisible by 120 and there are unbatched transactions, we automatically create a batch for them.
+In Cudos fork we added additional logging. It required adding AccountKeeper and making BankKeeper public. Also new methods were added in expected_keepers.go.

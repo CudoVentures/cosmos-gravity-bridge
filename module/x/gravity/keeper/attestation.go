@@ -127,7 +127,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		// If the attestation fails, something has gone wrong and we can't recover it. Log and move on
 		// The attestation will still be marked "Observed", and validators can still be slashed for not
 		// having voted for it.
-		k.logger(ctx).Error("attestation failed",
+		k.Logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
 			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),

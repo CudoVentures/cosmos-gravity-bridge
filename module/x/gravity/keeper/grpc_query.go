@@ -15,8 +15,9 @@ var _ types.QueryServer = Keeper{
 	storeKey:           nil,
 	paramSpace:         paramstypes.Subspace{},
 	cdc:                nil,
-	bankKeeper:         nil,
+	BankKeeper:         nil,
 	SlashingKeeper:     nil,
+	AccountKeeper:      nil,
 	AttestationHandler: nil,
 }
 
@@ -189,7 +190,7 @@ func (k Keeper) OutgoingLogicCalls(
 func (k Keeper) BatchRequestByNonce(
 	c context.Context,
 	req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
-	addr, err := types.NewEthAddress(req.ContractAddress);
+	addr, err := types.NewEthAddress(req.ContractAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}

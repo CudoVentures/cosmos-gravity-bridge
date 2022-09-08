@@ -30,8 +30,9 @@ var _ types.MsgServer = msgServer{
 		storeKey:           nil,
 		paramSpace:         paramstypes.Subspace{},
 		cdc:                nil,
-		bankKeeper:         nil,
+		BankKeeper:         nil,
 		SlashingKeeper:     nil,
+		AccountKeeper:      nil,
 		AttestationHandler: nil,
 	},
 }

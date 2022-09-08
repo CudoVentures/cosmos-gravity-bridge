@@ -78,7 +78,7 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 		}
 
 		// Check if denom exists
-		metadata := a.keeper.bankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
+		metadata := a.keeper.BankKeeper.GetDenomMetaData(ctx, claim.CosmosDenom)
 		if metadata.Base == "" {
 			return sdkerrors.Wrap(types.ErrUnknown, fmt.Sprintf("denom not found %s", claim.CosmosDenom))
 		}
