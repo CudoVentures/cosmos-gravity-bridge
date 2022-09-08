@@ -11,7 +11,15 @@ import (
 )
 
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
+	logGravityBalance(ctx, k)
 	createBatch(ctx, k)
+}
+
+func logGravityBalance(ctx sdk.Context, k keeper.Keeper) {
+	var bondDenom string = k.StakingKeeper.BondDenom(ctx)
+	acc := k.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
+	coin := k.BankKeeper.GetBalance(ctx, acc.GetAddress(), bondDenom)
+	k.Logger(ctx).Info("Balance", bondDenom, coin.Amount.String())
 }
 
 func createBatch(ctx sdk.Context, k keeper.Keeper) {
@@ -22,33 +30,33 @@ func createBatch(ctx sdk.Context, k keeper.Keeper) {
 
 	_, tokenContract, err := k.DenomToERC20Lookup(ctx, msg.Denom)
 	if err != nil {
-		ctx.Logger().Error("Cannot find RequestBatchdenom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
+		k.Logger(ctx).Error("Cannot find RequestBatchdenom: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
 		return
 	}
 
 	//create batches every batchCreationPeriod blocks
 	bh := uint64(ctx.BlockHeight())
 	if bh%keeper.BatchCreationPeriod != 0 {
-		ctx.Logger().Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+keeper.BatchCreationPeriod-(bh%keeper.BatchCreationPeriod)), "module", types.ModuleName, "action", "auto creation of batches")
+		k.Logger(ctx).Info(fmt.Sprintf("Next automatic batch will be created at height %d", bh+keeper.BatchCreationPeriod-(bh%keeper.BatchCreationPeriod)), "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
 	hasUnbatchedTransactions := k.HasUnbatchedTransactionsByTokenType(ctx, *tokenContract)
 	if !hasUnbatchedTransactions {
-		ctx.Logger().Info("There are not any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
+		k.Logger(ctx).Info("There are not any pending transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 		return
 	}
 
 	batch, err := k.BuildOutgoingTXBatch(ctx, *tokenContract, keeper.OutgoingTxBatchSize)
 	if err != nil {
-		ctx.Logger().Error("Cannot build outgoing batch: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
+		k.Logger(ctx).Error("Cannot build outgoing batch: "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches", "err", err)
 		return
 	}
 
 	if batch != nil {
-		ctx.Logger().Info("A batch was created", "module", types.ModuleName, "action", "auto creation of batches")
+		k.Logger(ctx).Info("A batch was created", "module", types.ModuleName, "action", "auto creation of batches")
 	} else {
-		ctx.Logger().Info("There are no any transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
+		k.Logger(ctx).Info("There are no any transactions for "+msg.Denom, "module", types.ModuleName, "action", "auto creation of batches")
 	}
 }
 

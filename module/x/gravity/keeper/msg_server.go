@@ -30,8 +30,9 @@ var _ types.MsgServer = msgServer{
 		storeKey:           nil,
 		paramSpace:         paramstypes.Subspace{},
 		cdc:                nil,
-		bankKeeper:         nil,
+		BankKeeper:         nil,
 		SlashingKeeper:     nil,
+		AccountKeeper:      nil,
 		AttestationHandler: nil,
 	},
 }
@@ -168,7 +169,7 @@ func (k msgServer) SetMinFeeTransferToEth(c context.Context, msg *types.MsgSetMi
 
 	//get signer admin tokens
 	sAddr := msg.GetSigners()[0]
-	sat := k.bankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
+	sat := k.BankKeeper.GetAllBalances(ctx, sAddr).AmountOf("cudosAdmin")
 
 	if sat.LT(sdk.OneInt()) {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "only accounts with admin tokens can change the min bridge fee")

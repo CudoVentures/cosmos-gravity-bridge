@@ -16,36 +16,36 @@ import (
 
 // Keeper maintains the link to storage and exposes getter/setter methods for the various parts of the state machine
 type Keeper struct {
-	StakingKeeper types.StakingKeeper
-
-	storeKey   sdk.StoreKey // Unexposed key to access store from sdk.Context
+	cdc        codec.BinaryCodec // The wire codec for binary encoding/decoding.
+	storeKey   sdk.StoreKey      // Unexposed key to access store from sdk.Context
 	paramSpace paramtypes.Subspace
 
-	cdc            codec.BinaryCodec // The wire codec for binary encoding/decoding.
-	bankKeeper     types.BankKeeper
+	StakingKeeper  types.StakingKeeper
+	BankKeeper     types.BankKeeper
 	SlashingKeeper types.SlashingKeeper
+	AccountKeeper  types.AccountKeeper
 
 	AttestationHandler interface {
 		Handle(sdk.Context, types.Attestation, types.EthereumClaim) error
 	}
 }
 
-// NewKeeper returns a new instance of the gravity keeper
-func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper) Keeper {
-	// set KeyTable if it has not already been set
+func NewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, stakingKeeper types.StakingKeeper, bankKeeper types.BankKeeper, slashingKeeper types.SlashingKeeper, accountKeeper types.AccountKeeper) Keeper {
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
 	k := Keeper{
-		StakingKeeper:      stakingKeeper,
+		cdc:                cdc,
 		storeKey:           storeKey,
 		paramSpace:         paramSpace,
-		cdc:                cdc,
-		bankKeeper:         bankKeeper,
+		StakingKeeper:      stakingKeeper,
+		BankKeeper:         bankKeeper,
 		SlashingKeeper:     slashingKeeper,
+		AccountKeeper:      accountKeeper,
 		AttestationHandler: nil,
 	}
+
 	k.AttestationHandler = AttestationHandler{
 		keeper:     k,
 		bankKeeper: bankKeeper,
@@ -142,7 +142,7 @@ func (k Keeper) SetMinimumFeeTransferToEth(ctx sdk.Context, mft sdk.Int) {
 }
 
 // logger returns a module-specific logger.
-func (k Keeper) logger(ctx sdk.Context) log.Logger {
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 

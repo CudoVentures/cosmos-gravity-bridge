@@ -445,7 +445,7 @@ func CreateTestEnv(t *testing.T) TestInput {
 		getSubspace(paramsKeeper, slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()),
 	)
 
-	k := NewKeeper(marshaler, gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper, slashingKeeper)
+	k := NewKeeper(marshaler, gravityKey, getSubspace(paramsKeeper, types.DefaultParamspace), stakingKeeper, bankKeeper, slashingKeeper, accountKeeper)
 
 	stakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(
@@ -507,9 +507,9 @@ func MakeTestMarshaler() codec.Codec {
 func MintVouchersFromAir(t *testing.T, ctx sdk.Context, k Keeper, dest sdk.AccAddress, amount types.InternalERC20Token) sdk.Coin {
 	coin := amount.GravityCoin()
 	vouchers := sdk.Coins{coin}
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
+	err := k.BankKeeper.MintCoins(ctx, types.ModuleName, vouchers)
 	require.NoError(t, err)
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
+	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, dest, vouchers)
 	require.NoError(t, err)
 	return coin
 }
@@ -749,6 +749,10 @@ func (s *StakingKeeperMock) Jail(sdk.Context, sdk.ConsAddress) {}
 
 func (s *StakingKeeperMock) PowerReduction(ctx sdk.Context) sdk.Int {
 	return sdk.DefaultPowerReduction
+}
+
+func (s *StakingKeeperMock) BondDenom(ctx sdk.Context) (res string) {
+	return "acudos"
 }
 
 // AlwaysPanicStakingMock is a mock staking keeper that panics on usage
