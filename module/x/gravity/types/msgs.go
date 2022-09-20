@@ -21,6 +21,7 @@ var (
 	_ sdk.Msg = &MsgConfirmLogicCall{}
 	_ sdk.Msg = &MsgLogicCallExecutedClaim{}
 	_ sdk.Msg = &MsgSendToCosmosClaim{}
+	_ sdk.Msg = &MsgUpdateBlockHeightClaim{}
 	_ sdk.Msg = &MsgBatchSendToEthClaim{}
 	_ sdk.Msg = &MsgValsetUpdatedClaim{}
 	_ sdk.Msg = &MsgSubmitBadSignatureEvidence{}
@@ -315,6 +316,7 @@ type EthereumClaim interface {
 //nolint: exhaustivestruct
 var (
 	_ EthereumClaim = &MsgSendToCosmosClaim{}
+	_ EthereumClaim = &MsgUpdateBlockHeightClaim{}
 	_ EthereumClaim = &MsgBatchSendToEthClaim{}
 	_ EthereumClaim = &MsgERC20DeployedClaim{}
 	_ EthereumClaim = &MsgLogicCallExecutedClaim{}
@@ -655,6 +657,71 @@ func (b *MsgValsetUpdatedClaim) ClaimHash() ([]byte, error) {
 	}
 	internalMembers.Sort()
 	path := fmt.Sprintf("%d/%d/%d/%s/%s/%s", b.EventNonce, b.ValsetNonce, b.BlockHeight, internalMembers.ToExternal(), b.RewardAmount.String(), b.RewardToken)
+	return tmhash.Sum([]byte(path)), nil
+}
+
+// GetType returns the type of the claim
+func (msg *MsgUpdateBlockHeightClaim) GetType() ClaimType {
+	return CLAIM_TYPE_UPDATE_BLOCK_HEIGHT
+}
+
+// ValidateBasic performs stateless checks
+func (msg *MsgUpdateBlockHeightClaim) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Orchestrator); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Orchestrator)
+	}
+	if msg.EventNonce == 0 {
+		return fmt.Errorf("nonce == 0")
+	}
+	return nil
+}
+
+// GetSignBytes encodes the message for signing
+func (msg MsgUpdateBlockHeightClaim) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgUpdateBlockHeightClaim) GetClaimer() sdk.AccAddress {
+	err := msg.ValidateBasic()
+	if err != nil {
+		panic("MsgUpdateBlockHeightClaim failed ValidateBasic! Should have been handled earlier")
+	}
+
+	val, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return val
+}
+
+// GetSigners defines whose signature is required
+func (msg MsgUpdateBlockHeightClaim) GetSigners() []sdk.AccAddress {
+	acc, err := sdk.AccAddressFromBech32(msg.Orchestrator)
+	if err != nil {
+		panic(err)
+	}
+
+	return []sdk.AccAddress{acc}
+}
+
+// Type should return the action
+func (msg MsgUpdateBlockHeightClaim) Type() string { return "update_block_height_claim" }
+
+// Route should return the name of the module
+func (msg MsgUpdateBlockHeightClaim) Route() string { return RouterKey }
+
+const (
+	TypeMsgUpdateBlockHeightClaim = "update_block_height_claim"
+)
+
+// Hash implements BridgeDeposit.Hash
+// modify this with care as it is security sensitive. If an element of the claim is not in this hash a single hostile validator
+// could engineer a hash collision and execute a version of the claim with any unhashed data changed to benefit them.
+// note that the Orchestrator is the only field excluded from this hash, this is because that value is used higher up in the store
+// structure for who has made what claim and is verified by the msg ante-handler for signatures
+func (msg *MsgUpdateBlockHeightClaim) ClaimHash() ([]byte, error) {
+	path := fmt.Sprintf("%d/%d", msg.EventNonce, msg.BlockHeight)
 	return tmhash.Sum([]byte(path)), nil
 }
 

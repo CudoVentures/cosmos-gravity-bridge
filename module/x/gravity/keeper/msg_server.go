@@ -334,6 +334,26 @@ func (k msgServer) SendToCosmosClaim(c context.Context, msg *types.MsgSendToCosm
 	return &types.MsgSendToCosmosClaimResponse{}, nil
 }
 
+// UpdateBlockHeightClaim handles MsgUpdateBlockHeightClaim
+func (k msgServer) UpdateBlockHeightClaim(c context.Context, msg *types.MsgUpdateBlockHeightClaim) (*types.MsgUpdateBlockHeightClaimResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	err := k.checkOrchestratorValidatorInSet(ctx, msg.Orchestrator)
+	if err != nil {
+		return nil, err
+	}
+	any, err := codectypes.NewAnyWithValue(msg)
+	if err != nil {
+		return nil, err
+	}
+	err = k.claimHandlerCommon(ctx, any, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateBlockHeightClaimResponse{}, nil
+}
+
 // WithdrawClaim handles MsgBatchSendToEthClaim
 // TODO it is possible to submit an old msgWithdrawClaim (old defined as covering an event nonce that has already been
 // executed aka 'observed' and had it's slashing window expire) that will never be cleaned up in the endblocker. This

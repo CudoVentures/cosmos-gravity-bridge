@@ -176,7 +176,8 @@ func (a AttestationHandler) Handle(ctx sdk.Context, att types.Attestation, claim
 				panic("Can not use Ethereum originated token as reward!")
 			}
 		}
-
+	case *types.MsgUpdateBlockHeightClaim:
+		fmt.Println("Ethereum block height updated.")
 	default:
 		panic(fmt.Sprintf("Invalid event type for attestations %s", claim.GetType()))
 	}

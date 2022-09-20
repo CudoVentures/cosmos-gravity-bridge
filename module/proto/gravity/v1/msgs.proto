@@ -28,6 +28,9 @@ service Msg {
   rpc SendToCosmosClaim(MsgSendToCosmosClaim) returns (MsgSendToCosmosClaimResponse) {
     option (google.api.http).post = "/gravity/v1/send_to_cosmos_claim";
   }
+  rpc UpdateBlockHeightClaim(MsgUpdateBlockHeightClaim) returns (MsgUpdateBlockHeightClaimResponse) {
+    option (google.api.http).post = "/gravity/v1/send_to_cosmos_claim";
+  }
   rpc BatchSendToEthClaim(MsgBatchSendToEthClaim) returns (MsgBatchSendToEthClaimResponse) {
     option (google.api.http).post = "/gravity/v1/batch_send_to_eth_claim";
   }
@@ -194,6 +197,19 @@ message MsgSendToCosmosClaim {
 }
 
 message MsgSendToCosmosClaimResponse {}
+
+// MsgUpdateBlockHeightClaim
+// When more than 66% of the active validator set has
+// claimed to have seen the same block time
+// the block time is updated
+// -------------
+message MsgUpdateBlockHeightClaim {
+  uint64 event_nonce    = 1;
+  uint64 block_height   = 2;
+  string orchestrator    = 3;
+}
+
+message MsgUpdateBlockHeightClaimResponse {}
 
 // BatchSendToEthClaim claims that a batch of send to eth
 // operations on the bridge contract was executed.
