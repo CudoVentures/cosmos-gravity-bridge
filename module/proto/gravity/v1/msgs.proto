@@ -204,9 +204,8 @@ message MsgSendToCosmosClaimResponse {}
 // the block time is updated
 // -------------
 message MsgUpdateBlockHeightClaim {
-  uint64 event_nonce    = 1;
-  uint64 block_height   = 2;
-  string orchestrator    = 3;
+  uint64 block_height   = 1;
+  string orchestrator    = 2;
 }
 
 message MsgUpdateBlockHeightClaimResponse {}
