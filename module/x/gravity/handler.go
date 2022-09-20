@@ -41,6 +41,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgSendToCosmosClaim:
 			res, err := msgServer.SendToCosmosClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgUpdateBlockHeightClaim:
+			res, err := msgServer.UpdateBlockHeightClaim(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgBatchSendToEthClaim:
 			res, err := msgServer.BatchSendToEthClaim(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
