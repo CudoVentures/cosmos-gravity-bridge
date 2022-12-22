@@ -31,35 +31,38 @@ module.exports = {
   // This is a sample solc configuration that specifies which version of solc to use
   solidity: {
     compilers: [
-    {
-    version: "0.6.6",
-    settings: {
-      optimizer: {
-        enabled: true
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true
+          }
+        }
+      },
+      {
+        version: "0.6.12",
+        settings: {
+          optimizer: {
+            enabled: true
+          }
+        }
+      },
+      {
+        version: "0.8.1",
+        settings: {
+          optimizer: {
+            enabled: true
+          }
+        }
       }
-    }  
-  },
-  {
-    version: "0.6.12",
-    settings: {
-      optimizer: {
-        enabled: true
-      }
-    }  
-  },
-  {
-    version: "0.8.1",
-    settings: {
-      optimizer: {
-        enabled: true
-      }
-    }  
-  }
-]
+    ]
   },
   defaultNetwork: process.env.DEFAULT_NETWORK,
   networks: {
     rinkeby: {
+      url: `${process.env.ETH_NODE}`
+    },
+    sepolia: {
       url: `${process.env.ETH_NODE}`
     },
     mainnet: {
@@ -1022,7 +1025,7 @@ module.exports = {
   mocha: {
     timeout: 2000000
   },
-  etherscan:{
+  etherscan: {
     apiKey: `${process.env.ETHERSCAN_API_KEY}`
   }
 };

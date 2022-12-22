@@ -4,7 +4,12 @@ target
 tests/test-runner/Cargo.lock
 tests/dockerfile/gravity.tar.gz
 solidity/dist
+solidity/build
+solidity/artifacts/
 orchestrator/bins
+
+# OS files
+.DS_Store
 
 # IDE files
 .idea/
