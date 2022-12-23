@@ -1,8 +1,10 @@
 #!/bin/bash
 npx ts-node \
 contract-deployer.ts \
---cosmos-node="http://localhost:26657" \
---eth-node="http://localhost:8545" \
---eth-privkey="0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7" \
---contract=Gravity.json \
---test-mode=true
+--cosmos-node="${COSMOS_NODE}" \
+--eth-node="${ETH_NODE}" \
+--eth-privkey="${ETH_PRIV_KEY_HEX}" \
+--contract="artifacts/contracts/Gravity.sol/Gravity.json" \
+--test-mode=true \
+--cudos-access-control="${CUDOS_ACCESS_CONTROL_ADDRESS}" \
+--cudos-token-address="${CUDOS_TOKEN_ADDRESS}"
