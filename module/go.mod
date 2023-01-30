@@ -29,4 +29,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.33.2
 
 // replace github.com/cosmos/cosmos-sdk => ../../cosmos-sdk
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220914094638-cb70cee184ee
