@@ -22,6 +22,7 @@ import (
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/client/cli"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/client/rest"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
+	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/simulation"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
@@ -177,8 +178,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 // GenerateGenesisState creates a randomized GenState of the distribution module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	// TODO: implement gravity simulation stuffs
-	// simulation.RandomizedGenState(simState)
+	simulation.RandomizedGenState(simState)
 }
 
 // ProposalContents returns all the distribution content functions used to
