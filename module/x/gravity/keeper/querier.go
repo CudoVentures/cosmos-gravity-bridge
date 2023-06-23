@@ -6,7 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
@@ -95,66 +94,66 @@ const (
 )
 
 // NewQuerier is the module level router for state queries
-func NewQuerier(keeper Keeper) sdk.Querier {
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
-		switch path[0] {
+// func NewQuerier(keeper Keeper) sdk.Queryable {
+// 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) (res []byte, err error) {
+// 		switch path[0] {
 
-		// Valsets
-		case QueryCurrentValset:
-			return queryCurrentValset(ctx, keeper)
-		case QueryValsetRequest:
-			return queryValsetRequest(ctx, path[1:], keeper)
-		case QueryValsetConfirm:
-			return queryValsetConfirm(ctx, path[1:], keeper)
-		case QueryValsetConfirmsByNonce:
-			return queryAllValsetConfirms(ctx, path[1], keeper)
-		case QueryLastValsetRequests:
-			return lastValsetRequests(ctx, keeper)
-		case QueryLastPendingValsetRequestByAddr:
-			return lastPendingValsetRequest(ctx, path[1], keeper)
+// 		// Valsets
+// 		case QueryCurrentValset:
+// 			return queryCurrentValset(ctx, keeper)
+// 		case QueryValsetRequest:
+// 			return queryValsetRequest(ctx, path[1:], keeper)
+// 		case QueryValsetConfirm:
+// 			return queryValsetConfirm(ctx, path[1:], keeper)
+// 		case QueryValsetConfirmsByNonce:
+// 			return queryAllValsetConfirms(ctx, path[1], keeper)
+// 		case QueryLastValsetRequests:
+// 			return lastValsetRequests(ctx, keeper)
+// 		case QueryLastPendingValsetRequestByAddr:
+// 			return lastPendingValsetRequest(ctx, path[1], keeper)
 
-		// Batches
-		case QueryBatch:
-			return queryBatch(ctx, path[1], path[2], keeper)
-		case QueryBatchConfirms:
-			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
-		case QueryLastPendingBatchRequestByAddr:
-			return lastPendingBatchRequest(ctx, path[1], keeper)
-		case QueryOutgoingTxBatches:
-			return lastBatchesRequest(ctx, keeper)
-		case QueryBatchFees:
-			return queryBatchFees(ctx, keeper)
-		case PendingSendToEthTransactions:
-			return queryPendingSendToEthTransactions(ctx, path[1], keeper)
+// 		// Batches
+// 		case QueryBatch:
+// 			return queryBatch(ctx, path[1], path[2], keeper)
+// 		case QueryBatchConfirms:
+// 			return queryAllBatchConfirms(ctx, path[1], path[2], keeper)
+// 		case QueryLastPendingBatchRequestByAddr:
+// 			return lastPendingBatchRequest(ctx, path[1], keeper)
+// 		case QueryOutgoingTxBatches:
+// 			return lastBatchesRequest(ctx, keeper)
+// 		case QueryBatchFees:
+// 			return queryBatchFees(ctx, keeper)
+// 		case PendingSendToEthTransactions:
+// 			return queryPendingSendToEthTransactions(ctx, path[1], keeper)
 
-		// Logic calls
-		case QueryLogicCall:
-			return queryLogicCall(ctx, path[1], path[2], keeper)
-		case QueryLogicCallConfirms:
-			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
-		case QueryLastPendingLogicCallByAddr:
-			return lastPendingLogicCallRequest(ctx, path[1], keeper)
-		case QueryOutgoingLogicCalls:
-			return lastLogicCallRequests(ctx, keeper)
+// 		// Logic calls
+// 		case QueryLogicCall:
+// 			return queryLogicCall(ctx, path[1], path[2], keeper)
+// 		case QueryLogicCallConfirms:
+// 			return queryAllLogicCallConfirms(ctx, path[1], path[2], keeper)
+// 		case QueryLastPendingLogicCallByAddr:
+// 			return lastPendingLogicCallRequest(ctx, path[1], keeper)
+// 		case QueryOutgoingLogicCalls:
+// 			return lastLogicCallRequests(ctx, keeper)
 
-		case QueryGravityID:
-			return queryGravityID(ctx, keeper)
+// 		case QueryGravityID:
+// 			return queryGravityID(ctx, keeper)
 
-		// Token mappings
-		case QueryDenomToERC20:
-			return queryDenomToERC20(ctx, path[1], keeper)
-		case QueryERC20ToDenom:
-			return queryERC20ToDenom(ctx, path[1], keeper)
+// 		// Token mappings
+// 		case QueryDenomToERC20:
+// 			return queryDenomToERC20(ctx, path[1], keeper)
+// 		case QueryERC20ToDenom:
+// 			return queryERC20ToDenom(ctx, path[1], keeper)
 
-		// Pending transactions
-		case QueryPendingSendToEth:
-			return queryPendingSendToEth(ctx, path[1], keeper)
+// 		// Pending transactions
+// 		case QueryPendingSendToEth:
+// 			return queryPendingSendToEth(ctx, path[1], keeper)
 
-		default:
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
-		}
-	}
-}
+// 		default:
+// 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown %s query endpoint", types.ModuleName)
+// 		}
+// 	}
+// }
 
 func queryValsetRequest(ctx sdk.Context, path []string, keeper Keeper) ([]byte, error) {
 	nonce, err := types.UInt64FromString(path[0])

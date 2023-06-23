@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/keeper"
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestHandleMsgSendToEth(t *testing.T) {
 	var (
 		userCosmosAddr, _               = sdk.AccAddressFromBech32("cosmos1990z7dqsvh8gthw9pa5sn4wuy2xrsd80mg5z6y")
@@ -267,7 +267,7 @@ func TestMsgSetMinFeeTransferToEth(t *testing.T) {
 
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	var (
 		myOrchestratorAddr sdk.AccAddress = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -367,7 +367,7 @@ func TestMsgSendToCosmosClaimSingleValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewCoin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", amountB)}, balance)
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestMsgSendToCosmosClaimsMultiValidator(t *testing.T) {
 	var (
 		orchestratorAddr1, _ = sdk.AccAddressFromBech32("cosmos1dg55rtevlfxh46w88yjpdd08sqhh5cc3xhkcej")
@@ -470,7 +470,7 @@ func TestMsgSendToCosmosClaimsMultiValidator(t *testing.T) {
 	assert.Equal(t, sdk.Coins{sdk.NewInt64Coin("gravity0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e", 12)}, balance3)
 }
 
-//nolint: exhaustivestruct
+// nolint: exhaustivestruct
 func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	var (
 		ethAddress, _                 = types.NewEthAddress("0xb462864e395d88d6bc7c5dd5f3f5eb4cc2599255")
@@ -522,13 +522,15 @@ func TestMsgSetOrchestratorAddresses(t *testing.T) {
 	queryO := types.QueryDelegateKeysByOrchestratorAddress{
 		OrchestratorAddress: cosmosAddress2.String(),
 	}
-	_, err = k.GetDelegateKeyByOrchestrator(wctx, &queryO)
+
+	q := keeper.NewQuerier(k)
+	_, err = q.GetDelegateKeyByOrchestrator(wctx, &queryO)
 	require.NoError(t, err)
 
 	queryE := types.QueryDelegateKeysByEthAddress{
 		EthAddress: ethAddress2.GetAddress(),
 	}
-	_, err = k.GetDelegateKeyByEth(wctx, &queryE)
+	_, err = q.GetDelegateKeyByEth(wctx, &queryE)
 	require.NoError(t, err)
 
 	// try to set values again. This should fail see issue #344 for why allowing this

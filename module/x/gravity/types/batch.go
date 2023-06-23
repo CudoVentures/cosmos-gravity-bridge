@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/big"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -103,11 +104,11 @@ func NewInternalOutgingTxBatch(
 	block uint64) (*InternalOutgoingTxBatch, error) {
 
 	ret := &InternalOutgoingTxBatch{
-		BatchNonce: nonce,
-		BatchTimeout: timeout,
-		Transactions: transactions,
+		BatchNonce:    nonce,
+		BatchTimeout:  timeout,
+		Transactions:  transactions,
 		TokenContract: contract,
-		Block: block,
+		Block:         block,
 	}
 	if err := ret.ValidateBasic(); err != nil {
 		return nil, err
@@ -130,11 +131,11 @@ func NewInternalOutgingTxBatchFromExternalBatch(batch OutgoingTxBatch) (*Interna
 	}
 
 	return &InternalOutgoingTxBatch{
-		BatchNonce: batch.BatchNonce,
-		BatchTimeout: batch.BatchTimeout,
-		Transactions: txs,
+		BatchNonce:    batch.BatchNonce,
+		BatchTimeout:  batch.BatchTimeout,
+		Transactions:  txs,
 		TokenContract: *contractAddr,
-		Block: batch.Block,
+		Block:         batch.Block,
 	}, nil
 }
 
@@ -148,11 +149,11 @@ func (i *InternalOutgoingTxBatch) ToExternal() *OutgoingTxBatch {
 		txs[i] = tx.ToExternal()
 	}
 	return &OutgoingTxBatch{
-		BatchNonce: i.BatchNonce,
-		BatchTimeout: i.BatchTimeout,
-		Transactions: txs,
+		BatchNonce:    i.BatchNonce,
+		BatchTimeout:  i.BatchTimeout,
+		Transactions:  txs,
 		TokenContract: i.TokenContract.GetAddress(),
-		Block: i.Block,
+		Block:         i.Block,
 	}
 }
 

@@ -6,26 +6,35 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 )
 
-var _ types.QueryServer = Keeper{
-	StakingKeeper:      nil,
-	storeKey:           nil,
-	paramSpace:         paramstypes.Subspace{},
-	cdc:                nil,
-	BankKeeper:         nil,
-	SlashingKeeper:     nil,
-	AccountKeeper:      nil,
-	AttestationHandler: nil,
+// var _ types.QueryServer = Keeper{
+// 	StakingKeeper:      nil,
+// 	storeKey:           nil,
+// 	paramSpace:         paramstypes.Subspace{},
+// 	cdc:                nil,
+// 	BankKeeper:         nil,
+// 	SlashingKeeper:     nil,
+// 	AccountKeeper:      nil,
+// 	AttestationHandler: nil,
+// }
+
+var _ types.QueryServer = Querier{}
+
+type Querier struct {
+	Keeper
+}
+
+func NewQuerier(keeper Keeper) Querier {
+	return Querier{Keeper: keeper}
 }
 
 const QUERY_ATTESTATIONS_LIMIT uint64 = 1000
 
 // Params queries the params of the gravity module
-func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	var params types.Params
 	k.paramSpace.GetParamSet(sdk.UnwrapSDKContext(c), &params)
 	return &types.QueryParamsResponse{Params: params}, nil
@@ -33,21 +42,21 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 }
 
 // CurrentValset queries the CurrentValset of the gravity module
-func (k Keeper) CurrentValset(
+func (k Querier) CurrentValset(
 	c context.Context,
 	req *types.QueryCurrentValsetRequest) (*types.QueryCurrentValsetResponse, error) {
 	return &types.QueryCurrentValsetResponse{Valset: k.GetCurrentValset(sdk.UnwrapSDKContext(c))}, nil
 }
 
 // ValsetRequest queries the ValsetRequest of the gravity module
-func (k Keeper) ValsetRequest(
+func (k Querier) ValsetRequest(
 	c context.Context,
 	req *types.QueryValsetRequestRequest) (*types.QueryValsetRequestResponse, error) {
 	return &types.QueryValsetRequestResponse{Valset: k.GetValset(sdk.UnwrapSDKContext(c), req.Nonce)}, nil
 }
 
 // ValsetConfirm queries the ValsetConfirm of the gravity module
-func (k Keeper) ValsetConfirm(
+func (k Querier) ValsetConfirm(
 	c context.Context,
 	req *types.QueryValsetConfirmRequest) (*types.QueryValsetConfirmResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -58,7 +67,7 @@ func (k Keeper) ValsetConfirm(
 }
 
 // ValsetConfirmsByNonce queries the ValsetConfirmsByNonce of the gravity module
-func (k Keeper) ValsetConfirmsByNonce(
+func (k Querier) ValsetConfirmsByNonce(
 	c context.Context,
 	req *types.QueryValsetConfirmsByNonceRequest) (*types.QueryValsetConfirmsByNonceResponse, error) {
 	var confirms []*types.MsgValsetConfirm
@@ -70,7 +79,7 @@ func (k Keeper) ValsetConfirmsByNonce(
 }
 
 // LastValsetRequests queries the LastValsetRequests of the gravity module
-func (k Keeper) LastValsetRequests(
+func (k Querier) LastValsetRequests(
 	c context.Context,
 	req *types.QueryLastValsetRequestsRequest) (*types.QueryLastValsetRequestsResponse, error) {
 	valReq := k.GetValsets(sdk.UnwrapSDKContext(c))
@@ -85,7 +94,7 @@ func (k Keeper) LastValsetRequests(
 }
 
 // LastPendingValsetRequestByAddr queries the LastPendingValsetRequestByAddr of the gravity module
-func (k Keeper) LastPendingValsetRequestByAddr(
+func (k Querier) LastPendingValsetRequestByAddr(
 	c context.Context,
 	req *types.QueryLastPendingValsetRequestByAddrRequest) (*types.QueryLastPendingValsetRequestByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -114,14 +123,14 @@ func (k Keeper) LastPendingValsetRequestByAddr(
 }
 
 // BatchFees queries the batch fees from unbatched pool
-func (k Keeper) BatchFees(
+func (k Querier) BatchFees(
 	c context.Context,
 	req *types.QueryBatchFeeRequest) (*types.QueryBatchFeeResponse, error) {
 	return &types.QueryBatchFeeResponse{BatchFees: k.GetAllBatchFees(sdk.UnwrapSDKContext(c), OutgoingTxBatchSize)}, nil
 }
 
 // LastPendingBatchRequestByAddr queries the LastPendingBatchRequestByAddr of the gravity module
-func (k Keeper) LastPendingBatchRequestByAddr(
+func (k Querier) LastPendingBatchRequestByAddr(
 	c context.Context,
 	req *types.QueryLastPendingBatchRequestByAddrRequest) (*types.QueryLastPendingBatchRequestByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -142,7 +151,7 @@ func (k Keeper) LastPendingBatchRequestByAddr(
 	return &types.QueryLastPendingBatchRequestByAddrResponse{Batch: pendingBatchReq.ToExternal()}, nil
 }
 
-func (k Keeper) LastPendingLogicCallByAddr(
+func (k Querier) LastPendingLogicCallByAddr(
 	c context.Context,
 	req *types.QueryLastPendingLogicCallByAddrRequest) (*types.QueryLastPendingLogicCallByAddrResponse, error) {
 	addr, err := sdk.AccAddressFromBech32(req.Address)
@@ -164,7 +173,7 @@ func (k Keeper) LastPendingLogicCallByAddr(
 }
 
 // OutgoingTxBatches queries the OutgoingTxBatches of the gravity module
-func (k Keeper) OutgoingTxBatches(
+func (k Querier) OutgoingTxBatches(
 	c context.Context,
 	req *types.QueryOutgoingTxBatchesRequest) (*types.QueryOutgoingTxBatchesResponse, error) {
 	var batches []*types.OutgoingTxBatch
@@ -176,7 +185,7 @@ func (k Keeper) OutgoingTxBatches(
 }
 
 // OutgoingLogicCalls queries the OutgoingLogicCalls of the gravity module
-func (k Keeper) OutgoingLogicCalls(
+func (k Querier) OutgoingLogicCalls(
 	c context.Context,
 	req *types.QueryOutgoingLogicCallsRequest) (*types.QueryOutgoingLogicCallsResponse, error) {
 	var calls []*types.OutgoingLogicCall
@@ -188,7 +197,7 @@ func (k Keeper) OutgoingLogicCalls(
 }
 
 // BatchRequestByNonce queries the BatchRequestByNonce of the gravity module
-func (k Keeper) BatchRequestByNonce(
+func (k Querier) BatchRequestByNonce(
 	c context.Context,
 	req *types.QueryBatchRequestByNonceRequest) (*types.QueryBatchRequestByNonceResponse, error) {
 	addr, err := types.NewEthAddress(req.ContractAddress)
@@ -203,7 +212,7 @@ func (k Keeper) BatchRequestByNonce(
 }
 
 // BatchConfirms returns the batch confirmations by nonce and token contract
-func (k Keeper) BatchConfirms(
+func (k Querier) BatchConfirms(
 	c context.Context,
 	req *types.QueryBatchConfirmsRequest) (*types.QueryBatchConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmBatch
@@ -220,7 +229,7 @@ func (k Keeper) BatchConfirms(
 }
 
 // LogicConfirms returns the Logic confirmations by nonce and token contract
-func (k Keeper) LogicConfirms(
+func (k Querier) LogicConfirms(
 	c context.Context,
 	req *types.QueryLogicConfirmsRequest) (*types.QueryLogicConfirmsResponse, error) {
 	var confirms []*types.MsgConfirmLogicCall
@@ -235,7 +244,7 @@ func (k Keeper) LogicConfirms(
 
 // LastEventNonceByAddr returns the last event nonce for the given validator address,
 // this allows eth oracles to figure out where they left off
-func (k Keeper) LastEventNonceByAddr(
+func (k Querier) LastEventNonceByAddr(
 	c context.Context,
 	req *types.QueryLastEventNonceByAddrRequest) (*types.QueryLastEventNonceByAddrResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -254,7 +263,7 @@ func (k Keeper) LastEventNonceByAddr(
 }
 
 // DenomToERC20 queries the Cosmos Denom that maps to an Ethereum ERC20
-func (k Keeper) DenomToERC20(
+func (k Querier) DenomToERC20(
 	c context.Context,
 	req *types.QueryDenomToERC20Request) (*types.QueryDenomToERC20Response, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -267,7 +276,7 @@ func (k Keeper) DenomToERC20(
 }
 
 // ERC20ToDenom queries the ERC20 contract that maps to an Ethereum ERC20 if any
-func (k Keeper) ERC20ToDenom(
+func (k Querier) ERC20ToDenom(
 	c context.Context,
 	req *types.QueryERC20ToDenomRequest) (*types.QueryERC20ToDenomResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -284,7 +293,7 @@ func (k Keeper) ERC20ToDenom(
 }
 
 // GetAttestations queries the attestation map
-func (k Keeper) GetAttestations(
+func (k Querier) GetAttestations(
 	c context.Context,
 	req *types.QueryAttestationsRequest) (*types.QueryAttestationsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -297,7 +306,7 @@ func (k Keeper) GetAttestations(
 	return &types.QueryAttestationsResponse{Attestations: attestations}, nil
 }
 
-func (k Keeper) GetDelegateKeyByValidator(
+func (k Querier) GetDelegateKeyByValidator(
 	c context.Context,
 	req *types.QueryDelegateKeysByValidatorAddress) (*types.QueryDelegateKeysByValidatorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -320,7 +329,7 @@ func (k Keeper) GetDelegateKeyByValidator(
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
 }
 
-func (k Keeper) GetDelegateKeyByOrchestrator(
+func (k Querier) GetDelegateKeyByOrchestrator(
 	c context.Context,
 	req *types.QueryDelegateKeysByOrchestratorAddress) (*types.QueryDelegateKeysByOrchestratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -343,7 +352,7 @@ func (k Keeper) GetDelegateKeyByOrchestrator(
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
 }
 
-func (k Keeper) GetDelegateKeyByEth(
+func (k Querier) GetDelegateKeyByEth(
 	c context.Context,
 	req *types.QueryDelegateKeysByEthAddress) (*types.QueryDelegateKeysByEthAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -363,7 +372,7 @@ func (k Keeper) GetDelegateKeyByEth(
 	return nil, sdkerrors.Wrap(types.ErrInvalid, "No validator")
 }
 
-func (k Keeper) GetPendingSendToEth(
+func (k Querier) GetPendingSendToEth(
 	c context.Context,
 	req *types.QueryPendingSendToEth) (*types.QueryPendingSendToEthResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
