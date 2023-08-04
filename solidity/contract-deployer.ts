@@ -14,7 +14,8 @@ const args = commandLineArgs([
   // the ethernum node used to deploy the contract
   { name: "eth-node", type: String },
   // the cosmos node that will be used to grab the validator set via RPC (TODO),
-  { name: "cosmos-node", type: String },
+  { name: "cosmos-node-api", type: String },
+  { name: "cosmos-node-cometbft-rpc", type: String },
   // the Ethereum private key that will contain the gas required to pay for the contact deployment
   { name: "eth-privkey", type: String },
   // the gravity contract .json file
@@ -102,7 +103,6 @@ async function deploy() {
   const provider = await new ethers.providers.JsonRpcProvider(args["eth-node"]);
   let wallet = new ethers.Wallet(args["eth-privkey"], provider);
 
-
   if (args["test-mode"] == "True" || args["test-mode"] == "true") {
     var success = false;
     while(!success) {
@@ -151,7 +151,6 @@ async function deploy() {
       console.log("Test mode was enabled but the ERC20 contracts can't be found!")
       exit(1)
     }
-
 
     const { abi, bytecode } = getContractArtifacts(erc20_a_path);
     const erc20Factory = new ethers.ContractFactory(abi, bytecode, wallet);
@@ -232,14 +231,12 @@ async function deploy() {
   console.log("cudos token address:",cudosToken)
 
   const gravity = (await factory.deploy(
-    // todo generate this randomly at deployment time that way we can avoid
-    // anything but intentional conflicts
     gravityId,
     vote_power,
     eth_addresses,
     powers,
     cudosAccessControl,
-    cudosToken,
+    cudosToken
   )) as Gravity;
 
   await gravity.deployed();
@@ -275,55 +272,41 @@ function getContractArtifacts(path: string): { bytecode: string; abi: string } {
   var { bytecode, abi } = JSON.parse(fs.readFileSync(path, "utf8").toString());
   return { bytecode, abi };
 }
-const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
+// const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
 
 async function getLatestValset(): Promise<Valset> {
-  let block_height_request_string = args["cosmos-node"] + '/status';
+  let block_height_request_string = args["cosmos-node-cometbft-rpc"] + '/status';
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
-  let block_height = info.result.sync_info.latest_block_height;
   if (info.result.sync_info.catching_up) {
     console.log("This node is still syncing! You can not deploy using this validator set!");
     exit(1);
   }
-  let request_string = args["cosmos-node"] + "/abci_query"
-  let response = await axios.get(request_string, {params: {
-    path: "\"/custom/gravity/currentValset/\"",
-    height: block_height,
-    prove: "false",
-  }});
-  let valsets: ABCIWrapper = await response.data;
-  if (valsets.result.response.code !== 0) {
-    console.log("There was error fetching currentValset", valsets);
+  let request_string = args["cosmos-node-api"] + "/gravity/v1beta/valset/current"
+  let response = await axios.get(request_string);
+  if (response.status !== 200) {
+    console.log("There was error fetching current valset", response);
     exit(1);
   }
-  console.log(decode(valsets.result.response.value));
-  let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
-  return valset.value;
+  let valset = response.data.valset;
+  return valset;
 }
 async function getGravityId(): Promise<string> {
-  let block_height_request_string = args["cosmos-node"] + '/status';
+  let block_height_request_string = args["cosmos-node-cometbft-rpc"] + '/status';
   let block_height_response = await axios.get(block_height_request_string);
   let info: StatusWrapper = await block_height_response.data;
-  let block_height = info.result.sync_info.latest_block_height;
   if (info.result.sync_info.catching_up) {
     console.log("This node is still syncing! You can not deploy using this gravityID!");
     exit(1);
   }
-  let request_string = args["cosmos-node"] + "/abci_query"
-  let response = await axios.get(request_string, {params: {
-    path: "\"/custom/gravity/gravityID/\"",
-    height: block_height,
-    prove: "false",
-  }});
-  let gravityIDABCIResponse: ABCIWrapper = await response.data;
-  if (gravityIDABCIResponse.result.response.code !== 0) {
-    console.log("There was error fetching gravityId", gravityIDABCIResponse);
+  let request_string = args["cosmos-node-api"] + "/gravity/v1beta/params"
+  let response = await axios.get(request_string);
+  if (response.status !== 200) {
+    console.log("There was error fetching gravityId", response);
     exit(1);
   }
-  let gravityID: string = JSON.parse(decode(gravityIDABCIResponse.result.response.value))
-  return gravityID;
-
+  let params = response.data.params;
+  return params.gravity_id;
 }
 
 async function submitGravityAddress(address: string) {}

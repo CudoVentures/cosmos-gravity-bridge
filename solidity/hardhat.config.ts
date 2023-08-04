@@ -59,9 +59,6 @@ module.exports = {
   },
   defaultNetwork: process.env.DEFAULT_NETWORK,
   networks: {
-    rinkeby: {
-      url: `${process.env.ETH_NODE}`
-    },
     sepolia: {
       url: `${process.env.ETH_NODE}`
     },
