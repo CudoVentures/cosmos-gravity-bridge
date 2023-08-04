@@ -293,6 +293,10 @@ async function getLatestValset(): Promise<Valset> {
     prove: "false",
   }});
   let valsets: ABCIWrapper = await response.data;
+  if (valsets.result.response.code !== 0) {
+    console.log("There was error fetching currentValset", valsets);
+    exit(1);
+  }
   console.log(decode(valsets.result.response.value));
   let valset: ValsetTypeWrapper = JSON.parse(decode(valsets.result.response.value))
   return valset.value;
@@ -313,6 +317,10 @@ async function getGravityId(): Promise<string> {
     prove: "false",
   }});
   let gravityIDABCIResponse: ABCIWrapper = await response.data;
+  if (gravityIDABCIResponse.result.response.code !== 0) {
+    console.log("There was error fetching gravityId", gravityIDABCIResponse);
+    exit(1);
+  }
   let gravityID: string = JSON.parse(decode(gravityIDABCIResponse.result.response.value))
   return gravityID;
 

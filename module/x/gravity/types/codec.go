@@ -3,15 +3,32 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	authzcodec "github.com/cosmos/cosmos-sdk/x/authz/codec"
+	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
+	groupcodec "github.com/cosmos/cosmos-sdk/x/group/codec"
 )
 
 // ModuleCdc is the codec for the module
-var ModuleCdc = codec.NewLegacyAmino()
+var (
+	Amino     = codec.NewLegacyAmino()
+	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
+)
 
 func init() {
-	RegisterCodec(ModuleCdc)
+	RegisterLegacyAminoCodec(Amino)
+	cryptocodec.RegisterCrypto(Amino)
+	sdk.RegisterLegacyAminoCodec(Amino)
+
+	// Register all Amino interfaces and concrete types on the authz and gov Amino codec so that this can later be
+	// used to properly serialize MsgGrant, MsgExec and MsgSubmitProposal instances
+	RegisterLegacyAminoCodec(authzcodec.Amino)
+	RegisterLegacyAminoCodec(govcodec.Amino)
+	RegisterLegacyAminoCodec(groupcodec.Amino)
 }
 
 // nolint: exhaustivestruct
@@ -51,7 +68,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 // nolint: exhaustivestruct
 // RegisterCodec registers concrete types on the Amino codec
-func RegisterCodec(cdc *codec.LegacyAmino) {
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterInterface((*EthereumClaim)(nil), nil)
 	cdc.RegisterConcrete(&MsgSetOrchestratorAddress{}, "gravity/MsgSetOrchestratorAddress", nil)
 	cdc.RegisterConcrete(&MsgValsetConfirm{}, "gravity/MsgValsetConfirm", nil)

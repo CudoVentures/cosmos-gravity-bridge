@@ -104,7 +104,12 @@ func (AppModuleBasic) Name() string {
 
 // RegisterLegacyAminoCodec implements app module basic
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
+	types.RegisterLegacyAminoCodec(cdc)
+}
+
+// RegisterInterfaces implements app bmodule basic
+func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	types.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis implements app module basic
@@ -122,6 +127,12 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	return data.ValidateBasic()
 }
 
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the distribution module.
+// also implements app modeul basic
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+}
+
 // GetQueryCmd implements app module basic
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
@@ -130,17 +141,6 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // GetTxCmd implements app module basic
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd(types.StoreKey)
-}
-
-// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the distribution module.
-// also implements app modeul basic
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
-}
-
-// RegisterInterfaces implements app bmodule basic
-func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	types.RegisterInterfaces(registry)
 }
 
 //____________________________________________________________________________
@@ -166,12 +166,6 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
-// RegisterInvariants implements app module
-func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
-	// TODO: make some invariants in the gravity module to ensure that
-	// coins aren't being fraudlently minted etc...
-}
-
 // QuerierRoute implements app module
 func (am AppModule) QuerierRoute() string {
 	return types.QuerierRoute
@@ -181,6 +175,12 @@ func (am AppModule) QuerierRoute() string {
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.Querier{Keeper: am.keeper})
+}
+
+// RegisterInvariants implements app module
+func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {
+	// TODO: make some invariants in the gravity module to ensure that
+	// coins aren't being fraudlently minted etc...
 }
 
 // InitGenesis initializes the genesis state for this module and implements app module.
