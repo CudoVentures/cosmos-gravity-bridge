@@ -167,7 +167,7 @@ func (msg MsgSendToEth) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSendToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required
@@ -212,7 +212,7 @@ func (msg MsgSetMinFeeTransferToEth) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSetMinFeeTransferToEth) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required
@@ -249,7 +249,7 @@ func (msg MsgRequestBatch) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgRequestBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required
@@ -288,7 +288,7 @@ func (msg MsgConfirmBatch) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgConfirmBatch) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required
@@ -327,7 +327,7 @@ func (msg MsgConfirmLogicCall) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgConfirmLogicCall) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required
@@ -399,7 +399,7 @@ func (msg *MsgSendToCosmosClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSendToCosmosClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgSendToCosmosClaim) GetClaimer() sdk.AccAddress {
@@ -476,7 +476,7 @@ func (msg *MsgBatchSendToEthClaim) ClaimHash() ([]byte, error) {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgBatchSendToEthClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgBatchSendToEthClaim) GetClaimer() sdk.AccAddress {
@@ -532,7 +532,7 @@ func (e *MsgERC20DeployedClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgERC20DeployedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgERC20DeployedClaim) GetClaimer() sdk.AccAddress {
@@ -592,7 +592,7 @@ func (e *MsgLogicCallExecutedClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgLogicCallExecutedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgLogicCallExecutedClaim) GetClaimer() sdk.AccAddress {
@@ -665,7 +665,7 @@ func (e *MsgValsetUpdatedClaim) ValidateBasic() error {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgValsetUpdatedClaim) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgValsetUpdatedClaim) GetClaimer() sdk.AccAddress {
@@ -761,7 +761,7 @@ func (e *MsgSubmitBadSignatureEvidence) ValidateBasic() (err error) {
 
 // GetSignBytes encodes the message for signing
 func (msg MsgSubmitBadSignatureEvidence) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 // GetSigners defines whose signature is required

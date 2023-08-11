@@ -65,7 +65,7 @@ lint:
 ###############################################################################
 
 proto-gen:
-	./scripts/protocgen.sh
+	docker run --rm -v $(CURDIR):/workspace --workdir /workspace ghcr.io/cosmos/proto-builder:0.12.1 sh ./scripts/protocgen.sh
 
 proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json

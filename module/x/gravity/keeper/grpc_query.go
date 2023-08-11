@@ -32,6 +32,8 @@ func NewQuerier(keeper Keeper) Querier {
 }
 
 const QUERY_ATTESTATIONS_LIMIT uint64 = 1000
+const maxValsetRequestsReturned = 5
+const MaxResults = 100 // todo: impl pagination
 
 // Params queries the params of the gravity module
 func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
