@@ -151,7 +151,7 @@ func (k Keeper) processAttestation(ctx sdk.Context, att *types.Attestation, clai
 		k.Logger(ctx).Error("attestation failed",
 			"cause", err.Error(),
 			"claim type", claim.GetType(),
-			"id", types.GetAttestationKey(claim.GetEventNonce(), hash),
+			"id", hex.EncodeToString(types.GetAttestationKey(claim.GetEventNonce(), hash)),
 			"nonce", fmt.Sprint(claim.GetEventNonce()),
 		)
 	} else {
