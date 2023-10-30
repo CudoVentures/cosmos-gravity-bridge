@@ -291,6 +291,10 @@ cudos-v0.0.29-improvement-code-formatting
 
 cudos-v0.0.29-feature-remove-test-uniswap-liquidity
 
+cudos-v0.0.29-fix-events-encoding
+
+cudos-0.0.29-remove-feature-redundant-code-cleanup
+
 ### Remove redundant code
 We've removed the app folder and some sim setup commands from the cmd folder. Also we've moved the scripts from `contrib/local` to `scripts` folder for clarity. This was done so that we don't have to update repos and code that we don't actually use. We are using only the module part of the original repo.
 
