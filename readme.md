@@ -306,4 +306,4 @@ cudos-v0.0.29-feature-remove-test-uniswap-liquidity
 
 cudos-v0.0.29-fix-events-encoding
 
-cudos-0.0.29-remove-feature-redundant-code-cleanup
+cudos-0.0.29-remove-feature-redundant-code-cleanup (note this branch name is wrong, it is only "0.0.29" rather than "v0.0.29")
