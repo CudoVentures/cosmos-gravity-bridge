@@ -387,13 +387,13 @@ func (k Querier) GetPendingSendToEth(
 	}
 	for _, batch := range batches {
 		for _, tx := range batch.Transactions {
-			if tx.Sender.String() == sender_address {
+			if sender_address == "" || tx.Sender.String() == sender_address {
 				res.TransfersInBatches = append(res.TransfersInBatches, tx.ToExternal())
 			}
 		}
 	}
 	for _, tx := range unbatched_tx {
-		if tx.Sender.String() == sender_address {
+		if sender_address == "" || tx.Sender.String() == sender_address {
 			res.UnbatchedTransfers = append(res.UnbatchedTransfers, tx.ToExternal())
 		}
 	}
