@@ -162,8 +162,6 @@ We've implemented a minimum amount of acudos to send to ETH as to prevent spammi
 
 ### Added automatic fee calculation in orchestrator
 
-### Added whitelist functionality on some functions
-
 ### Added minimum bridge fee for MsgSendToEth
 Since the orchestrators sign ethereum transactions in order to validate the transfers from Cudos to Ethereum, they need to receive some minimum amount of CUDOS in order to not be at a loss at the end. We've implemented a minimum amount of bridge fee that needs to be set in each transfer.
 
@@ -180,8 +178,6 @@ Also more tests added.
 There are a few potential problems with the standard ecrecover function. That is why we implemented a zero address check after the ecrecover and also decided to use OpenZeppelins' tryEcrecover function. The latter required us to update our solidity version to ^0.8.0. From the update a few changes to the imports and a little change to the CosmosToken were required, but nothing major.
 
 ### Added pause functionality on Gravity contract
-
-### Only admin to some functions
 
 ### Added check for empty bytecode address on sendToCosmos
 This makes sure that the ERC20 contract address leads to a deployed contract, because there is a case where SendToCosmos could be called with not yet deployed contract.
@@ -208,6 +204,21 @@ We've added a static list of validators that participate in the orchestrating pr
 
 This is done on the module level, where if a validator tries to set itself as orchestrator, and is not in the static valset list, an error is thrown.
 
+### Fixed events encoding
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+We've update encoding of "attestationId" and "model" values while emiting events.
+
+### Logging
+To see the changes, compare to this branch: cudos-v0.0.29-feature-automatic-creation-of-batches
+
+In Cudos fork we added additional logging. It required adding AccountKeeper and making BankKeeper public. Also new methods were added in expected_keepers.go.
+
+### Added only orchestrator calls limit on some functions
+To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
+
+For security purposes we've added a check for some of the functions (like sumbitBatch) of the GravityBridge contract so that only orchestrators can use them. 
+
 ### Remove redundant code
 We've removed the app folder and some sim setup commands from the cmd folder. Also we've moved the scripts from `contrib/local` to `scripts` folder for clarity. This was done so that we don't have to update repos and code that we don't actually use. We are using only the module part of the original repo.
 
@@ -215,11 +226,6 @@ For the changes look at these commits:
 
 https://github.com/CudoVentures/cosmos-gravity-bridge/commit/e237ac34bad6e836adb50eb4388e7ee9365d8478
 https://github.com/CudoVentures/cosmos-gravity-bridge/pull/30/commits/c35ab7aefd39cf5aa21653abaf460971475d87bb
-
-### Fixed events encoding
-To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing 
-
-We've update encoding of "attestationId" and "model" values while emiting events.
 
 ## Reimplementing the changes
 All the changes we've done would have to be reimplemented manually once we merge from the original repo. For this purpose we've created a separate branch for each change for easier visualization of the change. In order to correctly see the differences in the change's branch, we've created a branch to serve as a comparison base. It is called cudos-v0.0.29-base-for-comparing.
@@ -274,8 +280,6 @@ cudos-v0.0.29-feature-min-fee-transfer-to-eth
 
 cudos-v0.0.29-feature-automatic-gas-calculation
 
-cudos-v0.0.29-feature-whitelisting
-
 cudos-v0.0.29-feature-cancel-sendToEth
 
 cudos-v0.0.29-feature-min-self-delegation
@@ -290,8 +294,6 @@ cudos-v0.0.29-feature-gravity-contract-ecrecover
 
 cudos-v0.0.29-feature-gravity-contract-pause
 
-cudos-v0.0.29-feature-gravity-contract-deploy-onlyAdmin
-
 cudos-v0.0.29-feature-gravity-contract-empty-byte-code
 
 cudos-v0.0.29-feature-gravity-contract-multiple-tokens
@@ -305,5 +307,9 @@ cudos-v0.0.29-improvement-code-formatting
 cudos-v0.0.29-feature-remove-test-uniswap-liquidity
 
 cudos-v0.0.29-fix-events-encoding
+
+cudos-v0.0.29-feature-logging
+
+cudos-v0.0.29-feature-only-orchestrator-functions
 
 cudos-0.0.29-remove-feature-redundant-code-cleanup (note this branch name is wrong, it is only "0.0.29" rather than "v0.0.29")
