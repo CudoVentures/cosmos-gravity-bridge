@@ -116,7 +116,7 @@ You can keep up with the latest development by watching our [public standups](ht
 ## Cudos changes to original Althea GravityBridge
 Since we forked the project, there are several changes that we've made to the repo. They are described below
 
-### Logging
+### Allow empty addresses in get-pending-send-to-eth
 To see the changes, compare to this branch: cudos-v0.0.29-feature-automatic-creation-of-batches
 
 Able to query all pending-send-to-eth without specifying an address
