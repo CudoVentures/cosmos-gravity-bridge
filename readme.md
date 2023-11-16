@@ -219,6 +219,11 @@ To see the changes, compare to this branch: cudos-v0.0.29-base-for-comparing
 
 For security purposes we've added a check for some of the functions (like sumbitBatch) of the GravityBridge contract so that only orchestrators can use them. 
 
+### Allow empty addresses in get-pending-send-to-eth
+To see the changes, compare to this branch: cudos-v0.0.29-feature-automatic-creation-of-batches
+
+Able to query all pending-send-to-eth without specifying an address
+
 ### Remove redundant code
 We've removed the app folder and some sim setup commands from the cmd folder. Also we've moved the scripts from `contrib/local` to `scripts` folder for clarity. This was done so that we don't have to update repos and code that we don't actually use. We are using only the module part of the original repo.
 
@@ -311,5 +316,7 @@ cudos-v0.0.29-fix-events-encoding
 cudos-v0.0.29-feature-logging
 
 cudos-v0.0.29-feature-only-orchestrator-functions
+
+cudos-v0.0.29-feature-allow-empty-address-in-getpendingsendtoeth
 
 cudos-0.0.29-remove-feature-redundant-code-cleanup (note this branch name is wrong, it is only "0.0.29" rather than "v0.0.29")
