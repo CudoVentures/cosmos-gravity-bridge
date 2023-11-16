@@ -319,4 +319,4 @@ cudos-v0.0.29-feature-only-orchestrator-functions
 
 cudos-v0.0.29-feature-allow-empty-address-in-getpendingsendtoeth
 
-cudos-0.0.29-remove-feature-redundant-code-cleanup (note this branch name is wrong, it is only "0.0.29" rather than "v0.0.29")
+cudos-0.0.29-remove-feature-redundant-code-cleanup (note: this branch name is wrong, it is only "0.0.29" rather than "v0.0.29")
